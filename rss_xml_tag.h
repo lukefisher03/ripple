@@ -16,6 +16,7 @@ struct rss_xml_attr {
 
 struct rss_xml_tag {
     char                    *name;
+    char                    *name_space;
     tag_type                type;
     struct rss_xml_attr     **attrs;
     size_t                  attr_count;
@@ -23,9 +24,14 @@ struct rss_xml_tag {
 
 struct rss_xml_tag *build_rss_xml_tag(char *tag, size_t length);
 void print_rss_xml_tag(struct rss_xml_tag *t);
+void rss_xml_tag_free(struct rss_xml_tag *tag);
+void rss_xml_attr_free(struct rss_xml_attr *attr);
 
 // Static functions
 static int _parse_tag_attrs(struct rss_xml_tag *t, char *tag_str, size_t length);
-static void rss_xml_clear_attrs(struct rss_xml_tag *tag);
+static void _rss_xml_clear_attrs(struct rss_xml_tag *tag);
+static bool _is_xml_name_start_char(char c);
+static bool _is_xml_special_char(char c);
+
 
 #endif

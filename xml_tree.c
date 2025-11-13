@@ -35,7 +35,7 @@ struct rss_feed *build_feed(char *xml, size_t size) {
     int tag_count = 0;
     size_t i = 0;
 
-    while (i < 5000) {
+    while (i < size) {
         char c = xml[i];
         if (c == '<') {
             size_t tag_start = i;
@@ -59,7 +59,7 @@ struct rss_feed *build_feed(char *xml, size_t size) {
 
 int main(int argc, char *argv[]) {
     size_t size;
-    char *rss = file_to_string("smart_less.xml", &size);
+    char *rss = file_to_string("test/stack_overflow.xml", &size);
     struct rss_feed *feed = build_feed(rss, size);
     printf("Feed article count: %i\n", feed->article_count);
     free(rss);

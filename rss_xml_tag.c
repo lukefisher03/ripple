@@ -17,51 +17,60 @@ struct rss_xml_tag *build_rss_xml_tag(char *tag_str, size_t length) {
     
     t->type = TAG_IGNORE;
     t->attr_count = 0;
+    t->name_space = NULL;
     t->name = NULL;
     t->attrs = NULL;
-    
-    size_t offset = 1; // Skip `<` character at the beginning
-    size_t index = 0;
-    size_t end_i = 0; 
-    
+        
     // Determine the tag type first.
     if (tag_str[1] == '/') {
         t->type = TAG_CLOSE;
-        offset = 2; // Don't include the backslash in the tag name.
     } else if (tag_str[length - 2] == '/') {
         t->type = TAG_SELF_CLOSE;
-        length -= 2; // Don't include trailing backslash.
     } else if (tag_str[1] == '?') {
         t->type = TAG_IGNORE;
-        offset = 2; // Don't include the backslash in the tage name.
     } else if (tag_str[1] == '!') {
         printf("Encountered CDATA\n");
+        rss_xml_tag_free(t);
         return NULL;   
     }else {
         t->type = TAG_OPEN;
     }
     
-    // Determine the name portion of the tag.
-    // No support for namespaces, so part after the colon is ignored in -> <tagName:secondPart>
-    bool colon_detected = false;
-    for (index = 0; index < length && tag_str[index] != ' ' && tag_str[index] != '>'; index++) {
-        if (tag_str[index] == ':') {
-            colon_detected = true;
-        }
-
-        if (!colon_detected) {
-            // Only increment the pointer to include the name before the colon.
-            end_i++;
-        }
+    // The offset is the index of the very first charactrer of the 
+    // full identifier.
+    size_t identifier_length = 0;
+    size_t name_space_length = 0;
+    size_t index;
+    for(index = 0; index < length && _is_xml_special_char(tag_str[index]); index++);
+    
+    size_t offset = index; // Skip starting characters at the beginning
+    if (!_is_xml_name_start_char(tag_str[offset])) {
+        rss_xml_tag_free(t); 
+        return NULL;
     }
-    
-    t->name = strndup(tag_str + offset, end_i - offset);
-    
+
+    for (; index < length && tag_str[index] != ' ' && tag_str[index] != '>'; index++) {
+        if (tag_str[index] == ':') {
+            if (t->name_space) {
+                rss_xml_tag_free(t);
+                fprintf(stderr, "XML elements can only belong to a single namespace!\n");
+                return NULL;
+            }
+            name_space_length = identifier_length + 1;
+            t->name_space = strndup(tag_str + offset, identifier_length);
+        }
+        identifier_length++;
+    }
+
+    t->name = strndup(tag_str + offset + name_space_length, identifier_length - name_space_length);
+
     // Get all the attributes
     if (t->type != TAG_CLOSE) {
         int res = _parse_tag_attrs(t, tag_str, length);
         if (res < 0) {
             fprintf(stderr, "INVALID XML DETECTED. Error code: %i\n", res);
+            rss_xml_tag_free(t);
+            return NULL;
         }
     }
 
@@ -88,22 +97,19 @@ static int _parse_tag_attrs(struct rss_xml_tag *t, char *tag_str, size_t length)
     bool within_quotes = false;
     bool found_whitespace = false;
     size_t expected_attribute_count = 0;
-
-    for (size_t i = 1; i < length; i++) {
-        if (tag_str[i] == '"') {
+    
+    size_t i;
+    for (i = 0; i < length && (tag_str[i] == '<' || tag_str[i] == '?' || tag_str[i] == '/'); i++);
+    for (; i < length; i++) {
+        if (tag_str[i] == '"' || tag_str[i] == '\'') {
             if (within_quotes) within_quotes = false;
             else within_quotes = true;
         }
         if (tag_str[i] == '=' && !within_quotes) expected_attribute_count++;
 
-        if (tag_str[i] == ' ') {
+        if (!found_whitespace) index = i;
+        if (tag_str[i] == ' ' || tag_str[i] == '\n') {
             found_whitespace = true;
-        }
-        if (!found_whitespace) index++;
-
-        if (tag_str[i] == '<') {
-            fprintf(stderr, "INVALID XML DETECTED: %s\n", tag_str);
-            return ERR_INVALID_XML;
         }
     }
 
@@ -112,14 +118,15 @@ static int _parse_tag_attrs(struct rss_xml_tag *t, char *tag_str, size_t length)
     t->attr_count = 0;
     t->attrs = calloc(expected_attribute_count, sizeof(struct rss_xml_attr));
     if (!t->attrs) {
-        free(t);
         return ERR_MEMORY_ALLOCATION;
     }
 
     for (; index < length; index++) {
         // Search for the beginning of an attribute. Skip these characters since they'll never
         // be the first character of an attribute.
-        if (!alpha_test(tag_str[index])) continue; 
+        if (tag_str[index] == ' ' || tag_str[index] == '\n') continue;
+        else if (_is_xml_special_char(tag_str[index])) break;
+        else if (!_is_xml_name_start_char(tag_str[index])) return ERR_INVALID_XML;
         else {
             // Attribute found
             size_t start = index;
@@ -148,13 +155,13 @@ static int _parse_tag_attrs(struct rss_xml_tag *t, char *tag_str, size_t length)
 
             t->attrs[t->attr_count++] = attr;
             index = end;
-        }
+        } 
     }
     
     if (expected_attribute_count != t->attr_count) {
         // Something went wrong
         fprintf(stderr, "Could not parse XML tag: %s\n", tag_str);
-        rss_xml_clear_attrs(t);
+        _rss_xml_clear_attrs(t);
         return ERR_INVALID_XML;
     }
 
@@ -166,6 +173,7 @@ void print_rss_xml_tag(struct rss_xml_tag *tag) {
         return;
     }
     printf("Tag name: '%s'\n", tag->name);
+    printf("Tag namespace: '%s'\n", tag->name_space);
     switch (tag->type) {
         case TAG_CLOSE:
             printf("Type: close\n");
@@ -174,7 +182,7 @@ void print_rss_xml_tag(struct rss_xml_tag *tag) {
             printf("Type: open\n");
             break;
         case TAG_IGNORE:
-            printf("Type: ignore");
+            printf("Type: ignore\n");
             break;
         case TAG_SELF_CLOSE:
             printf("Type: self-close\n");
@@ -193,17 +201,59 @@ void print_rss_xml_tag(struct rss_xml_tag *tag) {
     printf("\n");
 }
 
-static void rss_xml_clear_attrs(struct rss_xml_tag *tag) {
-    for (size_t i = 0; i < tag->attr_count; i++) {
-        free(tag->attrs[i]);
+static bool _is_xml_name_start_char(char c) {
+    if (alpha_test(c)) return true;
+
+    switch (c) {
+        case '-':
+        case '_':
+        case ':':
+            return true;
+        default:
+            return false;
     }
+}
+
+static bool _is_xml_special_char(char c) {
+    switch (c) {
+        case '>':
+        case '<':
+        case '/':
+        case '[':
+        case '?':
+        case '!':
+        case ']':
+            return true;
+        default:
+            return false;
+    }
+}
+
+
+static void _rss_xml_clear_attrs(struct rss_xml_tag *tag) {
+    if (!tag) return;
+
+    for (size_t i = 0; i < tag->attr_count; i++) {
+        rss_xml_attr_free(tag->attrs[i]);
+    }
+
+    tag->attrs = NULL;
     tag->attr_count = 0;
 }
 
 void rss_xml_tag_free(struct rss_xml_tag *tag) {
-    rss_xml_clear_attrs(tag);
+    if (!tag) return;
+
+    _rss_xml_clear_attrs(tag);
     free(tag->name);
     free(tag->attrs);
     free(tag);
 }
 
+void rss_xml_attr_free(struct rss_xml_attr *attr) {
+    if (!attr) return;
+
+    free(attr->name);
+    free(attr->value);
+    free(attr);
+}
