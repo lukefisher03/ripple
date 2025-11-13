@@ -1,7 +1,6 @@
 #ifndef D_ARRAY
 #define D_ARRAY
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 

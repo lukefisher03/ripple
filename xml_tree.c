@@ -32,10 +32,10 @@ struct rss_feed {
 struct rss_feed *build_feed(char *xml, size_t size) {
     struct rss_feed *feed = calloc(1, sizeof(struct rss_feed));
 
+    int tag_count = 0;
     size_t i = 0;
 
-    // while (i < size) {
-    while (i < size) {
+    while (i < 5000) {
         char c = xml[i];
         if (c == '<') {
             size_t tag_start = i;
@@ -46,21 +46,20 @@ struct rss_feed *build_feed(char *xml, size_t size) {
             char *tag_str = strndup(xml + tag_start, tag_length);
             printf("Raw tag: %s\n", tag_str);
             struct rss_xml_tag *t = build_rss_xml_tag(tag_str, tag_length);
+            tag_count++;
             free(tag_str);
             print_rss_xml_tag(t);
         }
         i++;
     }
 
-    feed->article_count = 5;
-
-    printf("\nGot here\n");
+    feed->article_count = tag_count;
     return feed;
 }
 
 int main(int argc, char *argv[]) {
     size_t size;
-    char *rss = file_to_string("stack_overflow.xml", &size);
+    char *rss = file_to_string("smart_less.xml", &size);
     struct rss_feed *feed = build_feed(rss, size);
     printf("Feed article count: %i\n", feed->article_count);
     free(rss);

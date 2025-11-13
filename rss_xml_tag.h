@@ -4,7 +4,10 @@
 #include "d_array.h"
 
 
-typedef enum tag_type { TAG_OPEN, TAG_CLOSE, TAG_SELF_CLOSE, TAG_IGNORE } tag_type;
+typedef enum tag_type { TAG_OPEN, TAG_CLOSE, TAG_SELF_CLOSE, TAG_IGNORE, TAG_CDATA } tag_type;
+
+#define ERR_INVALID_XML -1
+#define ERR_MEMORY_ALLOCATION -2
 
 struct rss_xml_attr {
     char    *name;
@@ -21,6 +24,8 @@ struct rss_xml_tag {
 struct rss_xml_tag *build_rss_xml_tag(char *tag, size_t length);
 void print_rss_xml_tag(struct rss_xml_tag *t);
 
-int _parse_tag_attrs(struct rss_xml_tag *t, char *tag_str, size_t length);
+// Static functions
+static int _parse_tag_attrs(struct rss_xml_tag *t, char *tag_str, size_t length);
+static void rss_xml_clear_attrs(struct rss_xml_tag *tag);
 
 #endif

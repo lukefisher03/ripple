@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <stdio.h>
 
 char *file_to_string(const char *path, size_t *size) {
     char *str; // Buffer for storing the output file string content

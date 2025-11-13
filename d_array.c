@@ -1,5 +1,6 @@
 #include "d_array.h"
-#include <stdlib.h>
+
+#include <stdio.h>
 #include <string.h>
 
 #define DEFAULT_CAPACITY 4
