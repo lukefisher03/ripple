@@ -10,7 +10,7 @@ xmlns:georss="http://www.georss.org/georss"
 xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
 >
 <channel>
-    <9tag  8name="value"    name2="v"></9tag>
+   <tag  name="value" name2="v"></tag>
    <title>Stack Overflow Blog</title>
    <description>Essays, opinions, and advice on the act of computer programming from Stack Overflow.</description>
    <atom:link href="https://stackoverflow.blog/feed/" rel="self" type="application/rss+xml" />
@@ -20,7 +20,7 @@ xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
    <sy:updatePeriod>hourly</sy:updatePeriod>
    <sy:updateFrequency>1</sy:updateFrequency>
    <item>
-       <guid 9isPermaLink="false">2b86fa86-c744-444f-8145-e4e5493e5a6b</guid>
+       <guid isPermaLink="false">2b86fa86-c744-444f-8145-e4e5493e5a6b</guid>
        <title>2025.8 release introduces Stack Overflow Internal: The next generation of enterprise knowledge intelligence</title>
        <link>https://stackoverflow.blog/2025/11/12/2025-8-release-introduces-stack-overflow-internal-the-next-generation-of-enterprise-knowledge-intelligence/</link>
        <pubDate>Wed, 12 Nov 2025 15:00:00 GMT</pubDate>

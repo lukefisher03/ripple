@@ -1,7 +1,7 @@
 #ifndef RSS_XML_TAG_H
 #define RSS_XML_TAG_H
 
-#include "d_array.h"
+#include "stack.h"
 
 
 typedef enum tag_type { TAG_OPEN, TAG_CLOSE, TAG_SELF_CLOSE, TAG_IGNORE, TAG_CDATA } tag_type;
