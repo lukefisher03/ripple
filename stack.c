@@ -32,11 +32,16 @@ bool stack_push(struct dynamic_stack *stk, void *item) {
     return true;
 }
 
-bool stack_empty(struct dynamic_stack *stk) {
+inline bool stack_is_empty(struct dynamic_stack *stk) {
+    return stk->count == 0;
+}
+
+void *stack_peek(struct dynamic_stack *stk) {
     if (stk->count == 0) {
-        return true;
-    } 
-    return false;
+        return NULL;
+    }
+
+    return stk->elements[stk->count - 1];
 }
 
 void *stack_pop(struct dynamic_stack *stk) {
@@ -47,6 +52,10 @@ void *stack_pop(struct dynamic_stack *stk) {
     void *e = stk->elements[stk->count - 1];
     stk->count--;
     return e;
+}
+
+inline void stack_clear(struct dynamic_stack *stk) {
+    stk->count = 0;
 }
 
 void stack_free(struct dynamic_stack *stk) {

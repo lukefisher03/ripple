@@ -1,5 +1,6 @@
 # Terminal RSS Aggregator
 A lightweight RSS Aggregator that runs in your terminal. Written in C
+**Please visit `docs/architecture.md` to see how the application is structured**
 
 ## Features
 TBD

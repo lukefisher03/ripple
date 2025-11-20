@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <stdio.h>
+#include <string.h>
 
 char *file_to_string(const char *path, size_t *size) {
     char *str; // Buffer for storing the output file string content
@@ -65,4 +66,36 @@ char *file_to_string(const char *path, size_t *size) {
     fclose(fptr);
     *size = buf_sz;
     return str;
+}
+
+bool prefixcmp(const char *prefix, char *str, size_t str_length) {
+    /*  Prefix compare - Given some prefix and a string to compare it against, 
+        check if the string starts with the prefix  */
+
+    if (!strlen(prefix)) return true; // A zero length prefix always returns true.
+    if (!str_length) return false; // If the prefix is non-zero and the string is 0, return false.
+    
+    for (size_t i = 0; i < strlen(prefix) && i < str_length; i++) {
+        if (prefix[i] != str[i]) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+bool prefixcmp_fast(const char *prefix, size_t prefix_length, char *str, size_t str_length) {
+    /* Prefix compare fast - Same as prefix compare, except with no calls to O(n) strlen. 
+       Use for comparing larger strings where the cost of O(n) is too high. */
+
+    if (!prefix_length) return true; // A zero length prefix always returns true.
+    if (!str_length) return false; // If the prefix is non-zero and the string is 0, return false.
+    
+    for (size_t i = 0; i < prefix_length && i < str_length; i++) {
+        if (prefix[i] != str[i]) {
+            return false;
+        }
+    }
+    
+    return true;
 }

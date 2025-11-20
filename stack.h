@@ -12,9 +12,16 @@ struct dynamic_stack {
 
 struct dynamic_stack *stack_init(void);
 
-bool stack_push(struct dynamic_stack *arr, void *item);
-bool stack_empty(struct dynamic_stack *arr);
-void *stack_pop(struct dynamic_stack *arr);
+bool stack_push(struct dynamic_stack *stk, void *item);
 
-void stack_free(struct dynamic_stack *arr);
+bool stack_is_empty(struct dynamic_stack *stk);
+
+void *stack_pop(struct dynamic_stack *stk);
+
+void *stack_peek(struct dynamic_stack *stk);
+
+void stack_clear(struct dynamic_stack *stk);
+
+void stack_free(struct dynamic_stack *stk);
+
 #endif

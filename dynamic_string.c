@@ -11,7 +11,7 @@ struct string_d *string_d_init(char * s) {
     }
 
     new_s->length = strlen(s);
-    new_s->capacity = new_s->length * 2;
+    new_s->capacity = new_s->length * 2 > 16 ? new_s->length * 2 : 16;
     new_s->str = strndup(s, new_s->length);
 
     return new_s;
@@ -43,7 +43,7 @@ void string_d_reset(struct string_d *s) {
         s->str[0] = '\0';
     }
     s->length = 0;
-    s->capacity = 1;
+    s->capacity = 16;
 }
 
 
