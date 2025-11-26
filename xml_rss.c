@@ -61,7 +61,7 @@ struct node *construct_parse_tree(char *xml, size_t length) {
 void print_parse_tree(struct node *root, int depth) {
     /* Recursive function for printing out an indented version of a
        parse tree */
-       
+
     if (!root) {
         return;
     }
@@ -72,7 +72,7 @@ void print_parse_tree(struct node *root, int depth) {
         return;
     }
 
-    switch (root->node_type) {
+    switch (root->type) {
         case TEXT_NODE:
             printf("\n%sText Node\n", spacer);
             printf("%sText Content: '%s'\n", spacer, root->text);
@@ -140,10 +140,46 @@ ssize_t accumulate_text(char *str, size_t length, struct node *new_node) {
         for (; i < length && str[i] != '<'; i++); 
     }
 
-    new_node->node_type = TEXT_NODE;
+    new_node->type = TEXT_NODE;
     new_node->text = strndup(str, i);
     return i;
 }
+
+bool build_channel(struct channel *chan, struct node *root) {
+    /* Perform iterative DFS to build a channel from a parse tree */
+    struct list *stack = list_init();
+    list_append(stack, chan); // Initialize stack with the channel element
+
+    struct node *pointer = root;
+    struct list *dfs_stack = list_init(); // Stack for doing DFS
+    list_append(dfs_stack, root); 
+
+    while (!list_is_empty(dfs_stack)) {
+        struct node *node = list_pop(dfs_stack);
+
+        switch (node->type) {
+            case XML_NODE:
+                if (node->xml.name == "channel") {
+                    
+                }
+                // Do processing
+                for (size_t i = 0; i < node->xml.children->count; i++) {
+                    // Append next nodes to visit on the stack
+                    list_append(dfs_stack, node->xml.children->elements[i]);
+                }
+                break;
+            case TEXT_NODE:
+
+                break;
+            default:
+                fprintf(stderr, "Encountered unrecognized node!\n");
+                break;
+        }
+    }
+
+    // FREE STACKS
+}
+
 
 bool is_termination_char(char c) {
     if (c == ' ' || c == ':' || c == '/' || c == '>') {

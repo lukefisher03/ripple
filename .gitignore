@@ -2,3 +2,4 @@ main
 *.dSYM/
 .vscode/
 out.txt
+output.txt

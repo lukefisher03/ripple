@@ -4,16 +4,16 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-struct string_d {
+struct ds { // The name `ds` stands for dynamic string
     char    *str;
     size_t  capacity;
     size_t  length;
 };
 
-struct string_d *string_d_init(char * s);
-struct string_d *string_d_clone(struct string_d *s);
-bool string_d_append(struct string_d *s1, char *s2);
-void string_d_reset(struct string_d *s);
-void string_d_free(struct string_d *s);
+struct ds *string_d_init(const char * s);
+struct ds *string_d_clone(const struct ds *s);
+struct ds *string_d_append(struct ds *s1, const char *s2);
+void string_d_reset(struct ds *s);
+void string_d_free(struct ds *s);
 
 #endif

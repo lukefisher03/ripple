@@ -22,16 +22,25 @@ struct tag {
 };
 
 struct item {
-
+    char    *title;
+    char    *author;
+    char    *pub_date;
+    char    *description;
+    char    *link;
 };
 
 struct channel {
-    struct item item;
-
+    char            *title;
+    char            *description;
+    char            *link;
+    char            *last_build_date;
+    struct item     **items;
 };
 
 
 struct node *construct_parse_tree(char *xml, size_t length);
+
+void print_parse_tree(struct node *root, int depth);
 
 bool read_tag(char *str, size_t length, struct tag *t);
 
@@ -41,6 +50,7 @@ bool is_termination_char(char c);
 
 struct tag *tag_init();
 
-void print_parse_tree(struct node *root, int depth);
+bool build_channel(struct channel *chan, struct node *parse_tree);
+
 char * get_spacer(int width);
 #endif

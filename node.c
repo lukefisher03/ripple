@@ -6,7 +6,7 @@ struct node *xml_node_init() {
     if (!new_node) {
         return NULL;
     }
-    new_node->node_type = XML_NODE;
+    new_node->type = XML_NODE;
     new_node->xml.children = list_init();
     return new_node;
 }
@@ -17,7 +17,7 @@ struct node *text_node_init() {
         return NULL;
     }
 
-    new_node->node_type = TEXT_NODE;
+    new_node->type = TEXT_NODE;
     new_node->text = NULL;
     return new_node;
 }

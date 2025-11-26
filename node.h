@@ -15,7 +15,7 @@ enum NODE_TYPE {
 };
 
 struct node {
-    enum NODE_TYPE node_type;
+    enum NODE_TYPE type;
     union {
         struct xml_node     xml;
         char                *text; // Text nodes just hold text
