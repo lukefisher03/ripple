@@ -4,16 +4,16 @@
 #include "dynamic_string.h"
 #include "list.h"
 
-struct xml_node {
-    struct list         *children;      // Number of children.
-    char                *name;          // Name of the element.
-};
-
 enum NODE_TYPE {
     ROOT_NODE,
     XML_NODE,
     TEXT_NODE,
     DUMMY,
+};
+
+struct xml_node {
+    struct list         *children;      // Children are strictly other nodes
+    char                *name;          // Name of the element.
 };
 
 struct node {
@@ -24,8 +24,11 @@ struct node {
     };
 };
 
-struct node *xml_node_init();
-struct node *text_node_init();
-struct node *dummy_node_init();
+struct node *xml_node_init(void);
+struct node *text_node_init(void);
+struct node *dummy_node_init(void);
+
+void free_node(struct node *node);
+void free_tree(struct node *node);
 
 #endif

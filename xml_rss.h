@@ -59,6 +59,9 @@ void print_parse_tree(const struct node *root, int depth);
 
 bool build_channel(struct channel *chan, struct node *parse_tree);
 
-struct channel *channel_init();
-struct item *item_init();
+struct channel *channel_init(void);
+struct item *item_init(void);
+
+void free_channel(struct channel *c);
+void free_item(struct item *it);
 #endif
