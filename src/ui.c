@@ -12,13 +12,7 @@ void ui_start() {
     int y = 5;
 
     tb_init();
-    // int height = tb_height();
-    // int width = tb_width();
-
-    // int mid = width / 2;
-
-    // printf("%i %i\n", height, width);
-
+    
     write_centered(y++, TB_GREEN, 0, "RIPPLE");
     tb_present();
     y += 5;
