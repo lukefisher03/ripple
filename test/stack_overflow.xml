@@ -91,7 +91,7 @@ xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
    </item>
    <item>
        <guid isPermaLink="false">5e0211e3-7d94-42e3-b25a-08949435ebc0</guid>
-       <title>What’s new at Stack Overflow: November 2025</title>
+       <title>What's new at Stack Overflow: November 2025</title>
        <link>https://stackoverflow.blog/2025/11/03/what-s-new-at-stack-overflow-november-2025/</link>
        <pubDate>Mon, 03 Nov 2025 15:00:00 GMT</pubDate>
        <description><![CDATA[From a new kind of vote to a preview of the upcoming redesign, check out what’s been happening at Stack Overflow over the past month.]]></description>
@@ -451,7 +451,7 @@ xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
    </item>
    <item>
        <guid isPermaLink="false">1fdc8259-39e2-4e1a-b18f-7fc224de6066</guid>
-       <title>Off with your CMS’s head! Composability and security in headless CMS</title>
+       <title>Off with your CMS's head! Composability and security in headless CMS</title>
        <link>https://stackoverflow.blog/2025/09/19/off-with-your-cms-s-head-composability-and-security-in-headless-cms/</link>
        <pubDate>Fri, 19 Sep 2025 04:40:00 GMT</pubDate>
        <description><![CDATA[Ryan welcomes Sebastian Gierlinger, VP of Engineering at Storyblok, to talk about how headless content management systems (CMS) fit into an increasingly componentized software landscape. ]]></description>

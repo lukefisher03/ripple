@@ -389,7 +389,6 @@ void free_item(struct item *it) {
 }
 
 void free_channel(struct channel *c) {
-    printf("Freeing channel: %s\n", c->title);
     free(c->description);
     free(c->title);
     free(c->language);
@@ -398,7 +397,6 @@ void free_channel(struct channel *c) {
 
     for (size_t i = 0; i < c->items->count; i++) {
         struct item *it = c->items->elements[i];
-        printf("\tFreeing article item: %s\n", it->title);
         free_item(it);
     }
     free(c);
