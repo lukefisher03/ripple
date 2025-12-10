@@ -3,8 +3,13 @@
 
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #define ARENA_DEFAULT_SIZE 4096 // Default arena size is 4KB
+
+/* In low memory environments (ie. embedded systems) it may be
+   beneficial to align every allocation based on its type rather
+   than applying the maximum alignment on the system. */
 #define DEFAULT_ALIGNMENT _Alignof(max_align_t)
 
 struct arena {
