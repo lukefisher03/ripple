@@ -1,0 +1,59 @@
+#include "ui_utils.h"
+#include "../termbox2/termbox2.h"
+
+int display_menu(int y, 
+                 const void *options, 
+                 size_t option_size,
+                 int option_count, 
+                 int (*render_selection)(int, int, bool, const void *)
+) 
+{
+    // Display a menu and then return the selected option
+    int cursor = 0;
+    int screen_height = tb_height();
+    int new_y = y;
+
+    int option_height = 1;
+    int num_displayed = screen_height / option_height;
+    int offset = 0;
+
+    while (1) {
+        struct tb_event ev;
+        for (int i = 0 + offset; i < option_count && i < num_displayed + offset; i++) {
+            // Convert void pointer to char * so we can do pointer arithmetic.
+            // add the index multiplied by the size to increment the pointer.
+            void *option = (char *)options + (i * option_size);
+
+            option_height = render_selection(0, new_y, i == cursor, option);
+            new_y += option_height;
+            num_displayed = (screen_height / option_height) - 2;
+        }
+
+        tb_present();
+        tb_poll_event(&ev);
+        switch (ev.key) {
+            case TB_KEY_ENTER:
+                return cursor;
+            case TB_KEY_ARROW_UP:
+                if (cursor > 0) {
+                    cursor--;
+                    if (cursor < offset) {
+                        offset--;
+                    }
+                }
+                break;
+                case TB_KEY_ARROW_DOWN:
+                if (cursor < option_count - 1) {
+                    cursor++;
+                    if (cursor >= num_displayed + offset ) {
+                        offset++;
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        new_y = y;
+
+    }
+}

@@ -1,9 +1,10 @@
 #ifndef TB_UI_H
 #define TB_UI_H
 
-#include <stdbool.h>
 #include "../termbox2/termbox2.h"
 #include "../parser/xml_rss.h"
+
+#include <stdbool.h>
 
 typedef struct channel_column_widths {
     size_t  title_width;
@@ -21,7 +22,7 @@ typedef enum MAIN_MENU_OPTIONS {
 typedef struct Page {
     void (*render)(void);
     struct {
-        // No state for now.
+        // No state for now. Could be implemented later on
     } state;
 } Page;
 

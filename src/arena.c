@@ -1,9 +1,10 @@
+#include "arena.h"
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 
-#include "arena.h"
 
 bool is_power_of_two(uintptr_t x) {
     return (x & (x-1)) == 0;
