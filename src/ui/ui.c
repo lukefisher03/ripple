@@ -1,6 +1,12 @@
+
+// Prevent redefinitions by putting this before
+// the definition of TB_IMPL
+#include "ui_utils.h" 
+
 #define TB_IMPL
 
-#include "ui_utils.h"
+// Now after TB_IMPL is defined, the definitions will be included here.
+#include "../termbox2/termbox2.h"
 #include "ui.h"
 #include "../arena.h"
 
@@ -21,7 +27,6 @@ static int COL_GAP = 2;
 static int main_menu(void);
 static void feed_reader(Channel **channel_list);
 
-static int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text);
 static int display_logo(int x, int y, uintattr_t fg, uintattr_t bg);
 static int render_main_menu_selection(int x, int y, bool selected, const void *);
 static int render_feed_article_selections(int x, int y, bool selected, const void *);
@@ -94,14 +99,6 @@ static void feed_reader(Channel **channel_list) {
     tb_present();
     tb_poll_event(&ev);
     arena_free(&arena);
-}
-
-
-static int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text) {
-    size_t text_len = strlen(text);
-    int mid = tb_width() / 2;
-    int v = tb_printf((mid - text_len / 2), y, fg, bg, text);
-    return v;
 }
 
 static int render_main_menu_selection(int x, int y, bool selected, const void *txt) {

@@ -1,5 +1,4 @@
 #include "ui_utils.h"
-#include "../termbox2/termbox2.h"
 
 int display_menu(int y, 
                  const void *options, 
@@ -56,4 +55,11 @@ int display_menu(int y,
         new_y = y;
 
     }
+}
+
+int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text) {
+    size_t text_len = strlen(text);
+    int mid = tb_width() / 2;
+    int v = tb_printf((mid - text_len / 2), y, fg, bg, text);
+    return v;
 }
