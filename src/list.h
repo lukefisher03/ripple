@@ -4,24 +4,24 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-struct list {
+typedef struct List {
     size_t capacity;
     size_t count;
     void **elements;
-};
+} List;
 
-struct list *list_init(void);
+List *list_init(void);
 
-bool list_append(struct list *stk, void *item);
+bool list_append(List *stk, void *item);
 
-bool list_is_empty(const struct list *stk);
+bool list_is_empty(const List *stk);
 
-void *list_pop(struct list *stk);
+void *list_pop(List *stk);
 
-void *list_peek(const struct list *stk);
+void *list_peek(const List *stk);
 
-void list_clear(struct list *stk);
+void list_clear(List *stk);
 
-void list_free(struct list *stk);
+void list_free(List *stk);
 
 #endif

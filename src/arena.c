@@ -9,7 +9,7 @@ bool is_power_of_two(uintptr_t x) {
     return (x & (x-1)) == 0;
 }
 
-void *arena_allocate_align(struct arena *arena, size_t size, uintptr_t align) {
+void *arena_allocate_align(Arena *arena, size_t size, uintptr_t align) {
     assert(arena);
     assert(is_power_of_two(align));
 
@@ -26,11 +26,11 @@ void *arena_allocate_align(struct arena *arena, size_t size, uintptr_t align) {
     return p;
 }
 
-void *arena_allocate(struct arena *arena, size_t size) {
+void *arena_allocate(Arena *arena, size_t size) {
     return arena_allocate_align(arena, size, DEFAULT_ALIGNMENT);
 }
 
-bool _arena_init(struct arena *arena, size_t default_size, bool clear_block) {
+bool _arena_init(Arena *arena, size_t default_size, bool clear_block) {
     if (clear_block) {
         arena->block = calloc(default_size, 1); // Memory is zeroed initially
     } else {
@@ -43,24 +43,24 @@ bool _arena_init(struct arena *arena, size_t default_size, bool clear_block) {
     return true;
 }
 
-bool arena_init(struct arena *arena, size_t default_size) {
+bool arena_init(Arena *arena, size_t default_size) {
     return _arena_init(arena, default_size, true);
 }
 
-bool arena_init_fast(struct arena *arena, size_t default_size) {
+bool arena_init_fast(Arena *arena, size_t default_size) {
     return _arena_init(arena, default_size, false);
 }
 
-void arena_reset_fast(struct arena *arena) {
+void arena_reset_fast(Arena *arena) {
     arena->fill_level = 0;
 }
 
-void arena_reset(struct arena *arena) {
+void arena_reset(Arena *arena) {
     arena_reset_fast(arena);
     memset(arena->block, 0, arena->capacity);
 }
 
-void arena_free(struct arena *arena) {
+void arena_free(Arena *arena) {
     free(arena->block);
     arena->block = NULL;
     arena->capacity = 0;
@@ -68,7 +68,7 @@ void arena_free(struct arena *arena) {
 }
 
 // int main() {
-//     struct arena a;
+//     Arena a;
 //     arena_init(&a, 50);
 
 //     int *x = arena_allocate(&a, sizeof(*x));

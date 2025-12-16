@@ -7,27 +7,27 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "arena.h"
+#include "../arena.h"
 
 // ------ Globals ------ //
 
 static int MIN_WIDTH = 100;
-static struct channel_column_widths COL_WIDTHS;
+static channel_column_widths COL_WIDTHS;
 static int COL_GAP = 2;
 
 // ------ Forward declarations ------ //
 static int main_menu(void);
-static void feed_reader(struct channel **channel_list);
+static void feed_reader(Channel **channel_list);
 
 static int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text);
 static int display_menu(int y, const void *options, size_t option_size, int option_count, int (*render_selection)(int, int, bool, const void *));
 static int display_logo(int x, int y, uintattr_t fg, uintattr_t bg);
 static int render_main_menu_selection(int x, int y, bool selected, const void *);
 static int render_feed_article_selections(int x, int y, bool selected, const void *);
-static void set_feed_column_widths(struct channel_column_widths *widths);
+static void set_feed_column_widths(channel_column_widths *widths);
 
 // ------ Main UI Call ------ //
-void ui_start(struct channel **channel_list, const size_t channel_count) {
+void ui_start(Channel **channel_list, const size_t channel_count) {
     tb_init();
     int y = 5;
 
@@ -74,9 +74,9 @@ static int main_menu(void) {
     return ret;
 }
 
-static void feed_reader(struct channel **channel_list) {
-    struct channel *c = channel_list[0];
-    struct arena arena;
+static void feed_reader(Channel **channel_list) {
+    Channel *c = channel_list[0];
+    Arena arena;
     struct tb_event ev;
     int width = tb_width();
     arena_init(&arena, 4096);
@@ -89,7 +89,7 @@ static void feed_reader(struct channel **channel_list) {
     }
     tb_printf(0, y++, TB_GREEN, 0, "Feed Reader");
     tb_printf(0, y++, TB_GREEN, 0, divider);
-    display_menu(y, c->items->elements, sizeof(struct item *), c->items->count, &render_feed_article_selections);
+    display_menu(y, c->items->elements, sizeof(Item *), c->items->count, &render_feed_article_selections);
     tb_present();
     tb_poll_event(&ev);
     arena_free(&arena);
@@ -197,8 +197,8 @@ static void write_column(char *dest, char *src, size_t max_width) {
 }
 
 static int render_feed_article_selections(int x, int y, bool selected, const void *it) {
-    struct item *item = *(struct item**)it;
-    struct arena arena;
+    Item *item = *(Item**)it;
+    Arena arena;
     int width = tb_width() > MIN_WIDTH ? tb_width() : MIN_WIDTH;
     int new_y = y;
 
@@ -245,7 +245,7 @@ static int display_logo(int x, int y, uintattr_t fg, uintattr_t bg) {
     return new_y - y;
 }
 
-static void set_feed_column_widths(struct channel_column_widths *widths) {
+static void set_feed_column_widths(channel_column_widths *widths) {
     int width = tb_width() > MIN_WIDTH ? tb_width() : MIN_WIDTH;
 
     widths->title_width = (int)(0.6 * width);

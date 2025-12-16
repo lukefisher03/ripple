@@ -14,29 +14,29 @@ enum TAG_TYPE {
     TAG_SELF_CLOSE,
 };
 
-struct tag {
+typedef struct Tag {
     char            *name;
     enum TAG_TYPE   tag_type;
     size_t          total_length;
-};
+} Tag;
 
-struct item {
+typedef struct Item {
     char    *title;
     char    *author;
     char    *pub_date;
     char    *description;
     char    *link;
     char    *guid;
-};
+} Item;
 
-struct channel {
+typedef struct Channel {
     char            *title;
     char            *description;
     char            *link;
     char            *last_build_date;
     char            *language;
-    struct list     *items; // List of items
-};
+    List     *items; // List of items
+} Channel;
 
 enum CONTAINER_TYPE {
     CHANNEL,
@@ -44,23 +44,23 @@ enum CONTAINER_TYPE {
     // IMG, // Not going to worry about this for now. TODO: Add image support
 };
 
-struct container {
+typedef struct Container {
     enum CONTAINER_TYPE     type;
     union {
-        struct item     *item;
-        struct channel  *channel;
+        Item     *item;
+        Channel  *channel;
     };
-};
+} Container;
 
-struct node *construct_parse_tree(const char *xml, size_t length);
+Node *construct_parse_tree(const char *xml, size_t length);
 
-void print_parse_tree(const struct node *root, int depth);
+void print_parse_tree(const Node *root, int depth);
 
-bool build_channel(struct channel *chan, struct node *parse_tree);
+bool build_channel(Channel *chan, Node *parse_tree);
 
-struct channel *channel_init(void);
-struct item *item_init(void);
+Channel *channel_init(void);
+Item *item_init(void);
 
-void free_channel(struct channel *c);
-void free_item(struct item *it);
+void free_channel(Channel *c);
+void free_item(Item *it);
 #endif
