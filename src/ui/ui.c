@@ -3,6 +3,8 @@
 // the definition of TB_IMPL
 #include "ui.h"
 #include "ui_utils.h" 
+
+// Include all pages
 #include "pages/main_page.h"
 #include "pages/feeds_page.h"
 
