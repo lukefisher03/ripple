@@ -57,9 +57,23 @@ int display_menu(int y,
     }
 }
 
+
 int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text) {
     size_t text_len = strlen(text);
     int mid = tb_width() / 2;
     int v = tb_printf((mid - text_len / 2), y, fg, bg, text);
     return v;
+}
+
+
+int display_logo(int x, int y, uintattr_t fg, uintattr_t bg) {
+    int new_y = y;
+
+    tb_printf(x, new_y++, fg, bg, "    ___  _           __    "); 
+    tb_printf(x, new_y++, fg, bg, "   / _ \\(_)__  ___  / /__  ");
+    tb_printf(x, new_y++, fg, bg, "  / , _/ / _ \\/ _ \\/ / -_) ");
+    tb_printf(x, new_y++, fg, bg, " /_/|_/_/ .__/ .__/_/\\__/  ");
+    tb_printf(x, new_y++, fg, bg, "       /_/  /_/            ");
+
+    return new_y - y;
 }

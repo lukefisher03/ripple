@@ -5,12 +5,6 @@
 
 #include <stdbool.h>
 
-typedef struct channel_column_widths {
-    size_t  title_width;
-    size_t  author_width;
-    size_t  pub_date_width;
-} channel_column_widths;
-
 typedef enum MAIN_MENU_OPTIONS {
     OPTION_FEEDS,
     OPTION_PREFERENCES,

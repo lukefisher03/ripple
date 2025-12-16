@@ -15,6 +15,6 @@ int display_menu(int y,
                        );
 
 int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text);
-
+int display_logo(int x, int y, uintattr_t fg, uintattr_t bg);
 
 #endif
