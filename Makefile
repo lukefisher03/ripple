@@ -15,6 +15,7 @@ CFLAGS := $(shell pkg-config --cflags readline)
 LDFLAGS := $(shell pkg-config --libs readline)
 
 main: src/main.c \
+	  src/logger.c src/logger.h \
 	  src/utils.c \
 	  src/utils.h \
 	  src/list.h src/list.c \
@@ -24,7 +25,7 @@ main: src/main.c \
 	  ${PARSER}/node.h ${PARSER}/node.c \
 	  src/arena.h src/arena.c
 
-	${CLANG} ${CFLAGS} ${LDFLAGS} -o main src/main.c src/utils.c ${PARSER}/*.c src/list.c src/ui/*.c src/ui/pages/*.c src/arena.c
+	${CLANG} ${CFLAGS} ${LDFLAGS} -o main src/main.c src/logger.c src/utils.c ${PARSER}/*.c src/list.c src/ui/*.c src/ui/pages/*.c src/arena.c
 
 run_main: main
 	./main

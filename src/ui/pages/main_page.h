@@ -5,7 +5,10 @@
 
 #include <stdbool.h>
 
-int main_menu(void);
+// Forward declare app_state struct
+typedef struct app_state app_state;
+
+void main_menu(app_state *app);
 static int render_main_menu_selection(int x, int y, bool selected, const void *txt);
 
 #endif

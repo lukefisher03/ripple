@@ -3,10 +3,7 @@
 // the definition of TB_IMPL
 #include "ui.h"
 #include "ui_utils.h" 
-
-// Include all pages
-#include "pages/main_page.h"
-#include "pages/feeds_page.h"
+#include "../list.h"
 
 #define TB_IMPL
 
@@ -20,31 +17,39 @@
 #include <stdio.h>
 #include <string.h>
 
+static page_renderer page_table[PAGE_COUNT] = {
+    [MAIN_PAGE] = main_menu,
+    [FEEDS_PAGE] = feed_reader,
+};
+
 // ------ Main UI Call ------ //
-void ui_start(Channel **channel_list, const size_t channel_count) {
+void ui_start() {
+    // Initialize the global app state
+    app_state app = {0};
+    app_init(&app);
+
     tb_init();
     int y = 5;
-
-    // Calculate how wide the feed columns need to be
-    set_feed_column_widths();
-    // Display the main menu
-    int selection = main_menu();
-
-    // Select Menu Option
-    switch (selection) {
-        case OPTION_FEEDS:
-            feed_reader(channel_list);
-            break;
-        case OPTION_PREFERENCES:
-            break;
-        case OPTION_FEEDBACK:
-            break;
-        case OPTION_EXIT:
-            break;
-        default:
-            fprintf(stderr, "INVALID MAIN MENU SELECTION!\n");
-            break;
-    }
-
+    push_page(MAIN_PAGE, &app);
     tb_shutdown();
+}
+
+void app_init(app_state *app) {
+    app->channel_list = NULL; 
+    app->channel_count = 0;
+    app->page_stack = NULL;
+}
+
+void app_destroy(app_state *app) {
+    free(app->channel_list);
+}
+
+void push_page(page_type page_id, app_state *app) {
+    // A page that is pushed, gets immediately rendered.
+    page_table[page_id](app);
+}
+
+void pop_page(app_state *app) {
+    // unimplemented for now.
+    return;
 }

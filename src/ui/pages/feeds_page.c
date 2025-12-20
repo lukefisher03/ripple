@@ -1,30 +1,50 @@
 #include "feeds_page.h"
+#include "../../arena.h"
 #include "../ui_utils.h"
+#include "../ui.h"
+#include "../../utils.h"
 
 static int COL_GAP = 2;
 static int MIN_WIDTH = 100;
 static channel_column_widths COL_WIDTHS;
 
 static int render_feed_article_selections(int x, int y, bool selected, const void *it);
+static char *files[] = {
+    "test/smart_less.xml",
+    "test/stack_overflow.xml",
+};
 
-void feed_reader(Channel **channel_list) {
-    Channel *c = channel_list[0];
-    Arena arena;
+void feed_reader(app_state *app){
+    app->channel_list = load_channels(files, 2);
+    app->channel_count = 2;
+
+    generic_list *item_list = list_init();
+    
+    // Combine all the channel's various articles
+    for (size_t i = 0; i < app->channel_count; i++) {
+        for (size_t j = 0; j < app->channel_list[i]->items->count; j++) {
+            rss_item *it = app->channel_list[i]->items->elements[j];
+            list_append(item_list, it);
+        }
+    }
+
+    mem_arena arena;
     struct tb_event ev;
     int width = tb_width();
+
     arena_init(&arena, 4096);
 
+    set_feed_column_widths();
     tb_clear();
-    int y = 5;
+    int y = 1;
     char *divider = arena_allocate(&arena, tb_width());
     for (size_t i = 0; i < width; i++) {
         divider[i] = '-';
     }
     tb_printf(0, y++, TB_GREEN, 0, "Feed Reader");
     tb_printf(0, y++, TB_GREEN, 0, divider);
-    display_menu(y, c->items->elements, sizeof(Item *), c->items->count, &render_feed_article_selections);
-    tb_present();
-    tb_poll_event(&ev);
+    display_menu(y, item_list->elements, sizeof(rss_item *), item_list->count, &render_feed_article_selections);
+    push_page(MAIN_PAGE, app);
     arena_free(&arena);
 }
 
@@ -44,8 +64,9 @@ static void write_column(char *dest, char *src, size_t max_width) {
 }
 
 static int render_feed_article_selections(int x, int y, bool selected, const void *it) {
-    Item *item = *(Item**)it;
-    Arena arena;
+    rss_item *item = *(rss_item**)it;
+    
+    mem_arena arena;
     int width = tb_width() > MIN_WIDTH ? tb_width() : MIN_WIDTH;
     int new_y = y;
 
@@ -64,7 +85,7 @@ static int render_feed_article_selections(int x, int y, bool selected, const voi
     offset += COL_WIDTHS.title_width;
     write_column(str + offset, item->author, COL_WIDTHS.author_width);
     offset += COL_WIDTHS.author_width;
-    write_column(str + offset, item->pub_date, COL_WIDTHS.pub_date_width);
+    write_column(str + offset, item->pub_date_string, COL_WIDTHS.pub_date_width);
 
     memset(str + width, '\0', 1);
 

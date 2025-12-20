@@ -3,31 +3,31 @@
 
 #include "../list.h"
 
-typedef enum NODE_TYPE {
+typedef enum node_type {
     ROOT_NODE,
     XML_NODE,
     TEXT_NODE,
     DUMMY,
-} NODE_TYPE;
+} node_type;
 
-typedef struct XMLNode {
-    struct List         *children;      // Children are strictly other nodes
+typedef struct xml_rss_node {
+    struct generic_list         *children;      // Children are strictly other nodes
     char                *name;          // Name of the element.
-} XMLNode;
+} xml_rss_node;
 
-typedef struct Node {
-    enum NODE_TYPE type;
+typedef struct rss_node {
+    enum node_type type;
     union {
-        struct XMLNode     xml;
+        struct xml_rss_node     xml;
         char                *text; // Text nodes just hold text
     };
-} Node;
+} rss_node;
 
-Node *xml_node_init(void);
-Node *text_node_init(void);
-Node *dummy_node_init(void);
+rss_node *xml_node_init(void);
+rss_node *text_node_init(void);
+rss_node *dummy_node_init(void);
 
-void free_node(Node *node);
-void free_tree(Node *node);
+void free_node(rss_node *node);
+void free_tree(rss_node *node);
 
 #endif

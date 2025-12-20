@@ -1,16 +1,24 @@
 #ifndef TB_UI_H
 #define TB_UI_H
 
-#include "../parser/xml_rss.h"
+// Include all pages
+#include "pages/main_page.h"
+#include "pages/feeds_page.h"
 
 #include <stdbool.h>
 
-typedef enum MAIN_MENU_OPTIONS {
-    OPTION_FEEDS,
-    OPTION_PREFERENCES,
-    OPTION_FEEDBACK,
-    OPTION_EXIT,
-} MAIN_MENU_OPTIONS;
+typedef enum page_type {
+    MAIN_PAGE,
+    FEEDS_PAGE,
+    PREFERENCES_PAGE,
+    ARTICLE_PAGE,
+} page_type;
+
+
+#define PAGE_COUNT 10
+typedef void (*page_renderer)(app_state *);
+
+
 
 /**
  * Breakdown of the UI structure
@@ -24,13 +32,32 @@ typedef enum MAIN_MENU_OPTIONS {
  *
  */
 
-typedef struct Page {
-    void (*render)(void);
-    struct {
-        // No state for now. Could be implemented later on
-    } state;
-} Page;
+typedef struct app_configuration {
+    // Store global state stuff in here
+} app_configuration;
 
-void ui_start(struct Channel **channel_list, size_t channel_count);
+typedef struct ui_page {
+    // Per page state
+    union {
+        feeds_page_state    *feed_state;
+    };
+    generic_list            *page_stack;
+    page_type               page_type;
+    
+    void (*render)(void);
+} ui_page;
+
+typedef struct app_state {
+    generic_list        *page_stack;
+    rss_channel         **channel_list;
+    size_t              channel_count;
+    app_configuration   config;
+} app_state;
+
+void app_init(app_state *app);
+void app_destroy(app_state *app);
+void ui_start();
+void push_page(page_type page_id, app_state *app);
+void pop_page(app_state *app);
 
 #endif

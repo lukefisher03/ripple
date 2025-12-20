@@ -1,23 +1,36 @@
 #include "main_page.h"
 #include "../ui_utils.h"
+#include "../ui.h"
 
-int main_menu(void) {
+static const char *main_menu_options[] = {
+    "Feeds",
+    "Preferences",
+    "Feedback",
+    "Exit",
+};
+
+
+void main_menu(app_state *app) {
+    (void) app;
+
     tb_clear();
     int y = 5;
     y += display_logo((tb_width() / 2) - 14, y, TB_WHITE, TB_BLACK);
     y += 2;
-    const char *options[] = {
-        "Feeds",
-        "Preferences",
-        "Feedback",
-        "Exit",
-    };
-
+    
     write_centered(y + 8, TB_GREEN, 0, "Made by Luke Fisher");
 
-    int ret = display_menu(y, options, sizeof(char *), 4, &render_main_menu_selection);
-    tb_present();
-    return ret;
+    int ret = display_menu(y, main_menu_options, sizeof(char *), 4, &render_main_menu_selection);
+
+    // Switch to transition to the other pages
+    switch (ret)
+    {
+    case 0:
+        push_page(FEEDS_PAGE, app);
+        break;
+    default:
+        break;
+    }
 }
 
 

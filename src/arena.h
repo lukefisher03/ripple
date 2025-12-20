@@ -12,26 +12,26 @@
    than applying the maximum alignment on the system. */
 #define DEFAULT_ALIGNMENT _Alignof(max_align_t)
 
-typedef struct Arena {
+typedef struct mem_arena {
     size_t  capacity;
     size_t  fill_level;
     char    *block;
-} Arena;
+} mem_arena;
 
 /* Advance the `fill_level` pointer in the block. Performs memory alignment */
-void *arena_allocate(Arena *arena, size_t size);
+void *arena_allocate(mem_arena *arena, size_t size);
 
 /* Initialize our allocator */
-bool arena_init(Arena *arena, size_t default_size);
+bool arena_init(mem_arena *arena, size_t default_size);
 /* Same as above except called with malloc instead of calloc */
-bool arena_init_fast(Arena *arena, size_t default_size);
+bool arena_init_fast(mem_arena *arena, size_t default_size);
 
 /* Reset the fill_level pointer and zero the block so the arena can be reused */
-void arena_reset(Arena *arena);
+void arena_reset(mem_arena *arena);
 /* Same as above except the block is not zeroed*/
-void arena_reset_fast(Arena *arena);
+void arena_reset_fast(mem_arena *arena);
 
 /* Free the block of memory, the arena itself is not freed */
-void arena_free(Arena *arena);
+void arena_free(mem_arena *arena);
 
 #endif

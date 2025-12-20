@@ -4,8 +4,8 @@
 #include <string.h>
 
 // -------- Initializers -------- //
-Node *xml_node_init(void) {
-    Node *new_node = calloc(1, sizeof(*new_node));
+rss_node *xml_node_init(void) {
+    rss_node *new_node = calloc(1, sizeof(*new_node));
     if (!new_node) {
         return NULL;
     }
@@ -15,8 +15,8 @@ Node *xml_node_init(void) {
     return new_node;
 }
 
-Node *text_node_init(void) {
-    Node *new_node = calloc(1, sizeof(*new_node));
+rss_node *text_node_init(void) {
+    rss_node *new_node = calloc(1, sizeof(*new_node));
     if (!new_node) {
         return NULL;
     }
@@ -25,8 +25,8 @@ Node *text_node_init(void) {
     return new_node;
 }
 
-Node *dummy_node_init(void) {
-    Node *new_node = calloc(1, sizeof(*new_node));
+rss_node *dummy_node_init(void) {
+    rss_node *new_node = calloc(1, sizeof(*new_node));
     if (!new_node) {
         return NULL;
     }
@@ -37,18 +37,18 @@ Node *dummy_node_init(void) {
 
 // -------- Cleanup -------- //
 
-static void free_text_node(Node *node) {
+static void free_text_node(rss_node *node) {
     free(node->text);
     free(node);
 }
 
-static void free_xml_node(Node *node) {
+static void free_xml_node(rss_node *node) {
     free(node->xml.name);
     list_free(node->xml.children);
     free(node);
 }
 
-void free_node(Node *node) {
+void free_node(rss_node *node) {
     switch (node->type) {
     case XML_NODE:
         free_xml_node(node);
@@ -63,7 +63,7 @@ void free_node(Node *node) {
 }
 
 // TODO: Convert to iterative to avoid stack overflow
-void free_tree(Node *node) {
+void free_tree(rss_node *node) {
     // Free an entire tree of nodes. The tree must ONLY contain
     // nodes defined in this file.
     if (!node) {
