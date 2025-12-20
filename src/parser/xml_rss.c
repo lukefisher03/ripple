@@ -66,11 +66,31 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
         new_node->text = strndup(str + offset, i - offset);
 
     } else {
-        
         for (; i < length && str[i] != '<'; i++); 
-        // Do entity replacements such as &amp; or &lt; 
         new_node->text = strndup(str + offset, i - offset);
         total_length = i;
+        
+        for (size_t j = 0; j < total_length; j++) {
+            // Convert all non-ascii characters to spaces.
+            if ((unsigned char)new_node->text[j] >= 0x80) {
+                new_node->text[j] = ' ';    
+            }
+
+            /**
+             * TODO: Write input sanitization
+             * 
+             * - Will need to drop non-ASCII characters.
+             * - Do replacements for characters entities (eg. &lt; or &quot;)
+             */
+
+            // if (new_node->text[j] == '&') {
+            //     size_t start = j;
+            //     size_t length = 0;
+            //     while (j < total_length && new_node->text[j] != ';') {
+            //         length++;
+            //     }
+            // }
+        }
     }
 
     new_node->type = TEXT_NODE;

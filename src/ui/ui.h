@@ -18,8 +18,6 @@ typedef enum page_type {
 #define PAGE_COUNT 10
 typedef void (*page_renderer)(app_state *);
 
-
-
 /**
  * Breakdown of the UI structure
  * 

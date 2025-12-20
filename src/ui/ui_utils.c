@@ -1,10 +1,12 @@
 #include "ui_utils.h"
 
+typedef int (*option_renderer)(int, int, bool, const void *);
+
 int display_menu(int y, 
                  const void *options, 
                  size_t option_size,
                  int option_count, 
-                 int (*render_selection)(int, int, bool, const void *)
+                 option_renderer render_selection 
 ) 
 {
     // Display a menu and then return the selected option
@@ -13,19 +15,21 @@ int display_menu(int y,
     int new_y = y;
 
     int option_height = 1;
-    int num_displayed = screen_height / option_height;
+    int window = screen_height / option_height;
     int offset = 0;
 
     while (1) {
         struct tb_event ev;
-        for (int i = 0 + offset; i < option_count && i < num_displayed + offset; i++) {
+        tb_clear();
+        for (int i = offset; i < option_count && i < offset + window; i++) {
             // Convert void pointer to char * so we can do pointer arithmetic.
             // add the index multiplied by the size to increment the pointer.
             void *option = (char *)options + (i * option_size);
 
             option_height = render_selection(0, new_y, i == cursor, option);
+
             new_y += option_height;
-            num_displayed = (screen_height / option_height) - 2;
+            window = (screen_height / option_height) - 2;
         }
 
         tb_present();
@@ -41,10 +45,10 @@ int display_menu(int y,
                     }
                 }
                 break;
-                case TB_KEY_ARROW_DOWN:
+            case TB_KEY_ARROW_DOWN:
                 if (cursor < option_count - 1) {
                     cursor++;
-                    if (cursor >= num_displayed + offset ) {
+                    if (cursor >= offset + window ) {
                         offset++;
                     }
                 }
