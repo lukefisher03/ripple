@@ -1,5 +1,6 @@
 #include "xml_rss.h"
 #include "../utils.h"
+#include "../logger.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -12,12 +13,12 @@
 
 static inline bool is_termination_char(char c);
 static char *get_spacer(int width);
-struct container *container_init(enum CONTAINER_TYPE t);
-void free_container(struct container *c);
+rss_container *container_init(enum container_type t);
+void free_container(rss_container *c);
 
 // ======== Build parse tree ======== //
 
-bool read_tag(const char *str, size_t length, struct tag *t) {
+bool read_tag(const char *str, size_t length, Tag *t) {
     // Given a string starting with `<`, extract the tag name and
     // return the length of the tag.
 
@@ -47,7 +48,7 @@ bool read_tag(const char *str, size_t length, struct tag *t) {
     return true;
 }
 
-ssize_t accumulate_text(const char *str, size_t length, struct node *new_node) {
+ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     // Create a text node containing all the contents until a closing tag is 
     // reached. 
     if (!new_node) {
@@ -55,22 +56,36 @@ ssize_t accumulate_text(const char *str, size_t length, struct node *new_node) {
         return TRSS_ERR;
     }
 
-    ssize_t i = 1;
-    size_t offset = 0;
+    ssize_t i = 0;
     size_t total_length = 0;
+    // Detect the terminating part of the content
+    const char *end_str = "<";
     if (sstartswith("<![CDATA[", str, length)) {
-        for (; i < length && !sstartswith("]]>", str + i, length - i); i++);
-        total_length = i+3;
-        offset = 9;
-    } else {
-        for (; i < length && str[i] != '<'; i++); 
-        total_length = i;
+        i += 9;
+        end_str = "]]>";
+        total_length += 3;
     }
 
+    // Get the total length of the string
+    size_t j = i;
+    for (; j < length && !sstartswith(end_str, str+j, length - j); j++);
+
+    size_t content_length = 0;
+    total_length += j;
+    content_length = j - i;
+    
+    new_node->text = malloc(content_length + 1);
+    size_t len = 0;
+    const char *s = str + i;
+    for (size_t k = 0; k < content_length; k++) {
+        if ((unsigned char)s[k] < 0x80) {
+           new_node->text[len++] = s[k]; 
+        }
+    }
+    new_node->text[len] = '\0';
+
+    log_debug("Accumulated string: %s", new_node->text);
     new_node->type = TEXT_NODE;
-    // The offset ensures we don't copy `<![CDATA[` or `]]>` into the
-    // string buffer.
-    new_node->text = strndup(str + offset, i - offset);
     return total_length;
 }
 
@@ -87,11 +102,11 @@ ssize_t skip_comment(const char *str, size_t length) {
     return i + 4;
 }
 
-struct node *construct_parse_tree(const char *xml, size_t length) {
+rss_node *construct_parse_tree(const char *xml, size_t length) {
     // Given a string of RSS XML construct a parse tree.
 
-    struct node *root = xml_node_init();
-    struct list *stack = list_init();
+    rss_node *root = xml_node_init();
+    generic_list *stack = list_init();
     list_append(stack, root);
 
     size_t i = 0;
@@ -105,19 +120,19 @@ struct node *construct_parse_tree(const char *xml, size_t length) {
         size_t l = length - i;
         
         if (sstartswith("<", s, l) && !sstartswith("<!", s, l) && !sstartswith("<?", s, l)) {
-            struct tag new_tag;
+            Tag new_tag;
             if (read_tag(s, l, &new_tag)) { 
                 if (new_tag.tag_type == TAG_OPEN) {
-                    struct node *top = list_peek(stack); 
+                    rss_node *top = list_peek(stack); 
 
-                    struct node *node = xml_node_init(); 
+                    rss_node *node = xml_node_init(); 
                     node->xml.name = strndup(new_tag.name, strlen(new_tag.name));
                     free(new_tag.name);
                     list_append(top->xml.children, node);
                     list_append(stack, node);
 
                 } else if (new_tag.tag_type == TAG_CLOSE) {
-                    struct node *v = list_pop(stack);
+                    rss_node *v = list_pop(stack);
                 }
 
                 i += new_tag.total_length;
@@ -127,20 +142,20 @@ struct node *construct_parse_tree(const char *xml, size_t length) {
             if (comment_length != TRSS_ERR) {
                 i += comment_length;
             } else {
-                fprintf(stderr, "Error skipping comment...\n");
+                // fprintf(stderr, "Error skipping comment...\n");
             }
         }else {
-            struct node *t_node = text_node_init();
+            rss_node *t_node = text_node_init();
             ssize_t text_length = accumulate_text(s, l, t_node);
 
             if (text_length < 1) {
-                fprintf(stderr, "Error processing text node!\n");
+                // fprintf(stderr, "Error processing text node!\n");
                 i++;
                 continue;
             } 
 
             i += text_length;
-            struct node *top = list_peek(stack);
+            rss_node *top = list_peek(stack);
             list_append(top->xml.children, t_node);
         }
     }
@@ -150,7 +165,7 @@ struct node *construct_parse_tree(const char *xml, size_t length) {
     return root;
 }
 
-void print_parse_tree(const struct node *root, int depth) {
+void print_parse_tree(const rss_node *root, int depth) {
     // Recursive function for printing out an indented version of a
     // parse tree 
 
@@ -185,35 +200,43 @@ void print_parse_tree(const struct node *root, int depth) {
 
 // ======== Build channels ======== //
 
-int process_node(struct container *c, const struct node *n) {
+int process_node(rss_container *c, const rss_node *n) {
     // This function only expects XML nodes, not text or dummy nodes
     if (n->type != XML_NODE) return TRSS_ERR;
     if (!n->xml.children->count) return TRSS_ERR;
 
-    struct node *text_node = (struct node *)(n->xml.children->elements[0]);
+    rss_node *text_node = (rss_node *)(n->xml.children->elements[0]);
     if (text_node->type != TEXT_NODE) return TRSS_ERR; 
 
     const char *node_name = n->xml.name;
     if (c->type == ITEM) {
-        struct item *item = c->item;
+        rss_item *item = c->item;
         // Remember that two strings are equal if strcmp(s1, s2) == 0
         if (!strcmp(node_name, "guid")) { 
-           item->guid = strdup(text_node->text);
+            item->guid = strdup(text_node->text);
         } else if (!strcmp(node_name, "title")) {
-           item->title = strdup(text_node->text);
+            item->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "author")) {
-           item->author = strdup(text_node->text);
+            item->author = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
-           item->link = strdup(text_node->text);
+            item->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "pubDate")) {
-           item->pub_date = strdup(text_node->text);
+            item->pub_date_rfc822 = strdup(text_node->text);
+            struct tm tm = {0};
+            if (rfc_822_to_tm(item->pub_date_rfc822, &tm)) {
+                strftime(item->pub_date_string, MAX_RSS_ITEM_DATE_LEN, "%a, %D", &tm);
+                item->pub_date_unix = timegm(&tm);
+            } else {
+                log_debug("Could not parse publish date string: %s, skipping", item->pub_date_rfc822);
+            }
+            
         } else if (!strcmp(node_name, "description")) {
-           item->description = strdup(text_node->text);
+            item->description = strdup(text_node->text);
         } else {
             // printf("No place for %s in container type %i\n", node_name, c->type);
         }
     } else if (c->type == CHANNEL) {
-        struct channel *channel = c->channel;
+        rss_channel *channel = c->channel;
         if (!strcmp(node_name, "title")) {
            channel->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "lastBuildDate")) {
@@ -235,16 +258,16 @@ int process_node(struct container *c, const struct node *n) {
     return TRSS_OK;
 }
 
-bool build_channel(struct channel *chan, struct node *root_node) {
+bool build_channel(rss_channel *chan, rss_node *root_node) {
     // Perform iterative DFS to build a channel from a parse tree
 
-    struct list *container_stack = list_init();
+    generic_list *container_stack = list_init();
     
-    struct list *dfs_stack = list_init();
+    generic_list *dfs_stack = list_init();
     list_append(dfs_stack, root_node); 
 
     while (!list_is_empty(dfs_stack)) {
-        struct node *node = list_pop(dfs_stack);
+        rss_node *node = list_pop(dfs_stack);
 
         switch (node->type) {
             case ROOT_NODE:
@@ -259,8 +282,9 @@ bool build_channel(struct channel *chan, struct node *root_node) {
                 break;
             case XML_NODE:
                 if (!strcmp(node->xml.name,"item")) {
-                    struct container *new_item = container_init(ITEM);
-                    struct container *parent = list_peek(container_stack);
+                    rss_container *new_item = container_init(ITEM);
+                    new_item->item->channel = chan;
+                    rss_container *parent = list_peek(container_stack);
                     list_append(chan->items, new_item->item);
                     list_append(container_stack, new_item);
 
@@ -275,31 +299,28 @@ bool build_channel(struct channel *chan, struct node *root_node) {
                     }
                 } else if (!strcmp(node->xml.name, "channel")) {
                     // Create new container holding the channel
-                    struct container *root_container = malloc(sizeof(*root_container));
+                    rss_container *root_container = malloc(sizeof(*root_container));
                     root_container->type = CHANNEL;
                     root_container->channel = chan;
                     list_append(container_stack, root_container);
 
                     for (ssize_t i = node->xml.children->count - 1; i >= 0; i--) {
-                        struct node *n = node->xml.children->elements[i];
+                        rss_node *n = node->xml.children->elements[i];
                         list_append(dfs_stack, n);
                     }
                 } else if (list_is_empty(container_stack)) {
                     // Append node's children backwards so that the stack has the 
                     // leftmost child on the top
                     for (ssize_t i = node->xml.children->count - 1; i >= 0; i--) {
-                        struct node *n = node->xml.children->elements[i];
+                        rss_node *n = node->xml.children->elements[i];
                         list_append(dfs_stack, n);
                     }
                 } else {
-                    struct container *c = list_peek(container_stack);
-                    if (process_node(c, node) == TRSS_ERR) {
-                        fprintf(stderr, "Error processing node: %s\n", node->xml.name);
-                    }
+                    rss_container *c = list_peek(container_stack);
+                    process_node(c, node);
                 }
                 break;
             default:
-                // fprintf(stderr, "Encountered unrecognized node!\n");
                 break;
         }
     }
@@ -317,10 +338,29 @@ bool build_channel(struct channel *chan, struct node *root_node) {
     return true;
 }
 
+rss_channel **load_channels(char *files[], size_t size) {
+    rss_channel **channel_list = calloc(size, sizeof(*channel_list));
+    if (!channel_list) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < size; i++) {
+        size_t size;
+        char *rss = file_to_string(files[i], &size);
+        rss_node *tree = construct_parse_tree(rss, size);
+        free(rss);
+        channel_list[i] = channel_init();
+        build_channel(channel_list[i], tree);
+        free_tree(tree);
+    }
+
+    return channel_list;
+}
+
 // ======== Initializers ======== //
 
-struct item *item_init(void) {
-    struct item *new_item = calloc(1, sizeof(*new_item));
+rss_item *item_init(void) {
+    rss_item *new_item = calloc(1, sizeof(*new_item));
     if (!new_item) {
         return NULL;
     }
@@ -328,8 +368,8 @@ struct item *item_init(void) {
     return new_item;
 }
 
-struct channel *channel_init(void) {
-    struct channel *new_channel = calloc(1, sizeof(*new_channel));
+rss_channel *channel_init(void) {
+    rss_channel *new_channel = calloc(1, sizeof(*new_channel));
     if (!new_channel) {
         return NULL;
     }
@@ -338,8 +378,8 @@ struct channel *channel_init(void) {
     return new_channel;
 }
 
-struct container *container_init(enum CONTAINER_TYPE t) {
-    struct container *new_container = malloc(sizeof(*new_container));
+rss_container *container_init(enum container_type t) {
+    rss_container *new_container = malloc(sizeof(*new_container));
     
     if (!new_container) return NULL;
     new_container->type = t;
@@ -378,18 +418,17 @@ static inline bool is_termination_char(char c) {
 
 // ======== Cleanup functions ======== //
 
-void free_item(struct item *it) {
+void free_item(rss_item *it) {
     free(it->title);
     free(it->description);
     free(it->author);
     free(it->guid);
     free(it->link);
-    free(it->pub_date);
+    free(it->pub_date_rfc822);
     free(it);
 }
 
-void free_channel(struct channel *c) {
-    printf("Freeing channel: %s\n", c->title);
+void free_channel(rss_channel *c) {
     free(c->description);
     free(c->title);
     free(c->language);
@@ -397,14 +436,13 @@ void free_channel(struct channel *c) {
     free(c->link);
 
     for (size_t i = 0; i < c->items->count; i++) {
-        struct item *it = c->items->elements[i];
-        printf("\tFreeing article item: %s\n", it->title);
+        rss_item *it = c->items->elements[i];
         free_item(it);
     }
     free(c);
 }
 
-void free_container(struct container *c) {
+void free_container(rss_container *c) {
     switch (c->type)
     {
     case CHANNEL:

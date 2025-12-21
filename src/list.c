@@ -4,8 +4,8 @@
 
 #define DEFAULT_CAPACITY 4
 
-struct list *list_init(void) {
-    struct list *l = malloc(sizeof(*l));
+struct generic_list *list_init(void) {
+    struct generic_list *l = malloc(sizeof(*l));
     if (!l) {
         return NULL;
     }
@@ -16,7 +16,7 @@ struct list *list_init(void) {
     return l;
 }
 
-bool list_append(struct list *l, void *item) {
+bool list_append(struct generic_list *l, void *item) {
     // Push a new item onto the stack.
     if (l->count == l->capacity) {
         // Adding this element would fill the stack entirely
@@ -32,9 +32,9 @@ bool list_append(struct list *l, void *item) {
     return true;
 }
 
-inline bool list_is_empty(const struct list *l) { return l->count == 0; }
+inline bool list_is_empty(const struct generic_list *l) { return l->count == 0; }
 
-void *list_peek(const struct list *l) {
+void *list_peek(const struct generic_list *l) {
     if (l->count == 0) {
         return NULL;
     }
@@ -42,7 +42,7 @@ void *list_peek(const struct list *l) {
     return l->elements[l->count - 1];
 }
 
-void *list_pop(struct list *l) {
+void *list_pop(struct generic_list *l) {
     // Same as peek except it decrements the stack counter, effectively popping
     // an element.
     if (l->count == 0) {
@@ -53,9 +53,9 @@ void *list_pop(struct list *l) {
     return e;
 }
 
-inline void list_clear(struct list *l) { l->count = 0; }
+inline void list_clear(struct generic_list *l) { l->count = 0; }
 
-void list_free(struct list *l) {
+void list_free(struct generic_list *l) {
     free(l->elements);
     free(l);
 }

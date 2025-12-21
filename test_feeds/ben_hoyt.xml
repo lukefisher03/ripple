@@ -1,0 +1,435 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>Ben Hoyt's technical writing</title>
+        <description>RSS feed for Ben Hoyt's technical writing</description>
+        <link>https://benhoyt.com/writings/</link>
+        <ttl>3600</ttl>
+        <atom:link href="https://benhoyt.com/writings/rss.xml" rel="self" type="application/rss+xml" />
+        <item>
+            <title>Don't fear Python subprocess or Go codegen</title>
+            <description>Discusses some design choices used in Jubilant: Python subprocess.run to
+                wrap a CLI tool, a code generator to convert Go structs to Python dataclasses, and
+                the use of uv with a simple Makefile to run commands.</description>
+            <guid>https://benhoyt.com/writings/jubilant/</guid>
+            <link>https://benhoyt.com/writings/jubilant/</link>
+            <pubDate>Sat, 13 Dec 2025 18:00:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Go performance from version 1.0 to 1.22</title>
+            <description>Shows how much the performance of Go has improved from version 1.0 through
+                to 1.22 (including PGO) -- in its compiler, runtime, and libraries.</description>
+            <guid>https://benhoyt.com/writings/go-version-performance-2024/</guid>
+            <link>https://benhoyt.com/writings/go-version-performance-2024/</link>
+            <pubDate>Sat, 13 Apr 2024 18:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>The One Billion Row Challenge in Go: from 1m45s to 3.4s in nine solutions</title>
+            <description>How I solved the One Billion Row Challenge (1BRC) in Go nine times, from a
+                simple unoptimised version that takes 1 minute 45 seconds, to an optimised and
+                parallelised version that takes 3.4 seconds.</description>
+            <link>https://benhoyt.com/writings/go-1brc/</link>
+            <guid>https://benhoyt.com/writings/go-1brc/</guid>
+            <pubDate>Sun, 03 Mar 2024 16:00:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Switching from S3 to Tigris on Fly.io</title>
+            <description>How I switched my side project from using Amazon S3 for file hosting to
+                using Tigris (which is built on Fly.io infrastructure). It was a good experience
+                overall, but there were a few quirks.</description>
+            <link>https://benhoyt.com/writings/flyio-and-tigris/</link>
+            <guid>https://benhoyt.com/writings/flyio-and-tigris/</guid>
+            <pubDate>Tue, 13 Feb 2024 22:00:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Discussing Forth, C, CGI, Python, Go, and AWK on "Stray Pointers"</title>
+            <description>This is a transcription of Jim Lawless's interview with Ben Hoyt on his
+                Stray Pointers podcast. We discuss Forth, C, CGI, Python, Go, and AWK.</description>
+            <link>https://benhoyt.com/writings/stray-pointers-interview/</link>
+            <guid>https://benhoyt.com/writings/stray-pointers-interview/</guid>
+            <pubDate>Sun, 04 Feb 2024 14:00:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>"Stray Pointers" interview</title>
+            <description>Not technical writing, but Jim Lawless interviewed me on his "Stray
+                Pointers" podcast. We discuss Forth, C, CGI, Python, Go, and AWK.</description>
+            <link>https://sites.libsyn.com/481983/discussing-programming-languages-with-ben-hoyt</link>
+            <guid>https://sites.libsyn.com/481983/discussing-programming-languages-with-ben-hoyt</guid>
+            <pubDate>Tue, 16 Jan 2024 17:00:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Using a Markov chain to generate readable nonsense with 20 lines of Python</title>
+            <description>Describes a simple Markov chain algorithm to generate reasonable-sounding
+                but utterly nonsensical text, and presents some example outputs as well as a Python
+                implementation.</description>
+            <link>https://benhoyt.com/writings/markov-chain/</link>
+            <guid>https://benhoyt.com/writings/markov-chain/</guid>
+            <pubDate>Sat, 11 Nov 2023 17:30:00 +0100</pubDate>
+        </item>
+        <item>
+            <title>How (not) to apply for a software job</title>
+            <description>Advice for how to (and how not to) apply for a software engineering job,
+                particularly for the written parts of the interview process. As a bonus, some tips
+                for your resume/CV.</description>
+            <link>https://benhoyt.com/writings/how-to-apply/</link>
+            <guid>https://benhoyt.com/writings/how-to-apply/</guid>
+            <pubDate>Tue, 26 Sep 2023 17:30:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>The AWK book's 60-line version of Make</title>
+            <description>A discussion of the minimal version of Make included in 'The AWK
+                Programming Language', as well as a Python port of the AWK program.</description>
+            <link>https://benhoyt.com/writings/awk-make/</link>
+            <guid>https://benhoyt.com/writings/awk-make/</guid>
+            <pubDate>Mon, 11 Sep 2023 09:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Using the WordStar diamond in 2023</title>
+            <description>Describes the WordStar diamond, a wonderful set of key bindings from the
+                1970s, and how you can use it in 2023 on Linux or Windows.</description>
+            <link>https://benhoyt.com/writings/wordstar-diamond/</link>
+            <guid>https://benhoyt.com/writings/wordstar-diamond/</guid>
+            <pubDate>Thu, 17 Aug 2023 12:15:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Name before type: why 'age int' is better than 'int age'</title>
+            <description>A variable's name is more important than its type, so the name should be
+                more prominent and come first in declarations.</description>
+            <link>https://benhoyt.com/writings/name-before-type/</link>
+            <guid>https://benhoyt.com/writings/name-before-type/</guid>
+            <pubDate>Mon, 07 Aug 2023 08:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>The proposal to enhance Go's HTTP router</title>
+            <description>A brief look at the proposed enhancements to the Go standard library HTTP
+                request router, net/http.ServeMux: matching on HTTP method, and supporting wildcards
+                in matched paths.</description>
+            <link>https://benhoyt.com/writings/go-servemux-enhancements/</link>
+            <guid>https://benhoyt.com/writings/go-servemux-enhancements/</guid>
+            <pubDate>Mon, 31 Jul 2023 08:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Scripting with Go: a 400-line Git client that can create a repo and push itself to GitHub</title>
+            <description>In which I rewrite my toy pygit client in Go to see how suitable Go is for
+                simple scripts.</description>
+            <link>https://benhoyt.com/writings/gogit/</link>
+            <guid>https://benhoyt.com/writings/gogit/</guid>
+            <pubDate>Sat, 29 Jul 2023 16:30:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Names should be as short as possible while still being clear</title>
+            <description>Short, meaningful names that take context into account are better than
+                long, verbose names that don't.</description>
+            <link>https://benhoyt.com/writings/short-names/</link>
+            <guid>https://benhoyt.com/writings/short-names/</guid>
+            <pubDate>Mon, 03 Jul 2023 21:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Lookup Tables (Forth Dimensions XIX.3)</title>
+            <description>An article about lookup tables in Forth that I co-authored with Hans
+                Bezemer (creator of 4tH) when I was 16.</description>
+            <link>https://benhoyt.com/writings/forth-lookup-tables/</link>
+            <guid>https://benhoyt.com/writings/forth-lookup-tables/</guid>
+            <pubDate>Sat, 01 Jul 2023 22:10:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>For Python packages, file structure != API</title>
+            <description>When designing Python packages, decoupling the file structure from the
+                package's API makes your package easier to import and use.</description>
+            <link>https://benhoyt.com/writings/python-api-file-structure/</link>
+            <guid>https://benhoyt.com/writings/python-api-file-structure/</guid>
+            <pubDate>Fri, 30 Jun 2023 22:50:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Designing Pythonic library APIs</title>
+            <description>Principles I've found useful for designing good Python library APIs,
+                including structure, naming, error handling, and type annotations.</description>
+            <link>https://benhoyt.com/writings/python-api-design/</link>
+            <guid>https://benhoyt.com/writings/python-api-design/</guid>
+            <pubDate>Sun, 18 Jun 2023 21:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>From Go on EC2 to Fly.io: +fun, −$9/mo</title>
+            <description>How I switched hosting my Go-based side projects from Amazon EC2 to Fly.io,
+                significantly simplified deployment, and saved a bit of cash while I was at it.</description>
+            <link>https://benhoyt.com/writings/flyio/</link>
+            <guid>https://benhoyt.com/writings/flyio/</guid>
+            <pubDate>Mon, 27 Feb 2023 10:00:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Code coverage for your AWK programs</title>
+            <description>This article describes GoAWK's code coverage support, which was contributed
+                by Volodymyr Gubarkov.</description>
+            <link>https://benhoyt.com/writings/goawk-coverage/</link>
+            <guid>https://benhoyt.com/writings/goawk-coverage/</guid>
+            <pubDate>Sat, 10 Dec 2022 13:41:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>I/O is no longer the bottleneck</title>
+            <description>In 2022, disk I/O is very fast, and not usually the performance bottleneck
+                in programs. This article digs into some numbers.</description>
+            <link>https://benhoyt.com/writings/io-is-no-longer-the-bottleneck/</link>
+            <guid>https://benhoyt.com/writings/io-is-no-longer-the-bottleneck/</guid>
+            <pubDate>Sat, 26 Nov 2022 22:20:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>microPledge: our startup that (we wish) competed with Kickstarter</title>
+            <description>What our crowdfunding startup microPledge was, why it failed, and what we
+                learned from the process.</description>
+            <link>https://benhoyt.com/writings/micropledge/</link>
+            <guid>https://benhoyt.com/writings/micropledge/</guid>
+            <pubDate>Mon, 14 Nov 2022 20:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Rob Pike's simple C regex matcher in Go</title>
+            <description>Translating Rob Pike's simple and elegant C regex matcher to Go.</description>
+            <link>https://benhoyt.com/writings/rob-pike-regex/</link>
+            <guid>https://benhoyt.com/writings/rob-pike-regex/</guid>
+            <pubDate>Fri, 12 Aug 2022 14:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Tools I use to build my website</title>
+            <description>How I build my website benhoyt.com with GitHub Pages, Jekyll, a simple
+                HTML+CSS layout, Sublime Text, and Sublime Merge.</description>
+            <link>https://benhoyt.com/writings/tools-i-use-to-build-my-website/</link>
+            <guid>https://benhoyt.com/writings/tools-i-use-to-build-my-website/</guid>
+            <pubDate>Tue, 02 Aug 2022 19:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Modernizing AWK, a 45-year old language, by adding CSV support</title>
+            <description>Why and how I added proper CSV support to GoAWK, my POSIX-compatible AWK
+                interpreter.</description>
+            <link>https://benhoyt.com/writings/goawk-csv/</link>
+            <guid>https://benhoyt.com/writings/goawk-csv/</guid>
+            <pubDate>Tue, 10 May 2022 09:30:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Prig: like AWK, but uses Go for "scripting"</title>
+            <description>Describes Prig, which is for Processing Records In Go. It's a text
+                processing tool like AWK, but it uses Go as the scripting language.</description>
+            <link>https://benhoyt.com/writings/prig/</link>
+            <guid>https://benhoyt.com/writings/prig/</guid>
+            <pubDate>Sun, 27 Feb 2022 18:20:00 +0100</pubDate>
+        </item>
+        <item>
+            <title>Go performance from version 1.2 to 1.18</title>
+            <description>Shows how much the performance of Go has improved from version 1.2 through
+                to 1.18 -- in its compiler, runtime, and libraries.</description>
+            <link>https://benhoyt.com/writings/go-version-performance/</link>
+            <guid>https://benhoyt.com/writings/go-version-performance/</guid>
+            <pubDate>Fri, 4 Feb 2022 09:30:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Optimizing GoAWK with a bytecode compiler and virtual machine</title>
+            <description>How I sped up GoAWK by switching from a tree-walking interpreter to a
+                bytecode compiler and virtual machine interpreter.</description>
+            <link>https://benhoyt.com/writings/goawk-compiler-vm/</link>
+            <guid>https://benhoyt.com/writings/goawk-compiler-vm/</guid>
+            <pubDate>Thu, 3 Feb 2022 22:25:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>AWKGo, an AWK-to-Go compiler</title>
+            <description>A discussion of AWKGo, a simple compiler that translates a useful subset of
+                the AWK text processing language into Go source code.</description>
+            <link>https://benhoyt.com/writings/awkgo/</link>
+            <guid>https://benhoyt.com/writings/awkgo/</guid>
+            <pubDate>Mon, 22 Nov 2021 00:10:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Improving the code from the official Go RESTful API tutorial</title>
+            <description>My re-implementation of the code from the official Go tutorial 'Developing
+                a RESTful API with Go and Gin', using only the standard library, adding tests, and
+                fixing issues.</description>
+            <link>https://benhoyt.com/writings/web-service-stdlib/</link>
+            <guid>https://benhoyt.com/writings/web-service-stdlib/</guid>
+            <pubDate>Wed, 17 Nov 2021 07:00:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Simple Lists: a tiny to-do list app written the old-school way (server-side Go, no JS)</title>
+            <description>Simple Lists is a tiny to-do list web application written in Go, with old
+                school server-side rendering and no JavaScript.</description>
+            <link>https://benhoyt.com/writings/simple-lists/</link>
+            <guid>https://benhoyt.com/writings/simple-lists/</guid>
+            <pubDate>Mon, 4 Oct 2021 07:30:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Structural pattern matching in Python 3.10</title>
+            <description>A critical but informative look at the new structural pattern matching
+                feature in Python 3.10, with real-world code examples.</description>
+            <link>https://benhoyt.com/writings/python-pattern-matching/</link>
+            <guid>https://benhoyt.com/writings/python-pattern-matching/</guid>
+            <pubDate>Mon, 20 Sep 2021 19:30:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Mugo, a toy compiler for a subset of Go that can compile itself</title>
+            <description>An overview of Mugo, a single-pass compiler for a tiny subset of the Go
+                programming language -- just enough to compile itself.</description>
+            <link>https://benhoyt.com/writings/mugo/</link>
+            <guid>https://benhoyt.com/writings/mugo/</guid>
+            <pubDate>Mon, 12 Apr 2021 20:30:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>How to implement a hash table (in C)</title>
+            <description>An explanation of how to implement a simple hash table data structure, with
+                code and examples in the C programming language.</description>
+            <link>https://benhoyt.com/writings/hash-table-in-c/</link>
+            <guid>https://benhoyt.com/writings/hash-table-in-c/</guid>
+            <pubDate>Fri, 26 Mar 2021 20:30:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Performance comparison: counting words in Python, Go, C++, C, AWK, Forth, and Rust</title>
+            <description>Performance comparison of counting and sorting word frequencies in various
+                languages (Python, Go, C++, C, AWK, Forth, Rust, and others).</description>
+            <link>https://benhoyt.com/writings/count-words/</link>
+            <guid>https://benhoyt.com/writings/count-words/</guid>
+            <pubDate>Mon, 15 Mar 2021 20:30:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>The small web is beautiful</title>
+            <description>A vision for the "small web", small software, and small architectures.
+                Also, a bonus rant about microservices.</description>
+            <link>https://benhoyt.com/writings/the-small-web-is-beautiful/</link>
+            <guid>https://benhoyt.com/writings/the-small-web-is-beautiful/</guid>
+            <pubDate>Tue, 2 Mar 2021 06:50:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Coming in Go 1.16: ReadDir and DirEntry</title>
+            <description>A look at the new os.ReadDir function and os.DirEntry interface coming in
+                Go 1.16, with a comparison to os.scandir in Python.</description>
+            <link>https://benhoyt.com/writings/go-readdir/</link>
+            <guid>https://benhoyt.com/writings/go-readdir/</guid>
+            <pubDate>Fri, 29 Jan 2021 10:00:00 +1300</pubDate>
+        </item>
+        <item>
+            <title>Fuzzing in Go</title>
+            <description>An overview of fuzz testing and the go-fuzz tool, as well as a look at the
+                recent draft design for including fuzz testing in the `go` tool (LWN.net).</description>
+            <link>https://lwn.net/Articles/829242/</link>
+            <guid>https://lwn.net/Articles/829242/</guid>
+            <pubDate>Tue, 25 Aug 2020 08:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Searching code with Sourcegraph</title>
+            <description>A look at Sourcegraph, a code search and code intelligence tool (LWN.net).</description>
+            <link>https://lwn.net/Articles/828748/</link>
+            <guid>https://lwn.net/Articles/828748/</guid>
+            <pubDate>Mon, 17 Aug 2020 08:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Different approaches to HTTP routing in Go</title>
+            <description>Compares routing techniques in Go, including five custom approaches and
+                three using third-party routing libraries.</description>
+            <link>https://benhoyt.com/writings/go-routing/</link>
+            <guid>https://benhoyt.com/writings/go-routing/</guid>
+            <pubDate>Fri, 31 Jul 2020 08:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Go filesystems and file embedding</title>
+            <description>A presentation of the Go draft designs for a filesystem interface and a
+                standard way to embed files in a Go binary (LWN.net).</description>
+            <link>https://lwn.net/Articles/827215/</link>
+            <guid>https://lwn.net/Articles/827215/</guid>
+            <pubDate>Fri, 31 Jul 2020 00:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>The sad, slow-motion death of Do Not Track</title>
+            <description>Talks about the valiant but almost-dead 10-year effort to prevent tracking
+                with the Do Not Track header.</description>
+            <link>https://lwn.net/Articles/826575/</link>
+            <guid>https://lwn.net/Articles/826575/</guid>
+            <pubDate>Wed, 22 Jul 2020 11:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>What's new in Lua 5.4</title>
+            <description>An overview of the new features in Lua 5.4 (LWN.net).</description>
+            <link>https://lwn.net/Articles/826134/</link>
+            <guid>https://lwn.net/Articles/826134/</guid>
+            <pubDate>Wed, 15 Jul 2020 11:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Hugo: a static-site generator</title>
+            <description>An overview of Hugo, a flexible static website generator written in Go and
+                optimized for speed (LWN.net).</description>
+            <link>https://lwn.net/Articles/825507/</link>
+            <guid>https://lwn.net/Articles/825507/</guid>
+            <pubDate>Wed, 8 Jul 2020 11:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Generics for Go</title>
+            <description>Gives some background, the current state, and potential timeline for
+                including generics in the Go programming language (LWN.net).</description>
+            <link>https://lwn.net/Articles/824716/</link>
+            <guid>https://lwn.net/Articles/824716/</guid>
+            <pubDate>Wed, 1 Jul 2020 11:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>More alternatives to Google Analytics</title>
+            <description>Looks at some heavier replacements for Google Analytics, as well as the
+                GoAccess log-based analytics tool (LWN.net).</description>
+            <link>https://lwn.net/Articles/824294/</link>
+            <guid>https://lwn.net/Articles/824294/</guid>
+            <pubDate>Wed, 24 Jun 2020 11:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Lightweight Google Analytics alternatives</title>
+            <description>Discusses what Google Analytics tracks, and presents two lightweight
+                alternatives: GoatCounter and Plausible (LWN.net).</description>
+            <link>https://lwn.net/Articles/822568/</link>
+            <guid>https://lwn.net/Articles/822568/</guid>
+            <pubDate>Wed, 17 Jun 2020 11:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>An intro to Go for non-Go developers</title>
+            <description>A brief introduction to Go for programmers who haven't used Go before: Why
+                use it? The standard library. And the language itself.</description>
+            <link>https://benhoyt.com/writings/go-intro/</link>
+            <guid>https://benhoyt.com/writings/go-intro/</guid>
+            <pubDate>Wed, 10 Jun 2020 23:38:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>ZZT in Go (using a Pascal-to-Go converter)</title>
+            <description>Describes my port of Adrian Siekierka's "Reconstruction of ZZT" to Go, done
+                in a semi-automated way using a Pascal-to-Go converter.</description>
+            <link>https://benhoyt.com/writings/zzt-in-go/</link>
+            <guid>https://benhoyt.com/writings/zzt-in-go/</guid>
+            <pubDate>Fri, 29 May 2020 17:25:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Testing in Go: philosophy and tools</title>
+            <description>Describes the minimalist philosophy of testing in Go and the built-in
+                testing tools (LWN.net).</description>
+            <link>https://lwn.net/Articles/821358/</link>
+            <guid>https://lwn.net/Articles/821358/</guid>
+            <pubDate>Wed, 27 May 2020 12:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>The state of the AWK</title>
+            <description>Surveys the AWK landscape, looks at new features in GNU Awk, and discusses
+                why AWK is still relevant in 2020 (LWN.net).</description>
+            <link>https://lwn.net/Articles/820829/</link>
+            <guid>https://lwn.net/Articles/820829/</guid>
+            <pubDate>Wed, 20 May 2020 12:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>What's coming in Go 1.15</title>
+            <description>An overview of what's coming in the Go 1.15 final release in August 2020
+                (LWN.net).</description>
+            <link>https://lwn.net/Articles/820217/</link>
+            <guid>https://lwn.net/Articles/820217/</guid>
+            <pubDate>Wed, 13 May 2020 12:00:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>Don't try to sanitize input. Escape output.</title>
+            <description>Why you shouldn't try to sanitize user input; instead, escape output correctly.</description>
+            <link>https://benhoyt.com/writings/dont-sanitize-do-escape/</link>
+            <guid>https://benhoyt.com/writings/dont-sanitize-do-escape/</guid>
+            <pubDate>Thu, 27 Feb 2020 19:27:00 +1200</pubDate>
+        </item>
+        <item>
+            <title>SEO for Software Engineers</title>
+            <description>The basics of Search Engine Optimization, written for software developers.</description>
+            <link>https://benhoyt.com/writings/seo-for-software-engineers/</link>
+            <guid>https://benhoyt.com/writings/seo-for-software-engineers/</guid>
+            <pubDate>Thu, 20 Feb 2020 12:00:00 +1200</pubDate>
+        </item>
+    </channel>
+</rss>

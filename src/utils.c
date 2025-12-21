@@ -1,4 +1,6 @@
 #include "utils.h"
+#include "logger.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -98,4 +100,28 @@ bool sstartswith_fast(const char *prefix, size_t prefix_length, const char *str,
     }
     
     return true;
+}
+
+bool rfc_822_to_tm(char *timestamp, struct tm *tm) {
+    // All variants of the RFC 822 date format
+    char *date_strings[] = {
+        "%a, %d %b %Y %H:%M:%S %z",
+        "%a, %d %b %Y %H:%M:%S GMT",
+        "%a, %d %b %Y %H:%M %z",
+        "%a, %d %b %Y %H:%M GMT",
+        "%d %b %Y %H:%M:%S %z",
+        "%d %b %Y %H:%M:%S GMT",
+    };
+
+    for (size_t i = 0; i < sizeof(date_strings) / sizeof(date_strings[0]); i++) {
+        struct tm tmp_tm = {0};
+        char *end = strptime(timestamp, date_strings[i], &tmp_tm);
+
+        if (end && *end == '\0') {
+            *tm = tmp_tm;
+            return true;
+        }
+    }
+
+    return false;
 }
