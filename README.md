@@ -1,9 +1,11 @@
 # Terminal RSS Aggregator
-A lightweight RSS Aggregator that runs in your terminal. Written in C.
+A lightweight RSS Aggregator that runs in your terminal. Written in C. Custom text UI that will periodically fetch feeds and cache them for you. (Caching to be implemented and networking to be sorted out)
 
-# How to Install
-The packages required are:
-- `openssl`
-- `readline`
+## Pictures
+### Main Menu
+![Main Menu](assets/main_menu.png)
 
-Most of the time openssl comes preinstalled. `readline` may or may not be preinstalled, but wherever it is ensure that `pkg-config` can find it. 
+### Feed Reader
+![Feed Reader](assets/feed_reader.png)
+
+See todo.txt for what's next

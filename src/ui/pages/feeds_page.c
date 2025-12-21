@@ -17,9 +17,9 @@ static bool collect_items(rss_channel **channels, size_t channel_count, generic_
 static void write_column(char *dest, const char *src, size_t max_width);
 
 static char *files[] = {
-    "test/stack_overflow.xml",
-    "test/smart_less.xml",
-    "test/ben_hoyt.xml"
+    "test_feeds/stack_overflow.xml",
+    "test_feeds/smart_less.xml",
+    "test_feeds/ben_hoyt.xml"
 };
 
 static char *blank_line;
