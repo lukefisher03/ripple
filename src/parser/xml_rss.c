@@ -9,6 +9,20 @@
 #define TRSS_OK 0
 #define TRSS_ERR -1
 
+typedef struct xml_entity {
+    char    ch;
+    char    *s;
+} xml_entity;
+
+static xml_entity xml_entities[] = {
+    {.ch = '<', .s = "&lt;"},
+    {.ch = '>', .s = "&gt;"},
+    {.ch = '"', .s = "&quot;"},
+    {.ch = '\'', .s = "&#x27;"},
+    {.ch = '\'', .s = "&apos;"},
+    
+};
+
 // ======== Forward declarations ======== //
 
 static inline bool is_termination_char(char c);
@@ -48,6 +62,18 @@ bool read_tag(const char *str, size_t length, Tag *t) {
     return true;
 }
 
+xml_entity *replace_entity(const char *str) {
+    size_t entity_count = sizeof(xml_entities) / sizeof(xml_entities[0]);
+    for (size_t i = 0; i < entity_count; i++) {
+        if (sstartswith(xml_entities[i].s, str, strlen(xml_entities[i].s))) {
+            log_debug("Found match %s", xml_entities[i].s);
+            return &xml_entities[i];
+        }
+    }
+    // Return a space by default if the entity replacement is not found
+    return NULL; 
+}
+
 ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     // Create a text node containing all the contents until a closing tag is 
     // reached. 
@@ -58,12 +84,14 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
 
     ssize_t i = 0;
     size_t total_length = 0;
+    bool entity_replacement_enabled = true;
     // Detect the terminating part of the content
     const char *end_str = "<";
     if (sstartswith("<![CDATA[", str, length)) {
         i += 9;
         end_str = "]]>";
         total_length += 3;
+        entity_replacement_enabled = false;
     }
 
     // Get the total length of the string
@@ -77,14 +105,24 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     new_node->text = malloc(content_length + 1);
     size_t len = 0;
     const char *s = str + i;
+
     for (size_t k = 0; k < content_length; k++) {
+        // Perform XML entity replacement
         if ((unsigned char)s[k] < 0x80) {
-           new_node->text[len++] = s[k]; 
+            if (entity_replacement_enabled && s[k] == '&') {
+                xml_entity *entity = replace_entity(s + k);
+                if (entity != NULL) {
+                    new_node->text[len++] = entity->ch;
+                    k += strlen(entity->s) - 1; 
+                }
+            } else {
+                new_node->text[len++] = s[k]; 
+            }
+
         }
     }
     new_node->text[len] = '\0';
 
-    log_debug("Accumulated string: %s", new_node->text);
     new_node->type = TEXT_NODE;
     return total_length;
 }
