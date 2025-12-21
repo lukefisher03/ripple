@@ -67,17 +67,3 @@ void arena_free(mem_arena *arena) {
     arena->capacity = 0;
     arena->fill_level = 0;
 }
-
-// int main() {
-//     Arena a;
-//     arena_init(&a, 50);
-
-//     int *x = arena_allocate(&a, sizeof(*x));
-//     char *s = "Hello world, this is neat!";
-//     size_t l = strlen(s);
-//     char *y = arena_allocate(&a, l+1);
-//     strncpy(y, s, l+1);
-//     printf("%s\n", y);
-//     int *z = arena_allocate(&a, sizeof(*z));
-    
-// }

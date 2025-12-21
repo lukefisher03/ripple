@@ -56,46 +56,36 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
         return TRSS_ERR;
     }
 
-    ssize_t i = 1;
-    size_t offset = 0;
+    ssize_t i = 0;
     size_t total_length = 0;
+    // Detect the terminating part of the content
+    const char *end_str = "<";
     if (sstartswith("<![CDATA[", str, length)) {
-        for (; i < length && !sstartswith("]]>", str + i, length - i); i++);
-        total_length = i+3;
-        offset = 9;
-        new_node->text = strndup(str + offset, i - offset);
-
-    } else {
-        for (; i < length && str[i] != '<'; i++); 
-        new_node->text = strndup(str + offset, i - offset);
-        total_length = i;
-        
-        for (size_t j = 0; j < total_length; j++) {
-            // Convert all non-ascii characters to spaces.
-            if ((unsigned char)new_node->text[j] >= 0x80) {
-                new_node->text[j] = ' ';    
-            }
-
-            /**
-             * TODO: Write input sanitization
-             * 
-             * - Will need to drop non-ASCII characters.
-             * - Do replacements for characters entities (eg. &lt; or &quot;)
-             */
-
-            // if (new_node->text[j] == '&') {
-            //     size_t start = j;
-            //     size_t length = 0;
-            //     while (j < total_length && new_node->text[j] != ';') {
-            //         length++;
-            //     }
-            // }
-        }
+        i += 9;
+        end_str = "]]>";
+        total_length += 3;
     }
 
+    // Get the total length of the string
+    size_t j = i;
+    for (; j < length && !sstartswith(end_str, str+j, length - j); j++);
+
+    size_t content_length = 0;
+    total_length += j;
+    content_length = j - i;
+    
+    new_node->text = malloc(content_length + 1);
+    size_t len = 0;
+    const char *s = str + i;
+    for (size_t k = 0; k < content_length; k++) {
+        if ((unsigned char)s[k] < 0x80) {
+           new_node->text[len++] = s[k]; 
+        }
+    }
+    new_node->text[len] = '\0';
+
+    log_debug("Accumulated string: %s", new_node->text);
     new_node->type = TEXT_NODE;
-    // The offset ensures we don't copy `<![CDATA[` or `]]>` into the
-    // string buffer.
     return total_length;
 }
 
@@ -293,6 +283,7 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
             case XML_NODE:
                 if (!strcmp(node->xml.name,"item")) {
                     rss_container *new_item = container_init(ITEM);
+                    new_item->item->channel = chan;
                     rss_container *parent = list_peek(container_stack);
                     list_append(chan->items, new_item->item);
                     list_append(container_stack, new_item);
@@ -326,13 +317,10 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
                     }
                 } else {
                     rss_container *c = list_peek(container_stack);
-                    if (process_node(c, node) == TRSS_ERR) {
-                        // fprintf(stderr, "Error processing node: %s\n", node->xml.name);
-                    }
+                    process_node(c, node);
                 }
                 break;
             default:
-                // fprintf(stderr, "Encountered unrecognized node!\n");
                 break;
         }
     }

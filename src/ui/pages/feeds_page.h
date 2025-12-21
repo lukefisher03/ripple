@@ -8,9 +8,10 @@
 typedef struct app_state app_state;
 
 typedef struct channel_column_widths {
-    size_t  title_width;
-    size_t  author_width;
-    size_t  pub_date_width;
+    size_t  channel_name;
+    size_t  title;
+    size_t  author;
+    size_t  pub_date;
 } channel_column_widths;
 
 typedef struct feeds_page_state {

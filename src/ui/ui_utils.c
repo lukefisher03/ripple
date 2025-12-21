@@ -15,12 +15,11 @@ int display_menu(int y,
     int new_y = y;
 
     int option_height = 1;
-    int window = screen_height / option_height;
+    int window = (screen_height - y) / option_height;
     int offset = 0;
 
     while (1) {
         struct tb_event ev;
-        tb_clear();
         for (int i = offset; i < option_count && i < offset + window; i++) {
             // Convert void pointer to char * so we can do pointer arithmetic.
             // add the index multiplied by the size to increment the pointer.
@@ -29,35 +28,31 @@ int display_menu(int y,
             option_height = render_selection(0, new_y, i == cursor, option);
 
             new_y += option_height;
-            window = (screen_height / option_height) - 2;
+            window = ((screen_height - y) / option_height);
         }
 
         tb_present();
         tb_poll_event(&ev);
-        switch (ev.key) {
-            case TB_KEY_ENTER:
-                return cursor;
-            case TB_KEY_ARROW_UP:
-                if (cursor > 0) {
-                    cursor--;
-                    if (cursor < offset) {
-                        offset--;
-                    }
-                }
-                break;
-            case TB_KEY_ARROW_DOWN:
-                if (cursor < option_count - 1) {
-                    cursor++;
-                    if (cursor >= offset + window ) {
-                        offset++;
-                    }
-                }
-                break;
-            default:
-                break;
-        }
-        new_y = y;
 
+        if (ev.key == TB_KEY_ENTER) return cursor;
+        if (ev.key == TB_KEY_ARROW_UP || ev.ch == 'k') {
+            if (cursor > 0) {
+                cursor--;
+                if (cursor < offset) {
+                    offset--;
+                }
+            }
+        }
+        if (ev.key == TB_KEY_ARROW_DOWN || ev.ch == 'j') {
+            if (cursor < option_count - 1) {
+                cursor++;
+                if (cursor >= offset + window ) {
+                    offset++;
+                }
+            }
+        }
+
+        new_y = y;
     }
 }
 

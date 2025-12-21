@@ -22,21 +22,6 @@ typedef struct Tag {
     size_t          total_length;
 } Tag;
 
-#define MAX_RSS_ITEM_DATE_LEN 64
-
-typedef struct rss_item {
-    char        *title;
-    char        *author;
-    // We store the pub date as a string as a backup
-    char        *pub_date_rfc822;
-    // Max date string length
-    char        pub_date_string[MAX_RSS_ITEM_DATE_LEN];
-    long        pub_date_unix;
-    char        *description;
-    char        *link;
-    char        *guid;
-} rss_item;
-
 typedef struct rss_channel {
     char            *title;
     char            *description;
@@ -45,6 +30,22 @@ typedef struct rss_channel {
     char            *language;
     generic_list     *items; // List of items
 } rss_channel;
+
+#define MAX_RSS_ITEM_DATE_LEN 64
+
+typedef struct rss_item {
+    char            *title;
+    char            *author;
+    // We store the pub date as a string as a backup
+    char            *pub_date_rfc822;
+    // Max date string length
+    char            pub_date_string[MAX_RSS_ITEM_DATE_LEN];
+    long            pub_date_unix;
+    char            *description;
+    char            *link;
+    char            *guid;
+    rss_channel     *channel;
+} rss_item;
 
 enum container_type {
     CHANNEL,
