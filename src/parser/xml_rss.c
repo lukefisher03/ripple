@@ -20,7 +20,7 @@ static xml_entity xml_entities[] = {
     {.ch = '"', .s = "&quot;"},
     {.ch = '\'', .s = "&#x27;"},
     {.ch = '\'', .s = "&apos;"},
-    
+
 };
 
 // ======== Forward declarations ======== //
@@ -109,20 +109,19 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     for (size_t k = 0; k < content_length; k++) {
         // Perform XML entity replacement
         if ((unsigned char)s[k] < 0x80) {
+            char ch = s[k]; 
             if (entity_replacement_enabled && s[k] == '&') {
                 xml_entity *entity = replace_entity(s + k);
                 if (entity != NULL) {
-                    new_node->text[len++] = entity->ch;
+                    ch = entity->ch;
                     k += strlen(entity->s) - 1; 
-                }
-            } else {
-                new_node->text[len++] = s[k]; 
-            }
-
+                } 
+            } 
+            new_node->text[len++] = ch; 
         }
     }
-    new_node->text[len] = '\0';
 
+    new_node->text[len] = '\0';
     new_node->type = TEXT_NODE;
     return total_length;
 }
@@ -131,7 +130,6 @@ ssize_t skip_comment(const char *str, size_t length) {
     // Given a string starting with `<!--`, skip to the termination of
     // the comment `-->` and return the number of characters the comment
     // is. 
-
     if (!str) return TRSS_ERR;
 
     ssize_t i = 0;

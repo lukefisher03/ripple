@@ -1,9 +1,12 @@
-
 // Prevent redefinitions by putting this before
 // the definition of TB_IMPL
 #include "ui.h"
 #include "ui_utils.h" 
 #include "../list.h"
+
+#include "pages/main_page.h"
+#include "pages/feeds_page.h"
+#include "pages/article_page.h"
 
 #define TB_IMPL
 
@@ -17,9 +20,20 @@
 #include <stdio.h>
 #include <string.h>
 
-static page_renderer page_table[PAGE_COUNT] = {
-    [MAIN_PAGE] = main_menu,
-    [FEEDS_PAGE] = feed_reader,
+
+static page_handlers page_handlers_table[PAGE_COUNT] = {
+    [MAIN_PAGE] = {
+        .create = main_menu,
+        .destroy = NULL,
+    },
+    [FEEDS_PAGE] = {
+        .create = feed_reader,
+        .destroy = feed_reader_destroy,
+    }, 
+    [ARTICLE_PAGE] = {
+        .create = article_page,
+        .destroy = NULL,
+    }
 };
 
 // ------ Main UI Call ------ //
@@ -38,6 +52,7 @@ void app_init(app_state *app) {
     app->channel_list = NULL; 
     app->channel_count = 0;
     app->page_stack = NULL;
+    app->current_page_handlers = NULL;
 }
 
 void app_destroy(app_state *app) {
@@ -46,10 +61,12 @@ void app_destroy(app_state *app) {
 
 void push_page(page_type page_id, app_state *app) {
     // A page that is pushed, gets immediately rendered.
-    page_table[page_id](app);
-}
-
-void pop_page(app_state *app) {
-    // unimplemented for now.
-    return;
+    page_handlers *current_handlers = app->current_page_handlers;
+    page_handlers *handlers = &page_handlers_table[page_id];
+    
+    if (current_handlers != NULL && current_handlers->destroy != NULL) {
+        current_handlers->destroy();
+    }
+    app->current_page_handlers = handlers;
+    handlers->create(app);
 }

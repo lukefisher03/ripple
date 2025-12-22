@@ -3,9 +3,7 @@
 
 #include "../../termbox2/termbox2.h"
 #include "../../parser/xml_rss.h"
-
-// Forward declare app_state struct
-typedef struct app_state app_state;
+#include "../ui.h"
 
 typedef struct channel_column_widths {
     size_t  channel_name;
@@ -14,12 +12,8 @@ typedef struct channel_column_widths {
     size_t  pub_date;
 } channel_column_widths;
 
-typedef struct feeds_page_state {
-    rss_channel **channel_list;
-    size_t      channel_count;
-} feeds_page_state;
-
 void feed_reader(app_state *app);
+void feed_reader_destroy(void);
 void set_feed_column_widths(void);
 
 #endif

@@ -6,6 +6,7 @@
 #include "../../logger.h"
 
 #include <string.h>
+#include <assert.h>
 
 static int COL_GAP = 2;
 static int MIN_WIDTH = 100;
@@ -23,6 +24,8 @@ static char *files[] = {
     "test_feeds/the_guardian.xml",
     "test_feeds/hacker_news.xml",
     "test_feeds/nyt_dining.xml",
+    "test_feeds/autoblog.xml",
+    "test_feeds/speedhunters.xml"
 };
 
 static char *blank_line;
@@ -51,8 +54,12 @@ void feed_reader_init(void) {
 
 void feed_reader_destroy(void) {
     free(blank_line);
+    blank_line = NULL;
     free(divider);
+    divider = NULL;
     free(thick_divider);
+    thick_divider = NULL;
+    log_debug("Cleaned up the feed reader page!");
 }
 
 void feed_reader(app_state *app){
@@ -85,9 +92,7 @@ void feed_reader(app_state *app){
     tb_printf(0, y++, TB_GREEN, 0, thick_divider);
     free(header);
     display_menu(y, items->elements, sizeof(rss_item *), items->count, &render_feed_article_selections);
-    feed_reader_destroy();
     list_free(items);
-
     push_page(MAIN_PAGE, app);
 }
 
@@ -119,8 +124,16 @@ static bool collect_items(rss_channel **channels, size_t channel_count, generic_
 }
 
 static void write_column(char *dest, const char *src, size_t max_width) {
+    assert(dest != NULL);
+    assert(max_width >= COL_GAP + 3);
+
     if (src) {
-        size_t src_len = strlen(src);
+        // Get rid of whitespace in the front
+        size_t offset = 0;
+        for(; src[offset] != '\0' && src[offset] == ' '; offset++);
+        const char *stripped_s = src + offset;
+        
+        size_t src_len = strlen(stripped_s);
         size_t final_width = src_len;
         if (final_width > max_width) {
             final_width = max_width;
@@ -129,8 +142,8 @@ static void write_column(char *dest, const char *src, size_t max_width) {
         for (size_t i = 0; i < final_width; i++) {
             // These columns should only be 1 line, so remove any newlines 
             // and replace with spaces.
-            if (src[i] != '\n') {
-                dest[i] = src[i];
+            if (stripped_s[i] != '\n') {
+                dest[i] = stripped_s[i]; 
             } else {
                 dest[i] = ' ';
             }
@@ -140,7 +153,6 @@ static void write_column(char *dest, const char *src, size_t max_width) {
             memcpy(dest + max_width - 3 - COL_GAP, "...", 3);
             memset(dest + max_width - COL_GAP, ' ', max_width - COL_GAP);
         }
-
     } else {
         memcpy(dest, "None", 4);
     }
