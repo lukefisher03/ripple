@@ -66,7 +66,6 @@ xml_entity *replace_entity(const char *str) {
     size_t entity_count = sizeof(xml_entities) / sizeof(xml_entities[0]);
     for (size_t i = 0; i < entity_count; i++) {
         if (sstartswith(xml_entities[i].s, str, strlen(xml_entities[i].s))) {
-            log_debug("Found match %s", xml_entities[i].s);
             return &xml_entities[i];
         }
     }

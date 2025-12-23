@@ -3,10 +3,9 @@
 #include "ui.h"
 #include "ui_utils.h" 
 #include "../list.h"
+#include "../logger.h"
 
-#include "pages/main_page.h"
-#include "pages/feeds_page.h"
-#include "pages/article_page.h"
+#include "pages/handlers.h"
 
 #define TB_IMPL
 
@@ -14,10 +13,6 @@
 #include "../termbox2/termbox2.h"
 #include "../arena.h"
 
-#include <stdarg.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-#include <stdio.h>
 #include <string.h>
 
 
@@ -43,30 +38,38 @@ void ui_start() {
     app_init(&app);
 
     tb_init();
-    int y = 5;
-    push_page(MAIN_PAGE, &app);
+    navigate(MAIN_PAGE, &app, (local_state){});
+
+    while(app.current_page.type != EXIT_PAGE) {
+        tb_clear();
+        local_state *st = &app.current_page.state;
+        page_create create = app.current_page.handlers.create;
+        create(&app, st);
+    }
     tb_shutdown();
 }
 
 void app_init(app_state *app) {
     app->channel_list = NULL; 
     app->channel_count = 0;
-    app->page_stack = NULL;
-    app->current_page_handlers = NULL;
 }
 
 void app_destroy(app_state *app) {
     free(app->channel_list);
 }
 
-void push_page(page_type page_id, app_state *app) {
+void navigate(page_type page_id, app_state *app, local_state state) {
     // A page that is pushed, gets immediately rendered.
-    page_handlers *current_handlers = app->current_page_handlers;
-    page_handlers *handlers = &page_handlers_table[page_id];
-    
-    if (current_handlers != NULL && current_handlers->destroy != NULL) {
-        current_handlers->destroy();
+    page previous_page = app->current_page;
+    page current_page = {
+        .handlers = page_handlers_table[page_id],
+        .state = state,
+        .type = page_id,
+    };
+
+    if (previous_page.handlers.destroy != NULL) {
+        previous_page.handlers.destroy();
     }
-    app->current_page_handlers = handlers;
-    handlers->create(app);
+
+    app->current_page = current_page;
 }

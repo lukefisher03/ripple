@@ -1,21 +1,24 @@
-#include "feeds_page.h"
+#include "handlers.h"
 #include "../../arena.h"
 #include "../ui_utils.h"
-#include "../ui.h"
 #include "../../utils.h"
 #include "../../logger.h"
 
 #include <string.h>
 #include <assert.h>
 
-static int COL_GAP = 2;
 static int MIN_WIDTH = 100;
+static int LEFT_OFFSET = 3;
 static channel_column_widths COL_WIDTHS;
+static int COL_GAP = 3;
+static char *stand_in = "None";
 
 // ------ Forward declarations ------ //
+void set_feed_column_widths(channel_column_widths *widths, size_t width);
 static int render_feed_article_selections(int x, int y, bool selected, const void *it);
 static bool collect_items(rss_channel **channels, size_t channel_count, generic_list *items);
-static void write_column(char *dest, const char *src, size_t max_width);
+size_t add_column(char *row, int col_width, const char *col_str);
+// static void write_column(char *dest, const char *src, size_t max_width);
 
 static char *files[] = {
     "test_feeds/stack_overflow.xml",
@@ -25,22 +28,30 @@ static char *files[] = {
     "test_feeds/hacker_news.xml",
     "test_feeds/nyt_dining.xml",
     "test_feeds/autoblog.xml",
-    "test_feeds/speedhunters.xml"
+    "test_feeds/speedhunters.xml",
 };
 
 static char *blank_line;
 static char *thick_divider;
 static char *divider;
-static int SCREEN_WIDTH;
+static size_t SCREEN_WIDTH;
 
 void feed_reader_init(void) {
-    SCREEN_WIDTH = tb_width();
-    tb_clear();
-    set_feed_column_widths();
+    SCREEN_WIDTH = tb_width() > MIN_WIDTH ? tb_width() : MIN_WIDTH;
+    set_feed_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
 
-    blank_line = malloc(SCREEN_WIDTH+ 1);
+    blank_line = malloc(SCREEN_WIDTH + 1);
     divider = malloc(SCREEN_WIDTH + 1);
     thick_divider = malloc(SCREEN_WIDTH + 1);
+    
+    // Should probably handle this better
+    if (!blank_line || !divider || !thick_divider) {
+        free(blank_line);
+        free(divider);
+        free(thick_divider);
+        log_debug("Out of memory! Could not initialize the feed reader!");
+        abort();
+    }
 
     memset(blank_line, ' ', SCREEN_WIDTH);
     memset(divider, '-', SCREEN_WIDTH);
@@ -49,7 +60,6 @@ void feed_reader_init(void) {
     divider[SCREEN_WIDTH] = '\0';
     blank_line[SCREEN_WIDTH] = '\0';
     thick_divider[SCREEN_WIDTH] = '\0';
-
 }
 
 void feed_reader_destroy(void) {
@@ -59,13 +69,17 @@ void feed_reader_destroy(void) {
     divider = NULL;
     free(thick_divider);
     thick_divider = NULL;
-    log_debug("Cleaned up the feed reader page!");
 }
 
-void feed_reader(app_state *app){
+void feed_reader(app_state *app, local_state *state){
+    (void) state;
+
     feed_reader_init();
-    app->channel_count = sizeof(files) / sizeof(files[0]);
-    app->channel_list = load_channels(files, app->channel_count);
+    if (!app->channel_list) {
+        log_debug("Loading channels");
+        app->channel_count = sizeof(files) / sizeof(files[0]);
+        app->channel_list = load_channels(files, app->channel_count);
+    }
 
     generic_list *items = list_init();
     if (!collect_items(app->channel_list, app->channel_count, items)) {
@@ -73,30 +87,39 @@ void feed_reader(app_state *app){
     } 
 
     int y = 1;
-
-    size_t offset = 4;
-    char *header = malloc(SCREEN_WIDTH + 1);
-    memset(header, ' ', SCREEN_WIDTH);
-    header[SCREEN_WIDTH] = '\0';
-    // Should probably refactor how I do columns
-    write_column(header + offset, "CHANNEL", COL_WIDTHS.channel_name);
-    offset += COL_WIDTHS.channel_name;
-    write_column(header + offset, "ARTICLE", COL_WIDTHS.title);
-    offset += COL_WIDTHS.title;
-    write_column(header + offset, "AUTHOR", COL_WIDTHS.author);
-    offset += COL_WIDTHS.author;
-    write_column(header + offset, "DATE", COL_WIDTHS.pub_date);
     
+    char *row = malloc(SCREEN_WIDTH + 1);
+    size_t offset = 0;
+
+    offset += add_column(row + offset, COL_WIDTHS.channel_name, "CHANNEL");
+    offset += add_column(row + offset, COL_WIDTHS.title, "TITLE");
+    offset += add_column(row + offset, COL_WIDTHS.author, "AUTHOR");
+    offset += add_column(row + offset, COL_WIDTHS.pub_date, "DATE");
+    memset(row + offset, ' ', SCREEN_WIDTH - offset);
+    row[SCREEN_WIDTH] = '\0';
+
+
     tb_printf(0, y++, TB_GREEN, 0, "FEED READER");
-    tb_printf(0, y++, TB_GREEN, 0, header);
+    tb_printf(0, y++, TB_GREEN, 0, row);
     tb_printf(0, y++, TB_GREEN, 0, thick_divider);
-    free(header);
-    display_menu(y, items->elements, sizeof(rss_item *), items->count, &render_feed_article_selections);
+    free(row);
+
+    int selection = display_menu(y, items->elements, sizeof(rss_item *), items->count, &render_feed_article_selections);
+    rss_item *selected_item = items->elements[selection];
+
     list_free(items);
-    push_page(MAIN_PAGE, app);
+
+    navigate(ARTICLE_PAGE, app, (local_state){
+        .page = ARTICLE_PAGE,
+        .article_state = {
+            .item = selected_item,
+        },
+    });
 }
 
 int compare_item_timestamps(const void *it1, const void *it2) {
+    // Performs comparison in reverse to make the latest articles
+    // appear first.
     rss_item *item1 = *(rss_item **)it1;
     rss_item *item2 = *(rss_item **)it2;
 
@@ -123,84 +146,58 @@ static bool collect_items(rss_channel **channels, size_t channel_count, generic_
     return true;
 }
 
-static void write_column(char *dest, const char *src, size_t max_width) {
-    assert(dest != NULL);
-    assert(max_width >= COL_GAP + 3);
-
-    if (src) {
-        // Get rid of whitespace in the front
-        size_t offset = 0;
-        for(; src[offset] != '\0' && src[offset] == ' '; offset++);
-        const char *stripped_s = src + offset;
-        
-        size_t src_len = strlen(stripped_s);
-        size_t final_width = src_len;
-        if (final_width > max_width) {
-            final_width = max_width;
-        }
-        
-        for (size_t i = 0; i < final_width; i++) {
-            // These columns should only be 1 line, so remove any newlines 
-            // and replace with spaces.
-            if (stripped_s[i] != '\n') {
-                dest[i] = stripped_s[i]; 
-            } else {
-                dest[i] = ' ';
-            }
-        }
-        
-        if (final_width >= max_width - COL_GAP) {
-            memcpy(dest + max_width - 3 - COL_GAP, "...", 3);
-            memset(dest + max_width - COL_GAP, ' ', max_width - COL_GAP);
-        }
-    } else {
-        memcpy(dest, "None", 4);
-    }
-}
-
 static int render_feed_article_selections(int x, int y, bool selected, const void *it) {
     rss_item *item = *(rss_item**)it;
-    
-    int width = SCREEN_WIDTH > MIN_WIDTH ? SCREEN_WIDTH : MIN_WIDTH;
     int new_y = y;
 
-    char *str = malloc(width + 1); 
-    memset(str, ' ', width); // Fill the entire buffer with empty space
+    set_feed_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
 
-    size_t l;
-    size_t offset = 4; // Width of the selector icon on the left
-    write_column(str + offset, item->channel->title, COL_WIDTHS.channel_name);
-    offset += COL_WIDTHS.channel_name;
-    write_column(str + offset, item->title, COL_WIDTHS.title);
-    offset += COL_WIDTHS.title;
-    write_column(str + offset, item->author, COL_WIDTHS.author);
-    offset += COL_WIDTHS.author;
-    write_column(str + offset, item->pub_date_string, COL_WIDTHS.pub_date);
+    char *row = malloc(SCREEN_WIDTH + 1);
+    size_t offset = 0;
 
-    uintattr_t bg = 0;
-    if (selected) {
-        memcpy(str, "-> ", 3);
-        bg = TB_BLACK;
-    }
-    memset(str + width, '\0', 1);
+    offset += add_column(row + offset, COL_WIDTHS.channel_name, item->channel->title);
+    offset += add_column(row + offset, COL_WIDTHS.title, item->title);
+    offset += add_column(row + offset, COL_WIDTHS.author, item->author);
+    offset += add_column(row + offset, COL_WIDTHS.pub_date, item->pub_date_string);
+    memset(row + offset, ' ', SCREEN_WIDTH - offset);
+    row[SCREEN_WIDTH] = '\0';
+
+    uintattr_t bg = selected ? TB_BLACK : 0;
 
     tb_printf(0, new_y++, 0, bg, blank_line);
-
-    int err;
-    if ((err = tb_printf(0, new_y++, TB_GREEN, bg, str)) != 0) {
-        log_debug("Error printing to screen with termbox! %i", err);
-    }
+    tb_printf(0, new_y++, TB_GREEN, bg, row);   
     tb_printf(0, new_y++, 0, bg, blank_line);
     tb_printf(0, new_y++, TB_GREEN, 0, divider);
-    free(str);
 
+    free(row);
     return new_y - y;
 }
 
-void set_feed_column_widths(void) {
-    int width = SCREEN_WIDTH > MIN_WIDTH ? SCREEN_WIDTH : MIN_WIDTH;
-    COL_WIDTHS.channel_name = (int)(0.2 * width);
-    COL_WIDTHS.title = (int)(0.5 * width);
-    COL_WIDTHS.author = (int)(0.2 * width);
-    COL_WIDTHS.pub_date = (int)(0.1 * width);
+size_t add_column(char *row, int col_width, const char *col_str) {
+    assert(row != NULL);
+    assert(col_width >= COL_GAP + 3);
+
+    const char *src = col_str ? col_str : "None"; 
+
+    size_t whitespace_count = 0;
+    for (; src[whitespace_count] != '\0' && src[whitespace_count] == ' '; whitespace_count++);
+    size_t col_str_len = strlen(src) - whitespace_count;
+    
+    memset(row, ' ', col_width);
+
+    if (col_str_len <= col_width - COL_GAP) {
+        memcpy(row, src + whitespace_count, col_str_len);
+    } else {
+        memcpy(row, src + whitespace_count, col_width - COL_GAP - 3);
+        memset(row + col_width - COL_GAP - 3, '.', 3);
+    } 
+
+    return col_width;
+}
+
+void set_feed_column_widths(channel_column_widths *widths, size_t width) {
+    widths->channel_name = (int)(0.2 * width);
+    widths->title = (int)(0.5 * width);
+    widths->author = (int)(0.2 * width);
+    widths->pub_date = (int)(0.1 * width);
 }
