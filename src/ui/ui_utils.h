@@ -7,13 +7,20 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-int display_menu(int y, 
-                        const void *options, 
-                        size_t option_size,
-                        int option_count, 
-                        int (*render_selection)(int, int, bool, const void *)
-                       );
+typedef int (*option_renderer)(int, int, bool, const void *);
 
+int display_menu(int y, 
+                 const void *options, 
+                 size_t option_size,
+                 int option_count, 
+                 option_renderer render_selection 
+                );
+
+int display_basic_menu(int y, 
+                       const void *options, 
+                       size_t option_size,
+                       int option_count 
+                       );
 int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text);
 int display_logo(int x, int y, uintattr_t fg, uintattr_t bg);
 

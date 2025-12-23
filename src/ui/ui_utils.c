@@ -1,6 +1,6 @@
 #include "ui_utils.h"
 
-typedef int (*option_renderer)(int, int, bool, const void *);
+static int render_basic_menu(int x, int y, bool selected, const void *txt);
 
 int display_menu(int y, 
                  const void *options, 
@@ -56,12 +56,42 @@ int display_menu(int y,
     }
 }
 
+int display_basic_menu(
+                int y, 
+                const void *options, 
+                size_t option_size,
+                int option_count 
+) {
+    return display_menu(y, options, option_size, option_count, &render_basic_menu);
+}
 
 int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text) {
     size_t text_len = strlen(text);
     int mid = tb_width() / 2;
     int v = tb_printf((mid - text_len / 2), y, fg, bg, text);
     return v;
+}
+
+static int render_basic_menu(int x, int y, bool selected, const void *txt) {
+    (void) x; // x is not used for this selection renderer
+    char *text = *(char **)txt;
+    // There's potentially a better way to do this, but this works for now
+    int new_y = y;
+    char *selected_s = malloc(strlen(text) + 10); 
+
+    if (!selected_s) {
+        fprintf(stderr, "Memory allocation failed for rendering selection.\n");
+        return 0;
+    } 
+
+    if (selected) {
+        sprintf(selected_s, "[ %s ]", text);
+    } else {
+        sprintf(selected_s, "  %s  ", text);
+    }
+    write_centered(new_y++, TB_GREEN, 0, selected_s);
+    free(selected_s);
+    return new_y - y;
 }
 
 

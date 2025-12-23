@@ -1,22 +1,20 @@
 #ifndef TB_UI_H
 #define TB_UI_H
 
-// Include all pages
-#include "pages/main_page.h"
-#include "pages/feeds_page.h"
-
+#include "../list.h"
+#include "../parser/xml_rss.h"
+#include "pages/states.h"
 #include <stdbool.h>
 
 typedef enum page_type {
+    EXIT_PAGE,
     MAIN_PAGE,
     FEEDS_PAGE,
     PREFERENCES_PAGE,
     ARTICLE_PAGE,
 } page_type;
 
-
 #define PAGE_COUNT 10
-typedef void (*page_renderer)(app_state *);
 
 /**
  * Breakdown of the UI structure
@@ -34,19 +32,32 @@ typedef struct app_configuration {
     // Store global state stuff in here
 } app_configuration;
 
-typedef struct ui_page {
-    // Per page state
+typedef struct local_state {
+    page_type   page;
     union {
-        feeds_page_state    *feed_state;
+       // different local state structs 
+       article_page_state article_state;
     };
-    generic_list            *page_stack;
-    page_type               page_type;
-    
-    void (*render)(void);
-} ui_page;
+} local_state;
+
+typedef struct app_state app_state;
+
+typedef void (*page_create)(app_state *, local_state *state);
+typedef void (*page_destroy)(void);
+
+typedef struct page_handlers {
+    page_create     create;
+    page_destroy    destroy;
+} page_handlers;
+
+typedef struct page {
+    page_type       type;
+    local_state     state;
+    page_handlers   handlers;
+} page;
 
 typedef struct app_state {
-    generic_list        *page_stack;
+    page                current_page;
     rss_channel         **channel_list;
     size_t              channel_count;
     app_configuration   config;
@@ -55,7 +66,5 @@ typedef struct app_state {
 void app_init(app_state *app);
 void app_destroy(app_state *app);
 void ui_start();
-void push_page(page_type page_id, app_state *app);
-void pop_page(app_state *app);
-
+void navigate(page_type page_id, app_state *app, local_state state);
 #endif

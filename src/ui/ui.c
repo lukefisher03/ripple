@@ -1,9 +1,11 @@
-
 // Prevent redefinitions by putting this before
 // the definition of TB_IMPL
 #include "ui.h"
 #include "ui_utils.h" 
 #include "../list.h"
+#include "../logger.h"
+
+#include "pages/handlers.h"
 
 #define TB_IMPL
 
@@ -11,15 +13,22 @@
 #include "../termbox2/termbox2.h"
 #include "../arena.h"
 
-#include <stdarg.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-#include <stdio.h>
 #include <string.h>
 
-static page_renderer page_table[PAGE_COUNT] = {
-    [MAIN_PAGE] = main_menu,
-    [FEEDS_PAGE] = feed_reader,
+
+static page_handlers page_handlers_table[PAGE_COUNT] = {
+    [MAIN_PAGE] = {
+        .create = main_menu,
+        .destroy = NULL,
+    },
+    [FEEDS_PAGE] = {
+        .create = feed_reader,
+        .destroy = feed_reader_destroy,
+    }, 
+    [ARTICLE_PAGE] = {
+        .create = article_page,
+        .destroy = NULL,
+    }
 };
 
 // ------ Main UI Call ------ //
@@ -29,27 +38,38 @@ void ui_start() {
     app_init(&app);
 
     tb_init();
-    int y = 5;
-    push_page(MAIN_PAGE, &app);
+    navigate(MAIN_PAGE, &app, (local_state){});
+
+    while(app.current_page.type != EXIT_PAGE) {
+        tb_clear();
+        local_state *st = &app.current_page.state;
+        page_create create = app.current_page.handlers.create;
+        create(&app, st);
+    }
     tb_shutdown();
 }
 
 void app_init(app_state *app) {
     app->channel_list = NULL; 
     app->channel_count = 0;
-    app->page_stack = NULL;
 }
 
 void app_destroy(app_state *app) {
     free(app->channel_list);
 }
 
-void push_page(page_type page_id, app_state *app) {
+void navigate(page_type page_id, app_state *app, local_state state) {
     // A page that is pushed, gets immediately rendered.
-    page_table[page_id](app);
-}
+    page previous_page = app->current_page;
+    page current_page = {
+        .handlers = page_handlers_table[page_id],
+        .state = state,
+        .type = page_id,
+    };
 
-void pop_page(app_state *app) {
-    // unimplemented for now.
-    return;
+    if (previous_page.handlers.destroy != NULL) {
+        previous_page.handlers.destroy();
+    }
+
+    app->current_page = current_page;
 }
