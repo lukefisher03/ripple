@@ -77,7 +77,8 @@ static int render_basic_menu(int x, int y, bool selected, const void *txt) {
     char *text = *(char **)txt;
     // There's potentially a better way to do this, but this works for now
     int new_y = y;
-    char *selected_s = malloc(strlen(text) + 10); 
+    size_t max_len = strlen(text) + 5;
+    char *selected_s = malloc(max_len); 
 
     if (!selected_s) {
         fprintf(stderr, "Memory allocation failed for rendering selection.\n");
@@ -85,9 +86,9 @@ static int render_basic_menu(int x, int y, bool selected, const void *txt) {
     } 
 
     if (selected) {
-        sprintf(selected_s, "[ %s ]", text);
+        snprintf(selected_s, max_len,"[ %s ]", text);
     } else {
-        sprintf(selected_s, "  %s  ", text);
+        snprintf(selected_s, max_len, "  %s  ", text);
     }
     write_centered(new_y++, TB_GREEN, 0, selected_s);
     free(selected_s);

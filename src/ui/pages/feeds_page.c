@@ -8,10 +8,8 @@
 #include <assert.h>
 
 static int MIN_WIDTH = 100;
-static int LEFT_OFFSET = 3;
 static channel_column_widths COL_WIDTHS;
 static int COL_GAP = 3;
-static char *stand_in = "None";
 
 // ------ Forward declarations ------ //
 void set_feed_column_widths(channel_column_widths *widths, size_t width);

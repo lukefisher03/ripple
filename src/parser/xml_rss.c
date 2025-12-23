@@ -167,7 +167,7 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
                     list_append(stack, node);
 
                 } else if (new_tag.tag_type == TAG_CLOSE) {
-                    rss_node *v = list_pop(stack);
+                    list_pop(stack);
                 }
 
                 i += new_tag.total_length;
@@ -319,7 +319,6 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
                 if (!strcmp(node->xml.name,"item")) {
                     rss_container *new_item = container_init(ITEM);
                     new_item->item->channel = chan;
-                    rss_container *parent = list_peek(container_stack);
                     list_append(chan->items, new_item->item);
                     list_append(container_stack, new_item);
 

@@ -8,8 +8,6 @@ static const char *main_menu_options[] = {
     "Exit",
 };
 
-static int render_basic_menu(int x, int y, bool selected, const void *txt);
-
 void main_menu(app_state *app, local_state *state) {
     (void) app;
     (void) state;
