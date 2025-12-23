@@ -7,3 +7,4 @@
 - Some sort of caching / loading ability for feeds so we don't have to re-pull every time the application loads
 - Unify the error handling
 - Maybe refactor some of the column handling?
+- Refactor makefile

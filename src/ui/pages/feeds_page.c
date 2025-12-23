@@ -27,8 +27,10 @@ static char *files[] = {
     "test_feeds/nyt_dining.xml",
     "test_feeds/autoblog.xml",
     "test_feeds/speedhunters.xml",
+    "test_feeds/new_yorker.xml"
 };
 
+static char *row; 
 static char *blank_line;
 static char *thick_divider;
 static char *divider;
@@ -38,6 +40,7 @@ void feed_reader_init(void) {
     SCREEN_WIDTH = tb_width() > MIN_WIDTH ? tb_width() : MIN_WIDTH;
     set_feed_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
 
+    row = malloc(SCREEN_WIDTH + 1);
     blank_line = malloc(SCREEN_WIDTH + 1);
     divider = malloc(SCREEN_WIDTH + 1);
     thick_divider = malloc(SCREEN_WIDTH + 1);
@@ -67,6 +70,8 @@ void feed_reader_destroy(void) {
     divider = NULL;
     free(thick_divider);
     thick_divider = NULL;
+    free(row);
+    row = NULL;
 }
 
 void feed_reader(app_state *app, local_state *state){
@@ -150,7 +155,6 @@ static int render_feed_article_selections(int x, int y, bool selected, const voi
 
     set_feed_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
 
-    char *row = malloc(SCREEN_WIDTH + 1);
     size_t offset = 0;
 
     offset += add_column(row + offset, COL_WIDTHS.channel_name, item->channel->title);
@@ -167,7 +171,6 @@ static int render_feed_article_selections(int x, int y, bool selected, const voi
     tb_printf(0, new_y++, 0, bg, blank_line);
     tb_printf(0, new_y++, TB_GREEN, 0, divider);
 
-    free(row);
     return new_y - y;
 }
 
