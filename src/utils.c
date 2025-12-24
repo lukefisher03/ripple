@@ -70,37 +70,6 @@ char *file_to_string(const char *path, size_t *size) {
     return str;
 }
 
-bool sstartswith(const char *prefix, const char *str, size_t str_length) {
-    /*  Prefix compare - Given some prefix and a string to compare it against, 
-        check if the string starts with the prefix  */
-
-    if (!strlen(prefix)) return true; // A zero length prefix always returns true.
-    if (!str_length) return false; // If the prefix is non-zero and the string is 0, return false.
-    
-    for (size_t i = 0; i < strlen(prefix) && i < str_length; i++) {
-        if (prefix[i] != str[i]) {
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-bool sstartswith_fast(const char *prefix, size_t prefix_length, const char *str, size_t str_length) {
-    /* Prefix compare fast - Same as prefix compare, except with no calls to O(n) strlen. 
-       Use for comparing larger strings where the cost of O(n) is too high. */
-
-    if (!prefix_length) return true; // A zero length prefix always returns true.
-    if (!str_length) return false; // If the prefix is non-zero and the string is 0, return false.
-    
-    for (size_t i = 0; i < prefix_length && i < str_length; i++) {
-        if (prefix[i] != str[i]) {
-            return false;
-        }
-    }
-    
-    return true;
-}
 
 bool rfc_822_to_tm(char *timestamp, struct tm *tm) {
     // All variants of the RFC 822 date format

@@ -64,7 +64,7 @@ bool read_tag(const char *str, size_t length, Tag *t) {
 xml_entity *replace_entity(const char *str) {
     size_t entity_count = sizeof(xml_entities) / sizeof(xml_entities[0]);
     for (size_t i = 0; i < entity_count; i++) {
-        if (sstartswith(xml_entities[i].s, str, strlen(xml_entities[i].s))) {
+        if (strncmp(xml_entities[i].s, str, strlen(xml_entities[i].s)) == 0) {
             return &xml_entities[i];
         }
     }
@@ -85,7 +85,7 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     bool entity_replacement_enabled = true;
     // Detect the terminating part of the content
     const char *end_str = "<";
-    if (sstartswith("<![CDATA[", str, length)) {
+    if (!strncmp(str, "<![CDATA[", strlen("<![CDATA["))) {
         i += 9;
         end_str = "]]>";
         total_length += 3;
@@ -94,7 +94,8 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
 
     // Get the total length of the string
     size_t j = i;
-    for (; j < length && !sstartswith(end_str, str+j, length - j); j++);
+    size_t end_str_len = strlen(end_str);
+    for (; j < length && strncmp(str + j, end_str, end_str_len); j++);
 
     size_t content_length = 0;
     total_length += j;
@@ -129,11 +130,16 @@ ssize_t skip_comment(const char *str, size_t length) {
     // the comment `-->` and return the number of characters the comment
     // is. 
     if (!str) return TRSS_ERR;
+    if (!strncmp(str, "<!--", strlen("<!--"))) {
 
+    }
     ssize_t i = 0;
-    for (; i < length && !sstartswith("-->", str + i, length - i); i++);
+    for (; i < length && strncmp(str + i, "-->", 3); i++);
+    if (i == length) {
+        return TRSS_ERR;
+    }
     // Skip over the comment termination sequence.
-    return i + 4;
+    return i + 3;
 }
 
 rss_node *construct_parse_tree(const char *xml, size_t length) {
@@ -141,6 +147,8 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
 
     rss_node *root = xml_node_init();
     generic_list *stack = list_init();
+
+    int err = TRSS_OK;
     list_append(stack, root);
 
     size_t i = 0;
@@ -153,12 +161,11 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
         const char *s = xml + i;
         size_t l = length - i;
         
-        if (sstartswith("<", s, l) && !sstartswith("<!", s, l) && !sstartswith("<?", s, l)) {
+        if (!strncmp(s, "<", 1) && strncmp(s, "<!", 2) && strncmp(s, "<?", 2)) {
             Tag new_tag;
             if (read_tag(s, l, &new_tag)) { 
                 if (new_tag.tag_type == TAG_OPEN) {
                     rss_node *top = list_peek(stack); 
-
                     rss_node *node = xml_node_init(); 
                     node->xml.name = strndup(new_tag.name, strlen(new_tag.name));
                     free(new_tag.name);
@@ -171,19 +178,20 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
 
                 i += new_tag.total_length;
             }
-        } else if (sstartswith("<!--", s, l)) {
+        } else if (!strncmp(s, "<!--", 3)) {
             ssize_t comment_length = skip_comment(s, l);
             if (comment_length != TRSS_ERR) {
                 i += comment_length;
             } else {
-                // fprintf(stderr, "Error skipping comment...\n");
+                log_debug("Unterminated comment found when parsing");
+                err = TRSS_ERR;
+                break;
             }
         }else {
             rss_node *t_node = text_node_init();
             ssize_t text_length = accumulate_text(s, l, t_node);
 
             if (text_length < 1) {
-                // fprintf(stderr, "Error processing text node!\n");
                 i++;
                 continue;
             } 
@@ -194,6 +202,10 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
         }
     }
 
+    free(stack);
+    if (err != TRSS_OK) {
+        return NULL;
+    }
     root->type = ROOT_NODE;
     root->xml.name = strdup("ROOT");
     return root;
@@ -202,7 +214,6 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
 void print_parse_tree(const rss_node *root, int depth) {
     // Recursive function for printing out an indented version of a
     // parse tree 
-
     if (!root) {
         return;
     }

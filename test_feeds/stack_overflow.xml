@@ -9,6 +9,7 @@ xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
 xmlns:georss="http://www.georss.org/georss"
 xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
 >
+<!-- Hello how are you today???-->
 <channel>
     <title>Stack Overflow Blog</title>
    <description>Essays, opinions, and advice on the act of computer programming from Stack Overflow.</description>
@@ -80,6 +81,7 @@ xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
        <category><![CDATA[se-tech]]></category>
        <category><![CDATA[se-stackoverflow]]></category>
        <category><![CDATA[podcast]]></category>
+       <!--This is a big ol' comment!-->
        <category><![CDATA[ai]]></category>
        <category><![CDATA[ai-coding]]></category>
        <category><![CDATA[security]]></category>
