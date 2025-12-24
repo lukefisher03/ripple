@@ -87,6 +87,10 @@ static int render_basic_menu(int x, int y, bool selected, const void *txt) {
 
     if (selected) {
         snprintf(selected_s, max_len,"[ %s ]", text);
+        for (size_t i = 0; i < max_len; i++) {
+            char ch = selected_s[i];
+            selected_s[i] = toupper((unsigned char)ch);
+        }
     } else {
         snprintf(selected_s, max_len, "  %s  ", text);
     }

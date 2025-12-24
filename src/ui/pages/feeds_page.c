@@ -21,13 +21,13 @@ size_t add_column(char *row, int col_width, const char *col_str);
 static char *files[] = {
     "test_feeds/stack_overflow.xml",
     "test_feeds/smart_less.xml",
-    "test_feeds/ben_hoyt.xml",
-    "test_feeds/the_guardian.xml",
-    "test_feeds/hacker_news.xml",
-    "test_feeds/nyt_dining.xml",
-    "test_feeds/autoblog.xml",
-    "test_feeds/speedhunters.xml",
-    "test_feeds/new_yorker.xml"
+    // "test_feeds/ben_hoyt.xml",
+    // "test_feeds/the_guardian.xml",
+    // "test_feeds/hacker_news.xml",
+    // "test_feeds/nyt_dining.xml",
+    // "test_feeds/autoblog.xml",
+    // "test_feeds/speedhunters.xml",
+    // "test_feeds/new_yorker.xml"
 };
 
 static char *row; 

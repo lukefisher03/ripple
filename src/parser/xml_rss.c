@@ -20,7 +20,6 @@ static xml_entity xml_entities[] = {
     {.ch = '"', .s = "&quot;"},
     {.ch = '\'', .s = "&#x27;"},
     {.ch = '\'', .s = "&apos;"},
-
 };
 
 // ======== Forward declarations ======== //
