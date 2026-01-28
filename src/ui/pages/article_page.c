@@ -1,6 +1,7 @@
 #include "handlers.h"
 #include "../ui_utils.h"
 #include "../../logger.h"
+#include "../../utils.h"
 
 char *options[] = {
     "Back",
@@ -38,6 +39,9 @@ void article_page(app_state *app, local_state *state) {
     tb_printf(PADDING, y++, TB_GREEN, 0, divider);
     tb_printf(PADDING, y++, TB_GREEN, 0, channel_title);
     tb_printf(PADDING, y++, TB_GREEN, 0, item->link);
+    char formatted_time[128];
+    unix_time_to_formatted(item->unix_timestamp, formatted_time, 128);
+    tb_printf(PADDING, y++, TB_GREEN, 0, formatted_time);
     y += 5;
 
     size_t description_length = strlen(item->description);

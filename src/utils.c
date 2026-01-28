@@ -95,3 +95,23 @@ bool rfc_822_to_tm(char *timestamp, struct tm *tm) {
 
     return false;
 }
+
+int unix_time_to_formatted(int64_t unix_timestamp, char *str, size_t buf_len) {
+    if (!str || buf_len < 21) {
+        return 1;
+    }
+
+    struct tm tm_local = {0};
+    // TODO: This conversion is dangerous on legacy systems, but it might not
+    // really be that important. Just noting it.
+    time_t converted_timestamp = (time_t)unix_timestamp;
+    if (!localtime_r(&converted_timestamp, &tm_local)) {
+        return 1;
+    }
+
+    if (!strftime(str, buf_len, "%b %e, %Y %R", &tm_local)) {
+        return 1;
+    }
+
+    return 0;
+} 

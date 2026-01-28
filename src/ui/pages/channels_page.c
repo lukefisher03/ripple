@@ -1,3 +1,4 @@
+// TODO: This should just be the "feed" page. There will be a distinc channels page.
 #include "handlers.h"
 #include "../../arena.h"
 #include "../ui_utils.h"
@@ -130,7 +131,9 @@ static int render_channel_article_selections(int x, int y, bool selected, const 
     offset += add_column(row + offset, COL_WIDTHS.channel_name, article->channel_name);
     offset += add_column(row + offset, COL_WIDTHS.title, item->title);
     offset += add_column(row + offset, COL_WIDTHS.author, item->author);
-    // offset += add_column(row + offset, COL_WIDTHS.pub_date, item->pub_date_string);
+    char formatted_date[128] = "";
+    unix_time_to_formatted(item->unix_timestamp, formatted_date, 128);
+    offset += add_column(row + offset, COL_WIDTHS.pub_date, formatted_date);
     memset(row + offset, ' ', SCREEN_WIDTH - offset);
     row[SCREEN_WIDTH] = '\0';
 
