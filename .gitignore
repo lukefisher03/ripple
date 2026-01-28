@@ -1,6 +1,9 @@
 main
+db_testing
 *.dSYM/
 .vscode/
 out.txt
 output.txt
 ripple_debug.log
+*.db
+.DS_Store

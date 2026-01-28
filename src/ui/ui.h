@@ -9,7 +9,7 @@
 typedef enum page_type {
     EXIT_PAGE,
     MAIN_PAGE,
-    FEEDS_PAGE,
+    CHANNELS_PAGE,
     PREFERENCES_PAGE,
     ARTICLE_PAGE,
 } page_type;

@@ -15,15 +15,19 @@
 
 #include <string.h>
 
+static char *files[] = {
+    "test_feeds/stack_overflow.xml",
+    "test_feeds/smart_less.xml",
+};
 
 static page_handlers page_handlers_table[PAGE_COUNT] = {
     [MAIN_PAGE] = {
         .create = main_menu,
         .destroy = NULL,
     },
-    [FEEDS_PAGE] = {
-        .create = feed_reader,
-        .destroy = feed_reader_destroy,
+    [CHANNELS_PAGE] = {
+        .create = channel_reader,
+        .destroy = channel_reader_destroy,
     }, 
     [ARTICLE_PAGE] = {
         .create = article_page,
@@ -36,6 +40,12 @@ void ui_start() {
     // Initialize the global app state
     app_state app = {0};
     app_init(&app);
+
+    if (!app.channel_list) {
+        log_debug("Loading channels");
+        app.channel_count = sizeof(files) / sizeof(files[0]);
+        load_channels(files, app.channel_count);
+    }
 
     tb_init();
     navigate(MAIN_PAGE, &app, (local_state){});

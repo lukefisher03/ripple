@@ -2,6 +2,9 @@
 #include "../utils.h"
 #include "../logger.h"
 
+// This is only temporary, eventually there will be an http api between these two components
+#include "../channels_db/channel_db_api.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -266,13 +269,12 @@ int process_node(rss_container *c, const rss_node *n) {
         } else if (!strcmp(node_name, "link")) {
             item->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "pubDate")) {
-            item->pub_date_rfc822 = strdup(text_node->text);
+            char *pub_date_rfc822 = strdup(text_node->text);
             struct tm tm = {0};
-            if (rfc_822_to_tm(item->pub_date_rfc822, &tm)) {
-                strftime(item->pub_date_string, MAX_RSS_ITEM_DATE_LEN, "%a, %D", &tm);
-                item->pub_date_unix = timegm(&tm);
+            if (rfc_822_to_tm(pub_date_rfc822, &tm)) {
+                item->unix_timestamp = timegm(&tm);
             } else {
-                log_debug("Could not parse publish date string: %s, skipping", item->pub_date_rfc822);
+                log_debug("Could not parse publish date string: %s, skipping", pub_date_rfc822);
             }
             
         } else if (!strcmp(node_name, "description")) {
@@ -284,8 +286,6 @@ int process_node(rss_container *c, const rss_node *n) {
         rss_channel *channel = c->channel;
         if (!strcmp(node_name, "title")) {
            channel->title = strdup(text_node->text);
-        } else if (!strcmp(node_name, "lastBuildDate")) {
-           channel->last_build_date = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
            channel->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "description")) {
@@ -328,7 +328,7 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
             case XML_NODE:
                 if (!strcmp(node->xml.name,"item")) {
                     rss_container *new_item = container_init(ITEM);
-                    new_item->item->channel = chan;
+                    new_item->item->channel_id = chan->id;
                     list_append(chan->items, new_item->item);
                     list_append(container_stack, new_item);
 
@@ -382,10 +382,10 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
     return true;
 }
 
-rss_channel **load_channels(char *files[], size_t size) {
+int load_channels(char *files[], size_t size) {
     rss_channel **channel_list = calloc(size, sizeof(*channel_list));
     if (!channel_list) {
-        return NULL;
+        return 0;
     }
 
     for (size_t i = 0; i < size; i++) {
@@ -398,7 +398,7 @@ rss_channel **load_channels(char *files[], size_t size) {
         free_tree(tree);
     }
 
-    return channel_list;
+    return store_channel_list(size, channel_list);
 }
 
 // ======== Initializers ======== //
@@ -468,7 +468,6 @@ void free_item(rss_item *it) {
     free(it->author);
     free(it->guid);
     free(it->link);
-    free(it->pub_date_rfc822);
     free(it);
 }
 
@@ -476,7 +475,6 @@ void free_channel(rss_channel *c) {
     free(c->description);
     free(c->title);
     free(c->language);
-    free(c->last_build_date);
     free(c->link);
 
     for (size_t i = 0; i < c->items->count; i++) {

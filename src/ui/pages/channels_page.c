@@ -3,6 +3,7 @@
 #include "../ui_utils.h"
 #include "../../utils.h"
 #include "../../logger.h"
+#include "../../channels_db/channel_db_api.h"
 
 #include <string.h>
 #include <assert.h>
@@ -12,23 +13,10 @@ static channel_column_widths COL_WIDTHS;
 static int COL_GAP = 3;
 
 // ------ Forward declarations ------ //
-void set_feed_column_widths(channel_column_widths *widths, size_t width);
-static int render_feed_article_selections(int x, int y, bool selected, const void *it);
-static bool collect_items(rss_channel **channels, size_t channel_count, generic_list *items);
+void set_channel_column_widths(channel_column_widths *widths, size_t width);
+static int render_channel_article_selections(int x, int y, bool selected, const void *it);
 size_t add_column(char *row, int col_width, const char *col_str);
 // static void write_column(char *dest, const char *src, size_t max_width);
-
-static char *files[] = {
-    "test_feeds/stack_overflow.xml",
-    "test_feeds/smart_less.xml",
-    // "test_feeds/ben_hoyt.xml",
-    // "test_feeds/the_guardian.xml",
-    // "test_feeds/hacker_news.xml",
-    // "test_feeds/nyt_dining.xml",
-    // "test_feeds/autoblog.xml",
-    // "test_feeds/speedhunters.xml",
-    // "test_feeds/new_yorker.xml"
-};
 
 static char *row; 
 static char *blank_line;
@@ -36,9 +24,9 @@ static char *thick_divider;
 static char *divider;
 static size_t SCREEN_WIDTH;
 
-void feed_reader_init(void) {
+void channel_reader_init(void) {
     SCREEN_WIDTH = tb_width() > MIN_WIDTH ? tb_width() : MIN_WIDTH;
-    set_feed_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
+    set_channel_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
 
     row = malloc(SCREEN_WIDTH + 1);
     blank_line = malloc(SCREEN_WIDTH + 1);
@@ -50,7 +38,7 @@ void feed_reader_init(void) {
         free(blank_line);
         free(divider);
         free(thick_divider);
-        log_debug("Out of memory! Could not initialize the feed reader!");
+        log_debug("Out of memory! Could not initialize the channel reader!");
         abort();
     }
 
@@ -63,7 +51,7 @@ void feed_reader_init(void) {
     thick_divider[SCREEN_WIDTH] = '\0';
 }
 
-void feed_reader_destroy(void) {
+void channel_reader_destroy(void) {
     free(blank_line);
     blank_line = NULL;
     free(divider);
@@ -74,19 +62,14 @@ void feed_reader_destroy(void) {
     row = NULL;
 }
 
-void feed_reader(app_state *app, local_state *state){
+void channel_reader(app_state *app, local_state *state){
     (void) state;
 
-    feed_reader_init();
-    if (!app->channel_list) {
-        log_debug("Loading channels");
-        app->channel_count = sizeof(files) / sizeof(files[0]);
-        app->channel_list = load_channels(files, app->channel_count);
-    }
+    channel_reader_init();
 
     generic_list *items = list_init();
-    if (!collect_items(app->channel_list, app->channel_count, items)) {
-        log_debug("Could not load feeds due to memory error!");       
+    if (get_main_feed_articles(items) != 0) {
+        log_debug("Could not load channels due to memory error!");       
     } 
 
     int y = 1;
@@ -102,20 +85,20 @@ void feed_reader(app_state *app, local_state *state){
     row[SCREEN_WIDTH] = '\0';
 
 
-    tb_printf(0, y++, TB_GREEN, 0, "FEED READER");
+    tb_printf(0, y++, TB_GREEN, 0, "CHANNEL READER");
     tb_printf(0, y++, TB_GREEN, 0, row);
     tb_printf(0, y++, TB_GREEN, 0, thick_divider);
     free(row);
 
-    int selection = display_menu(y, items->elements, sizeof(rss_item *), items->count, &render_feed_article_selections);
-    rss_item *selected_item = items->elements[selection];
+    int selection = display_menu(y, items->elements, sizeof(article_with_channel_name *), items->count, &render_channel_article_selections);
+    article_with_channel_name *selected_item = items->elements[selection];
 
     list_free(items);
 
     navigate(ARTICLE_PAGE, app, (local_state){
         .page = ARTICLE_PAGE,
         .article_state = {
-            .item = selected_item,
+            .article = selected_item,
         },
     });
 }
@@ -127,40 +110,27 @@ int compare_item_timestamps(const void *it1, const void *it2) {
     rss_item *item2 = *(rss_item **)it2;
 
     // Start by comparing unix timestamps
-    if (item1->pub_date_unix > item2->pub_date_unix)
+    if (item1->unix_timestamp > item2->unix_timestamp)
         return -1;
-    if (item1->pub_date_unix < item2->pub_date_unix)
+    if (item1->unix_timestamp < item2->unix_timestamp)
         return 1;
 
     return -strcmp(item1->title, item2->title);
 }
 
-static bool collect_items(rss_channel **channels, size_t channel_count, generic_list *items) {
-    // Combine all the channel's various articles
-    for (size_t i = 0; i < channel_count; i++) {
-        for (size_t j = 0; j < channels[i]->items->count; j++) {
-            rss_item *it = channels[i]->items->elements[j];
-            if (!list_append(items, it)) {
-                return false;
-            }
-        }
-    }
-    qsort(items->elements, items->count, sizeof(rss_item *), compare_item_timestamps); 
-    return true;
-}
-
-static int render_feed_article_selections(int x, int y, bool selected, const void *it) {
-    rss_item *item = *(rss_item**)it;
+static int render_channel_article_selections(int x, int y, bool selected, const void *it) {
+    article_with_channel_name *article = *(article_with_channel_name**)it;
+    rss_item *item = article->item;
     int new_y = y;
 
-    set_feed_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
+    set_channel_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
 
     size_t offset = 0;
 
-    offset += add_column(row + offset, COL_WIDTHS.channel_name, item->channel->title);
+    offset += add_column(row + offset, COL_WIDTHS.channel_name, article->channel_name);
     offset += add_column(row + offset, COL_WIDTHS.title, item->title);
     offset += add_column(row + offset, COL_WIDTHS.author, item->author);
-    offset += add_column(row + offset, COL_WIDTHS.pub_date, item->pub_date_string);
+    // offset += add_column(row + offset, COL_WIDTHS.pub_date, item->pub_date_string);
     memset(row + offset, ' ', SCREEN_WIDTH - offset);
     row[SCREEN_WIDTH] = '\0';
 
@@ -196,7 +166,7 @@ size_t add_column(char *row, int col_width, const char *col_str) {
     return col_width;
 }
 
-void set_feed_column_widths(channel_column_widths *widths, size_t width) {
+void set_channel_column_widths(channel_column_widths *widths, size_t width) {
     widths->channel_name = (int)(0.2 * width);
     widths->title = (int)(0.5 * width);
     widths->author = (int)(0.2 * width);

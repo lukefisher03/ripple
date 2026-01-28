@@ -26,28 +26,30 @@ void article_page(app_state *app, local_state *state) {
 
     int height = tb_height();
 
+    // TODO: Cleanup this part and the state transition stuff
     article_page_state article_state = state->article_state;
-    rss_item *article = article_state.item;
+    rss_item *item = article_state.article->item;
+    char *channel_title = article_state.article->channel_name;
 
-    log_debug("Loaded article: %s", article->title);
+    log_debug("Loaded article: %s", item->title);
 
     int y = 5;
-    tb_printf(PADDING, y++, TB_GREEN, 0, article->title);
+    tb_printf(PADDING, y++, TB_GREEN, 0, item->title);
     tb_printf(PADDING, y++, TB_GREEN, 0, divider);
-    tb_printf(PADDING, y++, TB_GREEN, 0, article->channel->title);
-    tb_printf(PADDING, y++, TB_GREEN, 0, article->link);
+    tb_printf(PADDING, y++, TB_GREEN, 0, channel_title);
+    tb_printf(PADDING, y++, TB_GREEN, 0, item->link);
     y += 5;
 
-    size_t description_length = strlen(article->description);
+    size_t description_length = strlen(item->description);
     size_t lines = 0;
     size_t d_len = 0;
 
     char *description = malloc(description_length + height);
 
     for (size_t i = 0; i <= description_length; i++) {
-        char ch = article->description[i];
+        char ch = item->description[i];
         if (ch != '\n') {
-            description[d_len++] = article->description[i];
+            description[d_len++] = item->description[i];
         }
         if (d_len % width == 0) {
             description[d_len++] = '\n';
@@ -66,7 +68,7 @@ void article_page(app_state *app, local_state *state) {
 
     switch (selection) {
         case 0:
-            navigate(FEEDS_PAGE, app, (local_state){});
+            navigate(CHANNELS_PAGE, app, (local_state){});
             break;
         case 1:
             navigate(MAIN_PAGE, app, (local_state){});

@@ -70,6 +70,7 @@ char *file_to_string(const char *path, size_t *size) {
     return str;
 }
 
+// ------ Convert RFC 822 timestamps to tm structs ------ //
 
 bool rfc_822_to_tm(char *timestamp, struct tm *tm) {
     // All variants of the RFC 822 date format

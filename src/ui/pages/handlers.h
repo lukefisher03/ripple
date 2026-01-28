@@ -12,9 +12,8 @@ typedef struct channel_column_widths {
     int  pub_date;
 } channel_column_widths;
 
-void feed_reader(app_state *app, local_state *state);
-void feed_reader_destroy(void);
-
+void channel_reader(app_state *app, local_state *state);
+void channel_reader_destroy(void);
 
 void article_page(app_state *app, local_state *state);
 #endif

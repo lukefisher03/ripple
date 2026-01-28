@@ -2,7 +2,7 @@
 #include "../ui_utils.h"
 
 static const char *main_menu_options[] = {
-    "Feeds",
+    "Channels",
     "Preferences",
     "Feedback",
     "Exit",
@@ -24,7 +24,7 @@ void main_menu(app_state *app, local_state *state) {
     switch (ret)
     {
     case 0:
-        navigate(FEEDS_PAGE, app, (local_state){});
+        navigate(CHANNELS_PAGE, app, (local_state){});
         break;
     default:
         navigate(EXIT_PAGE, app, (local_state){});
