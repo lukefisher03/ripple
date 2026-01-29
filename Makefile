@@ -1,14 +1,16 @@
 CLANG = clang -Wall -Werror -std=gnu11 -O0 -g
 
-CFLAGS := $(shell pkg-config --cflags openssl)
-LDFLAGS := $(shell pkg-config --libs openssl)
+CFLAGS_MAIN := $(shell pkg-config --cflags openssl)
+CFLAGS_SOCK_TEST := $(shell pkg-config --cflags openssl liburiparser)
+LDFLAGS_SOCK_TEST := $(shell pkg-config --libs openssl liburiparser)
+LDFLAGS_MAIN := $(shell pkg-config --libs sqlite3)
 
 PARSER = src/parser
 
-socket_test: src/socket_test.c
-	${CLANG} ${CFLAGS} src/socket_test.c ${LDFLAGS} -o main
+http_get_rss_xml: src/http_get_rss_xml.c src/http_get_rss_xml.h
+	${CLANG} ${CFLAGS_SOCK_TEST} src/http_get_rss_xml.c src/logger.c ${LDFLAGS_SOCK_TEST} -o main
 
-run_socket_test: socket_test
+run_http_get_rss_xml: http_get_rss_xml 
 	./main
 
 MAIN_DEPS =   src/*.c \
@@ -27,8 +29,8 @@ SOURCES = 	src/*.c \
 			src/ui/*.c \
 			src/ui/pages/*.c \
 			src/channels_db/*.c
-CLANG_CMD = ${CLANG} ${CFLAGS} ${LDFLAGS} -o main ${SOURCES}
-ASAN_CLANG_CMD = ${CLANG} ${CFLAGS} ${LDFLAGS} -fsanitize=address -o main ${SOURCES}
+CLANG_CMD = ${CLANG} ${CFLAGS_MAIN} ${LDFLAGS_MAIN} -o main ${SOURCES}
+ASAN_CLANG_CMD = ${CLANG} ${CFLAGS_MAIN} ${LDFLAGS_MAIN} -fsanitize=address -o main ${SOURCES}
 
 main: ${MAIN_DEPS}
 	${CLANG_CMD}
@@ -36,10 +38,9 @@ main: ${MAIN_DEPS}
 asan_main: ${MAIN_DEPS}
 	${ASAN_CLANG_CMD}
 
-LDFLAGS := $(shell pkg-config --libs sqlite3)
 db_testing: src/channels_db/*
 	rm ripple.db || true
-	${CLANG} ${LDFLAGS} -o db_testing src/channels_db/*.c
+	${CLANG} ${LDFLAGS_MAIN} -o db_testing src/channels_db/*.c
 	./db_testing	
 
 run_main: main
