@@ -80,13 +80,12 @@ void channel_reader(app_state *app, local_state *state){
 
     offset += add_column(row + offset, COL_WIDTHS.channel_name, "CHANNEL");
     offset += add_column(row + offset, COL_WIDTHS.title, "TITLE");
-    offset += add_column(row + offset, COL_WIDTHS.author, "AUTHOR");
     offset += add_column(row + offset, COL_WIDTHS.pub_date, "DATE");
     memset(row + offset, ' ', SCREEN_WIDTH - offset);
     row[SCREEN_WIDTH] = '\0';
 
 
-    tb_printf(0, y++, TB_GREEN, 0, "CHANNEL READER");
+    write_centered(y++, TB_GREEN, 0, "ARTICLE FEED");
     tb_printf(0, y++, TB_GREEN, 0, row);
     tb_printf(0, y++, TB_GREEN, 0, thick_divider);
     free(row);
@@ -130,7 +129,6 @@ static int render_channel_article_selections(int x, int y, bool selected, const 
 
     offset += add_column(row + offset, COL_WIDTHS.channel_name, article->channel_name);
     offset += add_column(row + offset, COL_WIDTHS.title, item->title);
-    offset += add_column(row + offset, COL_WIDTHS.author, item->author);
     char formatted_date[128] = "";
     unix_time_to_formatted(item->unix_timestamp, formatted_date, 128);
     offset += add_column(row + offset, COL_WIDTHS.pub_date, formatted_date);
@@ -149,6 +147,7 @@ static int render_channel_article_selections(int x, int y, bool selected, const 
 
 size_t add_column(char *row, int col_width, const char *col_str) {
     assert(row != NULL);
+    log_debug("Column width: %i", col_width);
     assert(col_width >= COL_GAP + 3);
 
     const char *src = col_str ? col_str : "None"; 
@@ -171,7 +170,6 @@ size_t add_column(char *row, int col_width, const char *col_str) {
 
 void set_channel_column_widths(channel_column_widths *widths, size_t width) {
     widths->channel_name = (int)(0.2 * width);
-    widths->title = (int)(0.5 * width);
-    widths->author = (int)(0.2 * width);
-    widths->pub_date = (int)(0.1 * width);
+    widths->title = (int)(0.6 * width);
+    widths->pub_date = (int)(0.2 * width);
 }
