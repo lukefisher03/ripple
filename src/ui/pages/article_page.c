@@ -3,14 +3,14 @@
 #include "../../logger.h"
 #include "../../utils.h"
 
-char *options[] = {
-    "Back",
-    "Home",
-    "Exit",
+char *article_options[] = {
+    "back",
+    "home",
+    "exit",
 };
 
 size_t PADDING = 10;
-size_t options_length = sizeof(options) / sizeof(options[0]);
+size_t options_length = sizeof(article_options) / sizeof(article_options[0]);
 
 void article_page(app_state *app, local_state *state) {
     int width = tb_width();
@@ -65,14 +65,14 @@ void article_page(app_state *app, local_state *state) {
     tb_printf(PADDING, y++, TB_GREEN, 0, "DESCRIPTION");
     tb_printf(PADDING, y++, TB_GREEN, 0, description);
     y += lines + 5;
-    int selection = display_basic_menu(y++, options, sizeof(char *), options_length);
+    menu_result result = display_basic_menu(y++, article_options, options_length);
 
     free(divider);
     free(description);
 
-    switch (selection) {
+    switch (result.selection) {
         case 0:
-            navigate(CHANNELS_PAGE, app, (local_state){});
+            navigate(FEED_PAGE, app, (local_state){});
             break;
         case 1:
             navigate(MAIN_PAGE, app, (local_state){});

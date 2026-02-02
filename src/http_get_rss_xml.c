@@ -231,12 +231,3 @@ static int parse_url(const char *url, host_and_path *hp) {
 
     return 0;
 }
-
-int main(int argc, char const *argv[]) {
-    log_init();
-    const char * xml = get_feed_xml("//stackoverflow.blog/feed/");
-    printf("%s\n", xml);
-    return 0;
-}
-
-

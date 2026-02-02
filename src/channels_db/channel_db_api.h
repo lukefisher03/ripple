@@ -17,8 +17,7 @@ int build_ripple_database(void);
 int store_channel_list(size_t channel_count, rss_channel **channels);
 int get_main_feed_articles(generic_list *article_list);
 int get_channel_count(sqlite3 *db);
-// int get_channels(sqlite3 *db, generic_list *list);
-// int get_feed_list(sqlite3 *db, generic_list *list);
-
+int get_channel_article_count(const rss_channel *channel, int *out_count);
+int delete_channel(rss_channel *channel);
 
 #endif

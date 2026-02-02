@@ -1,9 +1,9 @@
 CLANG = clang -Wall -Werror -std=gnu11 -O0 -g
 
-CFLAGS_MAIN := $(shell pkg-config --cflags openssl)
+CFLAGS_MAIN := $(shell pkg-config --cflags openssl liburiparser)
 CFLAGS_SOCK_TEST := $(shell pkg-config --cflags openssl liburiparser)
 LDFLAGS_SOCK_TEST := $(shell pkg-config --libs openssl liburiparser)
-LDFLAGS_MAIN := $(shell pkg-config --libs sqlite3)
+LDFLAGS_MAIN := $(shell pkg-config --libs sqlite3 openssl liburiparser)
 
 PARSER = src/parser
 
