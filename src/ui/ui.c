@@ -36,8 +36,8 @@ static page_handlers page_handlers_table[PAGE_COUNT] = {
         .create = manage_channels_page,
         .destroy = NULL,
     },
-    [CONFIRMATION_PAGE] = {
-        .create = confirmation_page,
+    [CHANNEL_PAGE] = {
+        .create = channel_page,
         .destroy = NULL,
     },
 };

@@ -3,7 +3,7 @@
 #include "../../channels_db/channel_db_api.h"
 
 typedef struct article_page_state {
-    article_with_channel_name *article;
+    int article_id;
 } article_page_state;
 
 typedef struct confirmation_page_state {
@@ -12,4 +12,7 @@ typedef struct confirmation_page_state {
     size_t option_count;
 } confirmation_page_state;
 
+typedef struct channel_page_state {
+    int channel_id;
+} channel_page_state;
 #endif

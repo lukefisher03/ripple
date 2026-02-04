@@ -29,31 +29,32 @@ void article_page(app_state *app, local_state *state) {
 
     // TODO: Cleanup this part and the state transition stuff
     article_page_state article_state = state->article_state;
-    rss_item *item = article_state.article->item;
-    char *channel_title = article_state.article->channel_name;
+    rss_item item = {0};
+    get_article(article_state.article_id, &item);
 
-    log_debug("Loaded article: %s", item->title);
+    rss_channel chan = {0};
+    get_channel(item.channel_id, &chan);
 
     int y = 5;
-    tb_printf(PADDING, y++, TB_GREEN, 0, item->title);
+    tb_printf(PADDING, y++, TB_GREEN, 0, item.title);
     tb_printf(PADDING, y++, TB_GREEN, 0, divider);
-    tb_printf(PADDING, y++, TB_GREEN, 0, channel_title);
-    tb_printf(PADDING, y++, TB_GREEN, 0, item->link);
+    tb_printf(PADDING, y++, TB_GREEN, 0, chan.title);
+    tb_printf(PADDING, y++, TB_GREEN, 0, item.link);
     char formatted_time[128];
-    unix_time_to_formatted(item->unix_timestamp, formatted_time, 128);
+    unix_time_to_formatted(item.unix_timestamp, formatted_time, 128);
     tb_printf(PADDING, y++, TB_GREEN, 0, formatted_time);
     y += 5;
 
-    size_t description_length = strlen(item->description);
+    size_t description_length = strlen(item.description);
     size_t lines = 0;
     size_t d_len = 0;
 
     char *description = malloc(description_length + height);
 
     for (size_t i = 0; i <= description_length; i++) {
-        char ch = item->description[i];
+        char ch = item.description[i];
         if (ch != '\n') {
-            description[d_len++] = item->description[i];
+            description[d_len++] = item.description[i];
         }
         if (d_len % width == 0) {
             description[d_len++] = '\n';
@@ -72,7 +73,7 @@ void article_page(app_state *app, local_state *state) {
 
     switch (result.selection) {
         case 0:
-            navigate(FEED_PAGE, app, (local_state){});
+            navigate(app->previous_page.type, app, app->previous_page.state);
             break;
         case 1:
             navigate(MAIN_PAGE, app, (local_state){});

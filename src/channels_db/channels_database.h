@@ -5,6 +5,8 @@
 #include <sqlite3.h>
 
 int create_channel_table(sqlite3 *db, char **err_msg);
+int read_channel_from_stmt(sqlite3_stmt *stmt, rss_channel *channel);
+int read_article_from_stmt(sqlite3_stmt *stmt, rss_item *item);
 int create_article_table(sqlite3 *db, char **err_msg);
 int create_metadata_table(sqlite3 *db, char **err_msg);
 

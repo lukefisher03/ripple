@@ -1,7 +1,9 @@
 #include "channels_database.h"
+#include "../logger.h"
 
 #include <sqlite3.h>
 #include <stdio.h>
+#include <string.h>
 
 int create_channel_table(sqlite3 *db, char **err_msg) {
     if (!db) return 1;
@@ -51,52 +53,43 @@ int create_article_table(sqlite3 *db, char **err_msg) {
 }
 
 int store_article(sqlite3 *db, const rss_item *item, const rss_channel *channel) {
+    log_debug("Storing new article: %s", item->title);
     if (!item || !db) {
         return 1;
     }
 
-    const char *insert_article_sql = "INSERT INTO article(title, author, description, link, channel_id, unix_timestamp) VALUES (?, ?, ?, ?, ?, ?);";
+    const char *insert_article_sql = "INSERT INTO article(title, author, description, link, unix_timestamp, channel_id) VALUES (?, ?, ?, ?, ?, ?);";
     sqlite3_stmt *stmt = NULL;
-    int result;
+    int result = 1;
 
     result = sqlite3_prepare_v2(db, insert_article_sql, -1, &stmt, NULL);
-    if (result != SQLITE_OK) {
-        fprintf(stderr, "Error storing article (during prep): %s\n", sqlite3_errmsg(db));
-        goto cleanup;
-    }
+    if (result != SQLITE_OK) goto cleanup;
 
     int argument_idx = 1;
 
     result = sqlite3_bind_text(stmt, argument_idx++, item->title, -1, SQLITE_TRANSIENT);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
     result = sqlite3_bind_text(stmt, argument_idx++, item->author, -1, SQLITE_TRANSIENT);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
     result = sqlite3_bind_text(stmt, argument_idx++, item->description, -1, SQLITE_TRANSIENT);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
     result = sqlite3_bind_text(stmt, argument_idx++, item->link, -1, SQLITE_TRANSIENT);
-    if (result != SQLITE_OK) goto bind_error;
-    result = sqlite3_bind_int(stmt, argument_idx++, channel->id);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
     result = sqlite3_bind_int(stmt, argument_idx++, item->unix_timestamp);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
+    result = sqlite3_bind_int(stmt, argument_idx++, channel->id);
+    if (result != SQLITE_OK) goto cleanup;
 
-    bind_error:
-        if (result != SQLITE_OK) {
-            fprintf(stderr, "Error storing article (during argument binding): %s\n", sqlite3_errmsg(db));
-            goto cleanup; 
-        }
-
-    if ((result = sqlite3_step(stmt)) != SQLITE_DONE) {
-        fprintf(stderr, "Error storing article (during sqlite3_step): %s\n", sqlite3_errmsg(db));
-        goto cleanup;
-    }
-
-    result = SQLITE_OK;
+    result = sqlite3_step(stmt);
 
     cleanup:
-        if (stmt != NULL) sqlite3_finalize(stmt);
-
-    return (result == SQLITE_OK) ? 0 : 1;
+        if (result != SQLITE_DONE && result != SQLITE_OK) {
+            log_debug("DB Error storing article, %s", sqlite3_errmsg(db));
+        } else {
+            result = SQLITE_OK;
+        }
+        sqlite3_finalize(stmt);
+    return result;
 }
 
 int store_channel(sqlite3 *db, const rss_channel *channel) {
@@ -109,94 +102,72 @@ int store_channel(sqlite3 *db, const rss_channel *channel) {
     int result;
 
     result = sqlite3_prepare_v2(db, insert_channel_sql, -1, &stmt, NULL);
-    if (result != SQLITE_OK) {
-        fprintf(stderr, "Error storing channel (during prep): %s\n", sqlite3_errmsg(db));
-        goto cleanup;
-    }
+    if (result != SQLITE_OK) goto cleanup;
 
     int argument_idx = 1;
      
     result = sqlite3_bind_text(stmt, argument_idx++, channel->title, -1, NULL);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
     result = sqlite3_bind_text(stmt, argument_idx++, channel->description, -1, NULL);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
     result = sqlite3_bind_text(stmt, argument_idx++, channel->language, -1, NULL);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
     result = sqlite3_bind_text(stmt, argument_idx++, channel->link, -1, NULL);
-    if (result != SQLITE_OK) goto bind_error;
+    if (result != SQLITE_OK) goto cleanup;
 
-    bind_error:
-        if (result != SQLITE_OK) {
-            fprintf(stderr, "Error storing channel (during argument binding): %s\n", sqlite3_errmsg(db));
-            goto cleanup; 
-        }
-    
     result = sqlite3_step(stmt);
 
-    if ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
-        fprintf(stderr, "Error storing channel (during sqlite3_step): %s\n", sqlite3_errmsg(db));
-        goto cleanup;
-    }
-    if (result != SQLITE_DONE) {
-        result = SQLITE_OK;
-    }
-
     cleanup:
-        if (stmt != NULL) sqlite3_finalize(stmt);
+        if (result != SQLITE_DONE && result != SQLITE_OK) {
+            log_debug("DB Error failed to store channel, %s, %d", sqlite3_errmsg(db), result);
+        } else {
+            result = SQLITE_OK;
+        }
+        sqlite3_finalize(stmt);
 
-    return (result == SQLITE_OK) ? 0 : 1;
+    return result;
 }
 
-// int main(int argc, char *argv[]) {
-//     sqlite3 *db = NULL;
-//     int err = sqlite3_open("dev.db", &db);
+int read_channel_from_stmt(sqlite3_stmt *stmt, rss_channel *channel) {
+    int arg_idx = 0;
 
-//     if (err) {
-//         fprintf(stderr, "Could not open DB\n");
-//         return 1;
-//     } else {
-//         printf("Database opened\n");
-//     }
+    channel->id = sqlite3_column_int(stmt, arg_idx++);
 
-//     char *err_msg = NULL;
-//     int result;
-//     result = sqlite3_exec(db, "PRAGMA foreign_keys = ON;", NULL, NULL, &err_msg);
-//     printf("Result 0 %s\n", err_msg);
-//     result = create_channel_table(db, &err_msg);
-//     printf("Result 1 %i\n", result);
-//     result = create_article_table(db, &err_msg);
-//     printf("Result 2 %i\n", result);
+    const unsigned char *title = sqlite3_column_text(stmt, arg_idx++);
+    channel->title = title ? strdup((const char *)title) : NULL;
 
-//     rss_channel channel = {
-//         .description = "Channel description",
-//         .id = 1,
-//         .items = NULL,
-//         .language = "english",
-//         .last_build_date = "last build date",
-//         .link = "https://thisisachannellink.com",
-//         .title = "Lukie Pookie Channel",
-//     };
+    const unsigned char *description = sqlite3_column_text(stmt, arg_idx++);
+    channel->description = description ? strdup((const char *)description) : NULL;
 
+    const unsigned char *language = sqlite3_column_text(stmt, arg_idx++);
+    channel->language = language ? strdup((const char *)language) : NULL;
 
-//     rss_item item = {
-//         .author = "My author",
-//         .description = "my description.",
-//         .title = "This is the title",
-//         .unix_timestamp = 1235929,
-//         .link = "https://thisisalink.com",
-//         .channel = &channel,
-//     };
+    const unsigned char *link = sqlite3_column_text(stmt, arg_idx++);
+    channel->link = link ? strdup((const char *)link) : NULL;
 
-//     store_channel(db, &channel);
-//     store_article(db, &item);
-//     result = store_article(db, &item);
-//     printf("RESULT: %i\n", result);
+    channel->last_updated = sqlite3_column_int(stmt, arg_idx++);
 
-//     if (sqlite3_exec(db, "select * from article", &simple_callback, NULL, &err_msg) != SQLITE_OK) {
-//         fprintf(stderr, "Error getting columns: %s", err_msg);
-//     }
+    return arg_idx;
+}
 
-//     sqlite3_close(db);
-//     printf("Database closed\n");
-//     return 0;
-// }
+int read_article_from_stmt(sqlite3_stmt *stmt, rss_item *item) {
+    int arg_idx = 0;
+
+    item->id = sqlite3_column_int(stmt, arg_idx++);
+    
+    const unsigned char* title = sqlite3_column_text(stmt, arg_idx++);
+    item->title = title ? strdup((const char *)title) : NULL;
+
+    const unsigned char* author = sqlite3_column_text(stmt, arg_idx++);
+    item->author = author ? strdup((const char *)author) : NULL;
+    
+    const unsigned char* description = sqlite3_column_text(stmt, arg_idx++);
+    item->description = description ? strdup((const char *)description) : NULL;
+
+    const unsigned char* link = sqlite3_column_text(stmt, arg_idx++);
+    item->link = link ? strdup((const char *)link) : NULL;
+    
+    item->unix_timestamp = sqlite3_column_int(stmt, arg_idx++);
+    item->channel_id = sqlite3_column_int(stmt, arg_idx++);
+    return arg_idx;
+}

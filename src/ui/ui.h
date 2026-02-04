@@ -3,7 +3,7 @@
 
 #include "../list.h"
 #include "../parser/xml_rss.h"
-#include "pages/states.h"
+#include "pages/local_states.h"
 #include <stdbool.h>
 
 typedef enum page_type {
@@ -11,7 +11,7 @@ typedef enum page_type {
     MAIN_PAGE,
     FEED_PAGE,
     CHANNELS_PAGE,
-    CONFIRMATION_PAGE,
+    CHANNEL_PAGE,
     PREFERENCES_PAGE,
     ARTICLE_PAGE,
 } page_type;
@@ -39,7 +39,7 @@ typedef struct local_state {
     union {
        // different local state structs 
        article_page_state article_state;
-       confirmation_page_state confirmation_state;
+       channel_page_state channel_state;
     };
 } local_state;
 

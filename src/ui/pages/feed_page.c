@@ -1,4 +1,3 @@
-// TODO: This should just be the "feed" page. There will be a distinc channels page.
 #include "handlers.h"
 #include "../ui_utils.h"
 #include "../../utils.h"
@@ -14,7 +13,6 @@ static feed_column_widths COL_WIDTHS;
 static void set_feed_page_column_widths(feed_column_widths *widths, size_t width);
 static int render_feed_article_selections(int x, int y, bool selected, const void *it);
 size_t add_column(char *row, int col_width, const char *col_str);
-// static void write_column(char *dest, const char *src, size_t max_width);
 
 static char *row; 
 extern char *thick_divider;
@@ -64,30 +62,16 @@ void main_feed(app_state *app, local_state *state){
 
     menu_result result = display_menu(y, items->elements, sizeof(article_with_channel_name *), items->count, &render_feed_article_selections);
     article_with_channel_name *selected_item = items->elements[result.selection];
+    int selected_article_id = selected_item->item->channel_id;
 
     list_free(items);
 
     navigate(ARTICLE_PAGE, app, (local_state){
         .page = ARTICLE_PAGE,
         .article_state = {
-            .article = selected_item,
+            .article_id = selected_article_id,
         },
     });
-}
-
-int compare_item_timestamps(const void *it1, const void *it2) {
-    // Performs comparison in reverse to make the latest articles
-    // appear first.
-    rss_item *item1 = *(rss_item **)it1;
-    rss_item *item2 = *(rss_item **)it2;
-
-    // Start by comparing unix timestamps
-    if (item1->unix_timestamp > item2->unix_timestamp)
-        return -1;
-    if (item1->unix_timestamp < item2->unix_timestamp)
-        return 1;
-
-    return -strcmp(item1->title, item2->title);
 }
 
 static int render_feed_article_selections(int x, int y, bool selected, const void *it) {
@@ -98,7 +82,6 @@ static int render_feed_article_selections(int x, int y, bool selected, const voi
     set_feed_page_column_widths(&COL_WIDTHS, SCREEN_WIDTH);
 
     size_t offset = 0;
-
     offset += add_column(row + offset, COL_WIDTHS.channel_name, article->channel_name);
     offset += add_column(row + offset, COL_WIDTHS.title, item->title);
     char formatted_date[128] = "";

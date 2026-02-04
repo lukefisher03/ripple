@@ -37,7 +37,6 @@ void manage_channels_page(app_state *app, local_state *state) {
         rss_channel *chan = channel_list->elements[i];
         int article_count = 0;
         get_channel_article_count(chan, &article_count);
-        log_debug("Lookint at element %d %d", i, channel_list->count);
         channel_with_extras *new_chan = malloc(sizeof(*new_chan));
         new_chan->chan = chan;
         new_chan->article_count = article_count;
@@ -58,14 +57,24 @@ void manage_channels_page(app_state *app, local_state *state) {
     tb_printf(0, y++, TB_GREEN, 0, thick_divider);
 
     menu_result result = display_menu(y, channels_with_extras, sizeof(channel_with_extras *), channel_list->count, &render_channel_list);
+    rss_channel *selected_channel = channel_list->elements[result.selection];
+    char *selected_channel_title = strdup(selected_channel->title);
+    int selected_channel_id = selected_channel->id;
+
+    for (size_t i = 0; i < channel_list->count; i++) {
+        free_channel(channel_list->elements[i]);
+    }
+    list_free(channel_list);
+
     tb_present();
 
     switch (result.ev.ch)
     {
     case 'd': {
-        rss_channel *selected_channel = channel_list->elements[result.selection];
         char msg[CONFIRMATION_MSG_SIZE];
-        size_t chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "Are you sure you wish to delete channel, %s?", selected_channel->title);
+        size_t chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "Are you sure you wish to delete channel, %s?", selected_channel_title);
+        free(selected_channel_title);
+
         if (chars_written >= CONFIRMATION_MSG_SIZE) {
             memcpy(msg + CONFIRMATION_MSG_SIZE - 4, "...", 3);
             msg[CONFIRMATION_MSG_SIZE - 1] = '\0';
@@ -75,15 +84,20 @@ void manage_channels_page(app_state *app, local_state *state) {
         menu_result result = display_confirmation_menu(msg, options, 2);
         
         if (result.selection == 1) {
-            int result = delete_channel(selected_channel);
-            if (result != 0) {
-                log_debug("Failed to delete channel %s", selected_channel->title);
-            }
+            // TODO: Should probably do some error handling here
+            delete_channel(selected_channel_id);
         }
         break;
     }
-    default:
+    case 'b':
         navigate(MAIN_PAGE, app, (local_state){});
+        break;
+    default:
+        navigate(CHANNEL_PAGE, app, (local_state){
+            .channel_state = {
+                .channel_id = selected_channel_id,
+            },
+        });
         break;
     }
 

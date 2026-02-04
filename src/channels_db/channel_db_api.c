@@ -4,7 +4,7 @@
 #include <sqlite3.h>
 #include <stdio.h>
 #include <string.h>
-
+// TODO: Refactor error handling and database closing here.
 int db_open(sqlite3 **db) {
     char *err_msg = NULL;
     int result = 1;
@@ -51,299 +51,314 @@ int get_channel_id(sqlite3 *db, const rss_channel *channel) {
     char *select_statement_str = "SELECT id FROM channel WHERE link = ? LIMIT 1;";
 
     result = sqlite3_prepare_v2(db, select_statement_str, -1, &stmt, NULL);
-    if (result != SQLITE_OK) {
-        fprintf(stderr, "Error: could not get channel id (prep error) - %s\n", sqlite3_errmsg(db));
-        goto cleanup;
-    }
+    if (result != SQLITE_OK) goto cleanup;
 
     result = sqlite3_bind_text(stmt, 1, channel->link, -1, NULL);
-    if (result != SQLITE_OK) {
-        fprintf(stderr, "Error: could not bind argument to SQL statement (binding error) - %s\n", sqlite3_errmsg(db));
-        goto cleanup;
-    }
+    if (result != SQLITE_OK) goto cleanup;
 
     result = sqlite3_step(stmt);
-    if (result != SQLITE_ROW) {
-        fprintf(stderr, "Error: SQL statement to get channel id failed - %s\n", sqlite3_errmsg(db));
-        goto cleanup;
-    }
+    if (result != SQLITE_ROW) goto cleanup;
+    result = SQLITE_OK;
 
     id = sqlite3_column_int(stmt, 0);
 
     cleanup:
-        if (stmt != NULL) sqlite3_finalize(stmt);
-       
+        if (result != SQLITE_DONE && result != SQLITE_OK) {
+            log_debug("DB Error getting channel id, %s", sqlite3_errmsg(db));
+        } 
+
+        sqlite3_finalize(stmt);
     return id;
-    
 }
 
 int store_channel_list(size_t channel_count, rss_channel **channels) {
+    log_debug("Storing channel list");
     sqlite3 *db = NULL;
     int result = 1;
 
     result = db_open(&db);
-    if (result != SQLITE_OK) {
-        fprintf(stderr, "Error storing channel list\n");
-        return result;
-    }
+    if (result != SQLITE_OK) goto cleanup;
     
     for (size_t i = 0; i < channel_count; i++) {
+        log_debug("Adding channel");
         rss_channel *chan = channels[i];
         result = store_channel(db, chan);
 
         if (result != SQLITE_OK) {
-            fprintf(stderr, "Error storing channel: %s\n", chan->title);
+            log_debug("SKIPPING CHANNEL");
             continue;
         }
 
         int channel_id = get_channel_id(db, chan);
         if (channel_id < 1) {
+            log_debug("SKIPPING CHANNEL 2");
             continue;
         }
 
         chan->id = channel_id;
-        log_debug("Channel '%s' id: %i", chan->title, chan->id);
         for (size_t j = 0; j < chan->items->count; j++) {
+            log_debug("Adding article");
             rss_item *item = chan->items->elements[j];
             result = store_article(db, item, chan);
             if (result != SQLITE_OK && result != SQLITE_CONSTRAINT_UNIQUE) {
-                fprintf(stderr, "Error storing article: %s\n", item->title);
+                log_debug("SKIPPING CHANNEL 3 %d", result);
+                goto cleanup;
             }
         }
     }
-
-    return (result != SQLITE_OK || result != SQLITE_CONSTRAINT_UNIQUE);
+cleanup:
+    sqlite3_close(db);
+    return result;
 }
-
-int get_channel_count(sqlite3 *db) {
-    sqlite3_stmt *stmt = NULL; 
-    int count = -1;
-    const char *stmt_str = "SELECT COUNT(*) FROM channel;";
-    if (sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL) != SQLITE_OK) {
-        fprintf(stderr, "Could not retrieve row count for the channel table: %s\n", sqlite3_errmsg(db));
-        return -1;
-    }
-
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        count = sqlite3_column_int(stmt, 0);
-    }
-
-    sqlite3_finalize(stmt);
-    return count;
-}
-
-int get_total_article_count(sqlite3 *db) {
-    sqlite3_stmt *stmt = NULL; 
-    int count = -1;
-    const char *stmt_str = "SELECT COUNT(*) FROM article;";
-    if (sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL) != SQLITE_OK) {
-        fprintf(stderr, "Could not retrieve row count for the article table: %s\n", sqlite3_errmsg(db));
-        return -1;
-    }
-
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        count = sqlite3_column_int(stmt, 0);
-    }
-
-    sqlite3_finalize(stmt);
-    return count;
-}
-
+        
 int get_channel_list(generic_list *article_list) {
     sqlite3_stmt *stmt = NULL;
     sqlite3 *db = NULL;
-    int result = SQLITE_OK;
+    int result = 1;
 
     result = db_open(&db);
-    if (result != SQLITE_OK) {
-        fprintf(stderr, "Error connecting to database: %s\n", sqlite3_errmsg(db));
-        return result;
-    }; 
+    if (result != SQLITE_OK) goto cleanup;
 
     const char *stmt_str = "SELECT * FROM channel ORDER BY title DESC;";
 
-    if (sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL) != SQLITE_OK) {
-        log_debug("Failed to collect channels");
-        sqlite3_close(db);
-        return 1;
-    }
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
 
     while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
         rss_channel *chan = malloc(sizeof(*chan));
         if (!chan) {
-            log_debug("Could not allocate space to store channel");
-            return 1;
+            log_debug("Failed memory allocation");
+            goto cleanup;
         }
         
-        int arg_idx = 0;
-
-        chan->id = sqlite3_column_int(stmt, arg_idx++);
-
-        const unsigned char *title = sqlite3_column_text(stmt, arg_idx++);
-        chan->title = title ? strdup((const char *)title) : NULL;
-        
-        const unsigned char *description = sqlite3_column_text(stmt, arg_idx++);
-        chan->description = description ? strdup((const char *)description) : NULL;
-
-        const unsigned char *language = sqlite3_column_text(stmt, arg_idx++);
-        chan->language = language ? strdup((const char *)language) : NULL;
-
-        const unsigned char *link = sqlite3_column_text(stmt, arg_idx++);
-        chan->link = link ? strdup((const char *)link) : NULL;
-
-        chan->last_updated = sqlite3_column_int(stmt, arg_idx++);
-
+        read_channel_from_stmt(stmt, chan);
         list_append(article_list, chan);
     }
 
-    return 0;
+cleanup: 
+    if (result != SQLITE_DONE && result != SQLITE_OK) {
+        log_debug("DB Error getting channel list, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
 
+    return result;
 }
 
 int get_channel_article_count(const rss_channel *channel, int *out_count) {
-    if (!channel) {
-        log_debug("Cannot get article count for NULL channel");
+    if (!channel || !out_count) {
         return -1;
     }
     sqlite3_stmt *stmt = NULL;
     sqlite3 *db = NULL;
-    int result = SQLITE_OK;
+    int result = -1;
 
     result = db_open(&db);
-    if (result != SQLITE_OK) {
-        fprintf(stderr, "Error connecting to database %s\n", sqlite3_errmsg(db));
-        return result;
-    }
+    if (result != SQLITE_OK) goto cleanup;
+    
 
     int id = get_channel_id(db, channel);
     if (id < 1) {
-        log_debug("Failed to get channel id for %s", channel->title);
-        return -1;
+        goto cleanup;
     }
 
     const char *stmt_str = "SELECT COUNT(*) FROM article WHERE channel_id=?;";
-    sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, id);
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
+    
+
+    result = sqlite3_bind_int(stmt, 1, id);
+    if (result != SQLITE_OK) goto cleanup;
 
     if ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
         int val = sqlite3_column_int(stmt, 0);
-        log_debug("Got article count for %s (id=%i): %d", channel->title, id, val);
         *out_count = val;
     } else {
-        log_debug("Failed to get channel id for %s: %s %i", channel->title, sqlite3_errmsg(db), result);
+        goto cleanup;
     }
+    result = SQLITE_OK;
 
+cleanup:
+    if (result != SQLITE_DONE && result != SQLITE_OK) {
+        log_debug("DB Error getting channel article count, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
     sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
     return result;
 }
 
 int get_main_feed_articles(generic_list *article_list) {
     sqlite3_stmt *stmt = NULL;
     sqlite3 *db = NULL;
-    int result = SQLITE_OK;    
+    int result = 1;    
 
     result = db_open(&db);
-    if (result != SQLITE_OK) {
-        fprintf(stderr, "Error connecting to database: %s\n", sqlite3_errmsg(db));
-        return result;
-    }; 
+    if (result != SQLITE_OK) goto cleanup;
 
-    const char *stmt_str = "SELECT a.id AS article_id, a.title AS article_title, a.author, a.description, a.unix_timestamp, a.link, c.id AS channel_id, c.title AS channel_title"
+    const char *stmt_str = "SELECT a.id AS article_id, a.title AS article_title, a.author, a.description, a.link, a.unix_timestamp, c.id AS channel_id, c.title AS channel_title"
                             " FROM article AS a JOIN channel AS c"
                             " ON a.channel_id=c.id"
                             " ORDER BY a.unix_timestamp DESC;";
 
-    if (sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL) != SQLITE_OK) {
-        fprintf(stderr, "Error retrieving feed articles: %s\n", sqlite3_errmsg(db));
-    }
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
 
     while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
         int argument_idx = 0;
 
         article_with_channel_name *article = malloc(sizeof(*article));
         if (!article) {
-            fprintf(stderr, "Failed memory allocation for article\n");
-            return 1;
+            log_debug("Failed memory allocation");
+            goto cleanup;
         }
 
         rss_item *item = malloc(sizeof(*item));
         if (!item) {
-            fprintf(stderr, "Failed memory allocation for item\n");
-            return 1;
+            log_debug("Failed memory allocation");
+            goto cleanup;
         }
 
-        item->id = sqlite3_column_int(stmt, argument_idx++);
-
-        const unsigned char *title = sqlite3_column_text(stmt, argument_idx++);
-        item->title = title ? strdup((const char *)title) : NULL;
-        
-        const unsigned char *author = sqlite3_column_text(stmt, argument_idx++);
-        item->author = author ? strdup((const char *)author) : NULL;         
-
-        const unsigned char *description = sqlite3_column_text(stmt, argument_idx++);
-        item->description = description ? strdup((const char *)description) : NULL; 
-
-        item->unix_timestamp = sqlite3_column_int(stmt, argument_idx++);
-
-        const unsigned char *link = sqlite3_column_text(stmt, argument_idx++);
-        item->link = link ? strdup((const char *)link) : NULL; 
-
-        item->channel_id = sqlite3_column_int(stmt, argument_idx++);
-
+        argument_idx += read_article_from_stmt(stmt, item); 
         const unsigned char *channel_title = sqlite3_column_text(stmt, argument_idx++);
         article->channel_name = channel_title ? strdup((const char *)channel_title) : NULL;
 
         article->item = item;
         list_append(article_list, article);
     }
- 
-    if(sqlite3_finalize(stmt) != SQLITE_OK) {
-        fprintf(stderr, "Error finalizing statement for getting all articles.");
-    }
 
-    if (result != SQLITE_DONE) {
-        fprintf(stderr, "Error converting statement to channel: %s\n", sqlite3_errmsg(db));
-        return 1;
-    }
+    if (result != SQLITE_DONE) goto cleanup;
 
+cleanup: 
+    if (result != SQLITE_DONE && result != SQLITE_OK) {
+        log_debug("Error getting feed articles, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
     return 0;
 }
 
-int delete_channel(rss_channel *channel) {
-    sqlite3 *db;
-    sqlite3_stmt *stmt;
+int get_channel_articles(rss_channel *channel, generic_list *out_list) {
+    sqlite3 *db = NULL;
+    sqlite3_stmt *stmt = NULL;
 
     int result = 1;
-    if ((result = db_open(&db)) != SQLITE_OK) {
-        log_debug("Failed to open db to delete channel %s", channel->title);
-        return 1;
-    }
+    if ((result = db_open(&db)) != SQLITE_OK) goto cleanup;
 
     int channel_id = get_channel_id(db, channel);
+    const char *stmt_str = "SELECT * FROM article WHERE channel_id=?;";
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
+
+    result = sqlite3_bind_int(stmt, 1, channel_id);
+    if (result != SQLITE_OK) goto cleanup;
+
+    while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
+        rss_item *article = malloc(sizeof(*article));
+        read_article_from_stmt(stmt, article);
+        list_append(out_list, article);
+    }
+    if (result != SQLITE_DONE) goto cleanup;
+
+cleanup:
+    if (result != SQLITE_DONE && result != SQLITE_OK) {
+        log_debug("Error getting channel articles, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return 0;
+}
+
+int get_channel(int channel_id, rss_channel *channel) {
+    sqlite3 *db = NULL;
+    sqlite3_stmt *stmt = NULL;
+
+    int result = 1;
+    if ((result = db_open(&db)) != SQLITE_OK) goto cleanup;
+
+    const char *stmt_str = "SELECT * FROM channel WHERE id=?;";
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
+
+    result = sqlite3_bind_int(stmt, 1, channel_id);
+    if (result != SQLITE_OK) goto cleanup;
+
+    while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
+        read_channel_from_stmt(stmt, channel);
+    }
+
+cleanup:
+    if (result != SQLITE_DONE && result != SQLITE_OK) {
+        log_debug("DB Error getting channel, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return result;
+}
+
+int get_article(int article_id, rss_item *article) {
+    sqlite3 *db = NULL;
+    sqlite3_stmt *stmt = NULL;
+
+    int result = 1;
+    if ((result = db_open(&db)) != SQLITE_OK) goto cleanup;
+
+    const char *stmt_str = "SELECT * FROM article WHERE id=?;";
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
+
+    result = sqlite3_bind_int(stmt, 1, article_id);
+    if (result != SQLITE_OK) goto cleanup;
+
+    while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
+        read_article_from_stmt(stmt, article);
+    }
+
+cleanup:
+    if (result != SQLITE_DONE && result != SQLITE_OK) {
+        log_debug("DB Error getting article, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return result;
+}
+
+int delete_channel(int channel_id) {
+    sqlite3 *db = NULL;
+    sqlite3_stmt *stmt = NULL;
+
+    int result = 1;
+    if ((result = db_open(&db)) != SQLITE_OK) goto cleanup;
+
     const char *stmt_str = "DELETE FROM channel WHERE id=?;";
 
     result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
-    if (result != SQLITE_OK) {
-        log_debug("Failed to prepare statement for deleting channel %s", sqlite3_errmsg(db));
-        return 1;
-    }
+    if (result != SQLITE_OK) goto cleanup;
 
     result = sqlite3_bind_int(stmt, 1, channel_id);
-    if (result != SQLITE_OK) {
-        log_debug("Failed to bind int to delete statement %s", sqlite3_errmsg(db));
-        return 1;
-    }
+    if (result != SQLITE_OK) goto cleanup;
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
-        log_debug("Failed to delete channel %s", sqlite3_errmsg(db));
-        return 1;
-    }
+    if ((result = sqlite3_step(stmt)) != SQLITE_DONE) goto cleanup;
 
+cleanup:
+    if (result != SQLITE_DONE && result != SQLITE_OK) {
+        log_debug("DB Error deleting channel, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
     sqlite3_finalize(stmt);
-    return 0; 
-}
-
-void free_article_with_channel_name(article_with_channel_name *article) {
-    free_item(article->item);
-    free(article->channel_name);
+    sqlite3_close(db);
+    return result; 
 }

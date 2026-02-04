@@ -477,9 +477,13 @@ void free_channel(rss_channel *c) {
     free(c->language);
     free(c->link);
 
-    for (size_t i = 0; i < c->items->count; i++) {
-        rss_item *it = c->items->elements[i];
-        free_item(it);
+    // TODO: Make separate objects for DB representation and parser representation.
+    // DB will never return the list of items.
+    if (c->items) {
+        for (size_t i = 0; i < c->items->count; i++) {
+            rss_item *it = c->items->elements[i];
+            free_item(it);
+        }
     }
     free(c);
 }

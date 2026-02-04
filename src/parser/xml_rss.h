@@ -48,7 +48,7 @@ typedef struct rss_item {
 enum container_type {
     CHANNEL,
     ITEM,
-    // IMG, // Not going to worry about this for now. TODO: Add image support
+    // IMG, // Not going to worry about this for now. TODO: Add image support?
 };
 
 typedef struct rss_container {
