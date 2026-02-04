@@ -41,7 +41,22 @@ void channel_page(app_state *app, local_state *state) {
     generic_list *article_list = list_init();
     get_channel_articles(&channel, article_list);
 
-    menu_result result = display_menu(y, article_list->elements, sizeof(rss_item *), article_list->count, &render_article_list);
+    int nav_help_offset = 3;
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'b', "BACK");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'h', "HOME");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'E', "EXIT");
+
+    menu_config config = {
+        .y = y,
+        .options = article_list->elements,
+        .option_size = sizeof(rss_item*),
+        .option_count = article_list->count,
+        .renderer = &render_article_list,
+        .valid_input_list = "hbE",
+        .valid_input_count = 3,
+    };
+
+    menu_result result = display_menu(config);
 
     rss_item *selected_article = article_list->elements[result.selection];
     int selected_article_id = selected_article->id;
@@ -57,6 +72,9 @@ void channel_page(app_state *app, local_state *state) {
             break;
         case 'b':
             navigate(CHANNELS_PAGE, app, (local_state){});
+            break;
+        case 'E':
+            navigate(EXIT_PAGE, app, (local_state){});
             break;
         default: {
             navigate(ARTICLE_PAGE, app, (local_state){

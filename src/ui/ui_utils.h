@@ -10,17 +10,22 @@
 typedef struct app_state app_state;
 typedef int (*option_renderer)(int, int, bool, const void *);
 
+typedef struct menu_config {
+    int                 y;
+    const void          *options;
+    size_t              option_size;
+    int                 option_count;
+    option_renderer     renderer;
+    char                *valid_input_list;
+    int                 valid_input_count;
+} menu_config;
+
 typedef struct menu_result {
     int             selection;
     struct tb_event ev;
 } menu_result;
 
-menu_result display_menu(int y, 
-                 const void *options, 
-                 size_t option_size,
-                 int option_count, 
-                 option_renderer render_selection
-                );
+menu_result display_menu(menu_config config);
 
 menu_result display_basic_menu(int y, 
                        const void *options, 
@@ -30,7 +35,8 @@ menu_result display_basic_menu(int y,
 menu_result display_confirmation_menu(const char *msg, char **options, int option_count);
 
 int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text);
-int display_logo(int x, int y, uintattr_t fg, uintattr_t bg);
+int print_logo(int x, int y, uintattr_t fg, uintattr_t bg);
 size_t add_column(char *row, int col_width, const char *col_str);
 void reset_dividers(void);
+int print_navigation_help(int x, int y, char key, char *instruction);
 #endif

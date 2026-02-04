@@ -56,7 +56,22 @@ void manage_channels_page(app_state *app, local_state *state) {
     tb_printf(0, y++, TB_GREEN, 0, row);
     tb_printf(0, y++, TB_GREEN, 0, thick_divider);
 
-    menu_result result = display_menu(y, channels_with_extras, sizeof(channel_with_extras *), channel_list->count, &render_channel_list);
+    int nav_help_offset = 3;
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'b', "BACK");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'D', "DELETE CHANNEL");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'E', "EXIT");
+
+    menu_config config = {
+        .y = y,
+        .options = channels_with_extras,
+        .option_size = sizeof(channel_with_extras*),
+        .option_count = channel_list->count,
+        .renderer = &render_channel_list,
+        .valid_input_list = "DbE",
+        .valid_input_count = 3,
+    };
+
+    menu_result result = display_menu(config);
     rss_channel *selected_channel = channel_list->elements[result.selection];
     char *selected_channel_title = strdup(selected_channel->title);
     int selected_channel_id = selected_channel->id;
@@ -68,37 +83,42 @@ void manage_channels_page(app_state *app, local_state *state) {
 
     tb_present();
 
-    switch (result.ev.ch)
-    {
-    case 'd': {
-        char msg[CONFIRMATION_MSG_SIZE];
-        size_t chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "Are you sure you wish to delete channel, %s?", selected_channel_title);
-        free(selected_channel_title);
+    switch (result.ev.ch) {
+        case 'D': {
+            char msg[CONFIRMATION_MSG_SIZE];
+            size_t chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "Are you sure you wish to delete channel, %s?", selected_channel_title);
+            free(selected_channel_title);
 
-        if (chars_written >= CONFIRMATION_MSG_SIZE) {
-            memcpy(msg + CONFIRMATION_MSG_SIZE - 4, "...", 3);
-            msg[CONFIRMATION_MSG_SIZE - 1] = '\0';
-            log_debug("Went over!");
+            if (chars_written >= CONFIRMATION_MSG_SIZE) {
+                memcpy(msg + CONFIRMATION_MSG_SIZE - 4, "...", 3);
+                msg[CONFIRMATION_MSG_SIZE - 1] = '\0';
+                log_debug("Went over!");
+            }
+            char *options[] = {"no", "yes"};
+            menu_result result = display_confirmation_menu(msg, options, 2);
+            
+            if (result.selection == 1) {
+                // TODO: Should probably do some error handling here
+                delete_channel(selected_channel_id);
+            }
+            break;
         }
-        char *options[] = {"no", "yes"};
-        menu_result result = display_confirmation_menu(msg, options, 2);
-        
-        if (result.selection == 1) {
-            // TODO: Should probably do some error handling here
-            delete_channel(selected_channel_id);
-        }
-        break;
+        case 'b':
+            navigate(MAIN_PAGE, app, (local_state){});
+            break;
+        case 'E':
+            navigate(EXIT_PAGE, app, (local_state){});
+            break;
+        default:
+            break;
     }
-    case 'b':
-        navigate(MAIN_PAGE, app, (local_state){});
-        break;
-    default:
+
+    if (result.ev.key == TB_KEY_ENTER) {
         navigate(CHANNEL_PAGE, app, (local_state){
             .channel_state = {
                 .channel_id = selected_channel_id,
             },
         });
-        break;
     }
 
 }
