@@ -3,13 +3,15 @@
 
 #include "../list.h"
 #include "../parser/xml_rss.h"
-#include "pages/states.h"
+#include "pages/local_states.h"
 #include <stdbool.h>
 
 typedef enum page_type {
     EXIT_PAGE,
     MAIN_PAGE,
-    FEEDS_PAGE,
+    FEED_PAGE,
+    CHANNELS_PAGE,
+    CHANNEL_PAGE,
     PREFERENCES_PAGE,
     ARTICLE_PAGE,
 } page_type;
@@ -37,6 +39,7 @@ typedef struct local_state {
     union {
        // different local state structs 
        article_page_state article_state;
+       channel_page_state channel_state;
     };
 } local_state;
 
@@ -58,6 +61,7 @@ typedef struct page {
 
 typedef struct app_state {
     page                current_page;
+    page                previous_page;
     rss_channel         **channel_list;
     size_t              channel_count;
     app_configuration   config;

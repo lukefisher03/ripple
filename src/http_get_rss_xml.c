@@ -1,3 +1,6 @@
+#include "http_get_rss_xml.h"
+#include "logger.h"
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <arpa/inet.h>
@@ -5,7 +8,15 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <uriparser/Uri.h>
 #include <netdb.h>
+
+typedef struct host_and_path {
+    char *host;
+    char *path;
+} host_and_path;
+
+static int parse_url(const char *url, host_and_path *hp);
 
 struct  ssl_connection {
     SSL_CTX  *ctx; // SSL context
@@ -13,7 +24,7 @@ struct  ssl_connection {
     int       sfd; // Attached file descriptor
 };
 
-struct ssl_connection *_ssl_connect(struct addrinfo *results, const char *host) {
+static struct ssl_connection *_ssl_connect(struct addrinfo *results, const char *host) {
     struct addrinfo *result_pointer = results; // Hold the results from getaddrinfo
     int socket_file_descriptor; // Socket file descriptor
 
@@ -34,7 +45,7 @@ struct ssl_connection *_ssl_connect(struct addrinfo *results, const char *host) 
 
     SSL_CTX *ctx = SSL_CTX_new(TLS_client_method());
     if (!ctx) {
-        fprintf(stderr, "SSL_CTX_new failed!\n");
+        log_debug("SSL_CTX_new failed!");
         close(socket_file_descriptor);
         return NULL;
     }
@@ -46,8 +57,8 @@ struct ssl_connection *_ssl_connect(struct addrinfo *results, const char *host) 
     int e;
     if ((e = SSL_connect(ssl)) <= 0) {
         e = SSL_get_error(ssl, e);
-        printf("TLS Handshake failed! %d\n", e);
-        printf("%s\n", ERR_error_string(e, NULL));
+        log_debug("TLS Handshake failed! %d\n", e);
+        log_debug("ERR: %s", ERR_error_string(e, NULL));
         close(socket_file_descriptor);
         return NULL;
     }
@@ -55,7 +66,7 @@ struct ssl_connection *_ssl_connect(struct addrinfo *results, const char *host) 
     struct ssl_connection *ssl_items = malloc(sizeof(*ssl_items));
     
     if (!ssl_items) {
-        printf("Failed to allocate SSL connection struct!\n");
+        log_debug("Failed to allocate SSL connection struct!\n");
         return NULL;
     }
     
@@ -66,12 +77,12 @@ struct ssl_connection *_ssl_connect(struct addrinfo *results, const char *host) 
     return ssl_items;
 }
 
-char * request_rss_xml(struct ssl_connection *ssl_items, const char * host, const char * path) {
+static char * request_rss_xml(struct ssl_connection *ssl_items, const char * host, const char * path) {
     size_t bytes_read = 0;
     size_t cap = 64000;
 
     char *response = malloc(cap);
-    char request[1024];
+    char request[1024]; // TODO: Investigate if this is the proper size for this buffer
 
     snprintf(request, sizeof(request), 
                 "GET %s HTTP/1.1\r\n"
@@ -87,7 +98,7 @@ char * request_rss_xml(struct ssl_connection *ssl_items, const char * host, cons
     int ret_code;
     if ((ret_code = SSL_write(ssl_items->ssl, request, strlen(request))) <= 0) {
         int error_code = SSL_get_error(ssl_items->ssl, ret_code);
-        printf("Could not send get request! %s\n", ERR_error_string(error_code, NULL));
+        log_debug("Could not send get request! %s\n", ERR_error_string(error_code, NULL));
         return NULL;
     }
 
@@ -95,7 +106,7 @@ char * request_rss_xml(struct ssl_connection *ssl_items, const char * host, cons
     while((bytes = SSL_read(ssl_items->ssl, response + bytes_read, cap - bytes_read - 1)) > 0) {
         if (bytes <= 0) {
             int error_code = SSL_get_error(ssl_items->ssl, bytes);
-            printf("Encountered an error when reading response, %s\n", ERR_error_string(error_code, NULL));
+            log_debug("Encountered an error when reading response, %s\n", ERR_error_string(error_code, NULL));
             return NULL;
         }
         bytes_read += bytes;
@@ -105,7 +116,7 @@ char * request_rss_xml(struct ssl_connection *ssl_items, const char * host, cons
             if (tmp) {
                 response = tmp;
             } else {
-                printf("Memory error, failed to allocate new space for response.\n");
+                log_debug("Memory error, failed to allocate new space for response.\n");
                 free(response);
                 return NULL;
             }
@@ -116,10 +127,16 @@ char * request_rss_xml(struct ssl_connection *ssl_items, const char * host, cons
     return response;
 }
 
-char * get_feed_xml(const char *host, const char *path) {
-    int                 sfd, s; // Socket file descriptor and status variable for getaddrinfo.
+char * get_feed_xml(char *url) {
+    host_and_path hp;
+    if (parse_url(url, &hp) != 0) {
+        log_debug("Failed to parse url, skipping");
+        return NULL;
+    }
+    log_debug("%s, %s", hp.host, hp.path);
+    int                 s; // Socket file descriptor and status variable for getaddrinfo.
     struct addrinfo     hints; // Narrow down results of getaddrinfo.
-    struct addrinfo     *results, *rp;  // Pointer to head of linked list in which getaddrinfo will
+    struct addrinfo     *results;  // Pointer to head of linked list in which getaddrinfo will
                                         // store the returned results. `rp` is a pointer to traverse
                                         // the list.
     
@@ -134,64 +151,83 @@ char * get_feed_xml(const char *host, const char *path) {
     hints.ai_protocol = 0;
 
     // Run getaddrinfo with the "http" service
-    s = getaddrinfo(host, "https", &hints, &results);
+    s = getaddrinfo(hp.host, "https", &hints, &results);
 
     if (s != 0) {
         fprintf(stderr, "getaddrinfo error: %d %s\n", s, gai_strerror(s));
         return NULL;
     }
 
-    struct ssl_connection *ssl = _ssl_connect(results, host);
+    struct ssl_connection *ssl = _ssl_connect(results, hp.host);
     freeaddrinfo(results);
-    char * rss = request_rss_xml(ssl, host, path);
+    char * rss = request_rss_xml(ssl, hp.host, hp.path);
    
     SSL_shutdown(ssl->ssl);
     SSL_free(ssl->ssl);
     SSL_CTX_free(ssl->ctx);
     close(ssl->sfd);
     free(ssl);
+    if (!rss) {
+        log_debug("Failed to get RSS XML for feed url: %s", hp.host);
+    }
     return rss;
 }
 
-// Get RSS feeds, written in C Sockets
-void print_returned_addresses(struct addrinfo *results, FILE *stream) {
-    if (stream == NULL) 
-        stream = stdout;
+void free_host_and_path(host_and_path *hp) {
+    free(hp->host);
+    free(hp->path);
 
-    struct addrinfo *rp = results;
-    size_t i = 0;
-    
-    if (rp == NULL) {
-        fprintf(stream, "Linked list is empty\n");
-        return;
-    }
-
-    // Iterate through all the returned results
-    while (rp != NULL) {
-        i++;
-        char host[1024];
-        void *addr;
-        fprintf(stream, "Result %lu\n", i);
-        if (rp->ai_family == AF_INET) {
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)rp->ai_addr;
-            addr = &(ipv4->sin_addr);
-            fprintf(stream, "Protocol: IPv4\n");
-        } else if (rp->ai_family == AF_INET6) {
-            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6*)rp->ai_addr;
-            addr = &(ipv6->sin6_addr);
-            fprintf(stream, "Protocol: IPv6\n");
-        }
-        fprintf(stream, "Address: %s\n", inet_ntop(rp->ai_family, addr, host, sizeof(host)));
-        fprintf(stream, "---------------------------------------------------\n");
-        rp = rp->ai_next;
-    }
+    hp->host = NULL;
+    hp->path = NULL;
 }
 
+static char *cp_range_to_buffer(UriTextRangeA *rng, size_t max_len) {
+    if (!rng) return NULL;
+    size_t len = (size_t)(rng->afterLast - rng->first);
+    log_debug("Host len: %lu", len);
+    if (len > max_len) {
+        log_debug("Url domain is too long");
+        return NULL;
+    } 
 
-int main(int argc, char const *argv[]) {
-    const char * xml = get_feed_xml("stackoverflow.blog", "/feed/");
-    printf("%s\n", xml);
+    char *buf = malloc(len + 1);
+    if (!buf) {
+        log_debug("Failed to allocate space for url host");
+        return NULL;
+    }
+
+    memcpy(buf, rng->first, len);
+    buf[len] = '\0';
+    return buf;
+}
+
+static int parse_url(const char *url, host_and_path *hp) {
+    if (!url) return 1;
+
+    UriUriA uri;
+    const char *errorPos; 
+    
+    if (uriParseSingleUriA(&uri, url, &errorPos) != URI_SUCCESS) {
+        log_debug("Failed to parse uri: %s", url);
+        log_debug("Error: %s", errorPos);
+        return 1;
+    }
+    if (!uri.hostText.first) {
+        log_debug("Couldn't parse url, missing scheme (https, http) - %s", url);
+        uriFreeUriMembersA(&uri);
+        return 1;
+    }
+    hp->host = cp_range_to_buffer(&uri.hostText, MAX_DOMAIN_LEN);
+    hp->path = malloc(MAX_PATH_LEN);
+    int ret = snprintf(hp->path, MAX_PATH_LEN, "%s", uri.hostText.afterLast); 
+
+    if (!hp->host || ret < 0 || ret >= MAX_PATH_LEN) {
+        log_debug("Failed to parse url - %s\n", url);
+        free_host_and_path(hp);
+        uriFreeUriMembersA(&uri);
+        return 1;
+    }
+    log_debug("%s", hp->host); 
+
     return 0;
 }
-
-

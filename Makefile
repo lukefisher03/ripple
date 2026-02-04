@@ -1,31 +1,50 @@
-CLANG = clang -std=gnu11 -O0 -g
+CLANG = clang -Wall -Werror -std=gnu11 -O0 -g
 
-CFLAGS := $(shell pkg-config --cflags openssl)
-LDFLAGS := $(shell pkg-config --libs libssl libcrypto)
+CFLAGS_MAIN := $(shell pkg-config --cflags openssl liburiparser)
+CFLAGS_SOCK_TEST := $(shell pkg-config --cflags openssl liburiparser)
+LDFLAGS_SOCK_TEST := $(shell pkg-config --libs openssl liburiparser)
+LDFLAGS_MAIN := $(shell pkg-config --libs sqlite3 openssl liburiparser)
 
 PARSER = src/parser
 
-socket_test: src/socket_test.c
-	${CLANG} ${CFLAGS} src/socket_test.c ${LDFLAGS} -o main
+http_get_rss_xml: src/http_get_rss_xml.c src/http_get_rss_xml.h
+	${CLANG} ${CFLAGS_SOCK_TEST} src/http_get_rss_xml.c src/logger.c ${LDFLAGS_SOCK_TEST} -o main
 
-run_socket_test: socket_test
+run_http_get_rss_xml: http_get_rss_xml 
 	./main
 
-CFLAGS := $(shell pkg-config --cflags readline)
-LDFLAGS := $(shell pkg-config --libs readline)
+MAIN_DEPS =   src/*.c \
+			  src/*.h \
+			  src/channels_db/*.c \
+			  src/channels_db/*.h \
+			  src/parser/*.c \
+			  src/parser/*.h \
+			  src/ui/*.c \
+			  src/ui/*.h \
+			  src/ui/pages/*.c \
+			  src/ui/pages/*.h
 
-main: src/main.c \
-	  src/logger.c src/logger.h \
-	  src/utils.c \
-	  src/utils.h \
-	  src/list.h src/list.c \
-	  src/ui/*.h src/ui/*.c \
-	  src/ui/pages/*.h src/ui/pages/*.c \
-	  ${PARSER}/xml_rss.h ${PARSER}/xml_rss.c \
-	  ${PARSER}/node.h ${PARSER}/node.c \
-	  src/arena.h src/arena.c
+SOURCES = 	src/*.c \
+			${PARSER}/*.c \
+			src/ui/*.c \
+			src/ui/pages/*.c \
+			src/channels_db/*.c
+CLANG_CMD = ${CLANG} ${CFLAGS_MAIN} ${LDFLAGS_MAIN} -o main ${SOURCES}
+ASAN_CLANG_CMD = ${CLANG} ${CFLAGS_MAIN} ${LDFLAGS_MAIN} -fsanitize=address -o main ${SOURCES}
 
-	${CLANG} ${CFLAGS} ${LDFLAGS} -o main src/main.c src/logger.c src/utils.c ${PARSER}/*.c src/list.c src/ui/*.c src/ui/pages/*.c src/arena.c
+main: ${MAIN_DEPS}
+	${CLANG_CMD}
+
+asan_main: ${MAIN_DEPS}
+	${ASAN_CLANG_CMD}
+
+db_testing: src/channels_db/*
+	rm ripple.db || true
+	${CLANG} ${LDFLAGS_MAIN} -o db_testing src/channels_db/*.c
+	./db_testing	
 
 run_main: main
+	rm ripple.db || true
+	./main
+run_main_asan: asan_main
 	./main

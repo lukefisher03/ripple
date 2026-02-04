@@ -1,14 +1,14 @@
 #include "handlers.h"
 #include "../ui_utils.h"
+#include "../../logger.h"
 
 static const char *main_menu_options[] = {
-    "Feeds",
-    "Preferences",
-    "Feedback",
-    "Exit",
+    "feed",
+    "channels",
+    "preferences",
+    "feedback",
+    "exit",
 };
-
-static int render_basic_menu(int x, int y, bool selected, const void *txt);
 
 void main_menu(app_state *app, local_state *state) {
     (void) app;
@@ -20,13 +20,17 @@ void main_menu(app_state *app, local_state *state) {
     
     write_centered(y + 8, TB_GREEN, 0, "Made by Luke Fisher");
 
-    int ret = display_basic_menu(y, main_menu_options, sizeof(char *), 4);
-
+    int option_count = sizeof(main_menu_options) / sizeof(main_menu_options[0]);
+    menu_result result = display_basic_menu(y, main_menu_options, option_count);
+    
     // Switch to transition to the other pages
-    switch (ret)
+    switch (result.selection)
     {
     case 0:
-        navigate(FEEDS_PAGE, app, (local_state){});
+        navigate(FEED_PAGE, app, (local_state){});
+        break;
+    case 1:
+        navigate(CHANNELS_PAGE, app, (local_state){});
         break;
     default:
         navigate(EXIT_PAGE, app, (local_state){});

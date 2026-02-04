@@ -70,37 +70,7 @@ char *file_to_string(const char *path, size_t *size) {
     return str;
 }
 
-bool sstartswith(const char *prefix, const char *str, size_t str_length) {
-    /*  Prefix compare - Given some prefix and a string to compare it against, 
-        check if the string starts with the prefix  */
-
-    if (!strlen(prefix)) return true; // A zero length prefix always returns true.
-    if (!str_length) return false; // If the prefix is non-zero and the string is 0, return false.
-    
-    for (size_t i = 0; i < strlen(prefix) && i < str_length; i++) {
-        if (prefix[i] != str[i]) {
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-bool sstartswith_fast(const char *prefix, size_t prefix_length, const char *str, size_t str_length) {
-    /* Prefix compare fast - Same as prefix compare, except with no calls to O(n) strlen. 
-       Use for comparing larger strings where the cost of O(n) is too high. */
-
-    if (!prefix_length) return true; // A zero length prefix always returns true.
-    if (!str_length) return false; // If the prefix is non-zero and the string is 0, return false.
-    
-    for (size_t i = 0; i < prefix_length && i < str_length; i++) {
-        if (prefix[i] != str[i]) {
-            return false;
-        }
-    }
-    
-    return true;
-}
+// ------ Convert RFC 822 timestamps to tm structs ------ //
 
 bool rfc_822_to_tm(char *timestamp, struct tm *tm) {
     // All variants of the RFC 822 date format
@@ -125,3 +95,23 @@ bool rfc_822_to_tm(char *timestamp, struct tm *tm) {
 
     return false;
 }
+
+int unix_time_to_formatted(int64_t unix_timestamp, char *str, size_t buf_len) {
+    if (!str || buf_len < 21) {
+        return 1;
+    }
+
+    struct tm tm_local = {0};
+    // TODO: This conversion is dangerous on legacy systems, but it might not
+    // really be that important. Just noting it.
+    time_t converted_timestamp = (time_t)unix_timestamp;
+    if (!localtime_r(&converted_timestamp, &tm_local)) {
+        return 1;
+    }
+
+    if (!strftime(str, buf_len, "%b %e, %Y %R", &tm_local)) {
+        return 1;
+    }
+
+    return 0;
+} 

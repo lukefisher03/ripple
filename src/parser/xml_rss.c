@@ -2,6 +2,9 @@
 #include "../utils.h"
 #include "../logger.h"
 
+// This is only temporary, eventually there will be an http api between these two components
+#include "../channels_db/channel_db_api.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -20,7 +23,6 @@ static xml_entity xml_entities[] = {
     {.ch = '"', .s = "&quot;"},
     {.ch = '\'', .s = "&#x27;"},
     {.ch = '\'', .s = "&apos;"},
-
 };
 
 // ======== Forward declarations ======== //
@@ -65,7 +67,7 @@ bool read_tag(const char *str, size_t length, Tag *t) {
 xml_entity *replace_entity(const char *str) {
     size_t entity_count = sizeof(xml_entities) / sizeof(xml_entities[0]);
     for (size_t i = 0; i < entity_count; i++) {
-        if (sstartswith(xml_entities[i].s, str, strlen(xml_entities[i].s))) {
+        if (strncmp(xml_entities[i].s, str, strlen(xml_entities[i].s)) == 0) {
             return &xml_entities[i];
         }
     }
@@ -86,7 +88,7 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     bool entity_replacement_enabled = true;
     // Detect the terminating part of the content
     const char *end_str = "<";
-    if (sstartswith("<![CDATA[", str, length)) {
+    if (!strncmp(str, "<![CDATA[", strlen("<![CDATA["))) {
         i += 9;
         end_str = "]]>";
         total_length += 3;
@@ -95,7 +97,8 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
 
     // Get the total length of the string
     size_t j = i;
-    for (; j < length && !sstartswith(end_str, str+j, length - j); j++);
+    size_t end_str_len = strlen(end_str);
+    for (; j < length && strncmp(str + j, end_str, end_str_len); j++);
 
     size_t content_length = 0;
     total_length += j;
@@ -130,11 +133,16 @@ ssize_t skip_comment(const char *str, size_t length) {
     // the comment `-->` and return the number of characters the comment
     // is. 
     if (!str) return TRSS_ERR;
+    if (!strncmp(str, "<!--", strlen("<!--"))) {
 
+    }
     ssize_t i = 0;
-    for (; i < length && !sstartswith("-->", str + i, length - i); i++);
+    for (; i < length && strncmp(str + i, "-->", 3); i++);
+    if (i == length) {
+        return TRSS_ERR;
+    }
     // Skip over the comment termination sequence.
-    return i + 4;
+    return i + 3;
 }
 
 rss_node *construct_parse_tree(const char *xml, size_t length) {
@@ -142,6 +150,8 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
 
     rss_node *root = xml_node_init();
     generic_list *stack = list_init();
+
+    int err = TRSS_OK;
     list_append(stack, root);
 
     size_t i = 0;
@@ -154,12 +164,11 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
         const char *s = xml + i;
         size_t l = length - i;
         
-        if (sstartswith("<", s, l) && !sstartswith("<!", s, l) && !sstartswith("<?", s, l)) {
+        if (!strncmp(s, "<", 1) && strncmp(s, "<!", 2) && strncmp(s, "<?", 2)) {
             Tag new_tag;
             if (read_tag(s, l, &new_tag)) { 
                 if (new_tag.tag_type == TAG_OPEN) {
                     rss_node *top = list_peek(stack); 
-
                     rss_node *node = xml_node_init(); 
                     node->xml.name = strndup(new_tag.name, strlen(new_tag.name));
                     free(new_tag.name);
@@ -167,24 +176,25 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
                     list_append(stack, node);
 
                 } else if (new_tag.tag_type == TAG_CLOSE) {
-                    rss_node *v = list_pop(stack);
+                    list_pop(stack);
                 }
 
                 i += new_tag.total_length;
             }
-        } else if (sstartswith("<!--", s, l)) {
+        } else if (!strncmp(s, "<!--", 3)) {
             ssize_t comment_length = skip_comment(s, l);
             if (comment_length != TRSS_ERR) {
                 i += comment_length;
             } else {
-                // fprintf(stderr, "Error skipping comment...\n");
+                log_debug("Unterminated comment found when parsing");
+                err = TRSS_ERR;
+                break;
             }
         }else {
             rss_node *t_node = text_node_init();
             ssize_t text_length = accumulate_text(s, l, t_node);
 
             if (text_length < 1) {
-                // fprintf(stderr, "Error processing text node!\n");
                 i++;
                 continue;
             } 
@@ -195,6 +205,10 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
         }
     }
 
+    free(stack);
+    if (err != TRSS_OK) {
+        return NULL;
+    }
     root->type = ROOT_NODE;
     root->xml.name = strdup("ROOT");
     return root;
@@ -203,7 +217,6 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
 void print_parse_tree(const rss_node *root, int depth) {
     // Recursive function for printing out an indented version of a
     // parse tree 
-
     if (!root) {
         return;
     }
@@ -256,13 +269,12 @@ int process_node(rss_container *c, const rss_node *n) {
         } else if (!strcmp(node_name, "link")) {
             item->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "pubDate")) {
-            item->pub_date_rfc822 = strdup(text_node->text);
+            char *pub_date_rfc822 = strdup(text_node->text);
             struct tm tm = {0};
-            if (rfc_822_to_tm(item->pub_date_rfc822, &tm)) {
-                strftime(item->pub_date_string, MAX_RSS_ITEM_DATE_LEN, "%a, %D", &tm);
-                item->pub_date_unix = timegm(&tm);
+            if (rfc_822_to_tm(pub_date_rfc822, &tm)) {
+                item->unix_timestamp = timegm(&tm);
             } else {
-                log_debug("Could not parse publish date string: %s, skipping", item->pub_date_rfc822);
+                log_debug("Could not parse publish date string: %s, skipping", pub_date_rfc822);
             }
             
         } else if (!strcmp(node_name, "description")) {
@@ -274,8 +286,6 @@ int process_node(rss_container *c, const rss_node *n) {
         rss_channel *channel = c->channel;
         if (!strcmp(node_name, "title")) {
            channel->title = strdup(text_node->text);
-        } else if (!strcmp(node_name, "lastBuildDate")) {
-           channel->last_build_date = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
            channel->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "description")) {
@@ -318,8 +328,7 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
             case XML_NODE:
                 if (!strcmp(node->xml.name,"item")) {
                     rss_container *new_item = container_init(ITEM);
-                    new_item->item->channel = chan;
-                    rss_container *parent = list_peek(container_stack);
+                    new_item->item->channel_id = chan->id;
                     list_append(chan->items, new_item->item);
                     list_append(container_stack, new_item);
 
@@ -373,10 +382,10 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
     return true;
 }
 
-rss_channel **load_channels(char *files[], size_t size) {
+int load_channels(char *files[], size_t size) {
     rss_channel **channel_list = calloc(size, sizeof(*channel_list));
     if (!channel_list) {
-        return NULL;
+        return 0;
     }
 
     for (size_t i = 0; i < size; i++) {
@@ -389,7 +398,7 @@ rss_channel **load_channels(char *files[], size_t size) {
         free_tree(tree);
     }
 
-    return channel_list;
+    return store_channel_list(size, channel_list);
 }
 
 // ======== Initializers ======== //
@@ -459,7 +468,6 @@ void free_item(rss_item *it) {
     free(it->author);
     free(it->guid);
     free(it->link);
-    free(it->pub_date_rfc822);
     free(it);
 }
 
@@ -467,12 +475,15 @@ void free_channel(rss_channel *c) {
     free(c->description);
     free(c->title);
     free(c->language);
-    free(c->last_build_date);
     free(c->link);
 
-    for (size_t i = 0; i < c->items->count; i++) {
-        rss_item *it = c->items->elements[i];
-        free_item(it);
+    // TODO: Make separate objects for DB representation and parser representation.
+    // DB will never return the list of items.
+    if (c->items) {
+        for (size_t i = 0; i < c->items->count; i++) {
+            rss_item *it = c->items->elements[i];
+            free_item(it);
+        }
     }
     free(c);
 }
