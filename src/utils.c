@@ -10,7 +10,7 @@ char *file_to_string(const char *path, size_t *size) {
     
     fptr = fopen(path, "rb");
     if (!fptr) {
-        fprintf(stderr, "Could not open file! %s\n", path);
+        log_debug("Could not open file! %s\n", path);
         return NULL;
     }
 
@@ -19,7 +19,7 @@ char *file_to_string(const char *path, size_t *size) {
 
     str = malloc(capacity);
     if (!str) {
-        fprintf(stderr, "Could not allocate space to hold file %s\n", path);
+        log_debug("Could not allocate space to hold file %s\n", path);
         fclose(fptr);
         return NULL;
     }
@@ -28,7 +28,7 @@ char *file_to_string(const char *path, size_t *size) {
     while (1) {
         if (buf_sz + CHUNK_SIZE >= MAX_FILE_SIZE - 1) {
             // Exit if the file goes over MAX_FILE_SIZE. (Minus 1 for null terminator)
-            fprintf(stderr, "File is too big. Must be smaller than %i bytes\n", MAX_FILE_SIZE);
+            log_debug("File is too big. Must be smaller than %i bytes\n", MAX_FILE_SIZE);
             fclose(fptr);
             free(str);
             return NULL;
@@ -38,7 +38,7 @@ char *file_to_string(const char *path, size_t *size) {
             capacity *= 2;
             char *tmp = realloc(str, capacity);
             if (!tmp) {
-                fprintf(stderr, "Memory allocation error!\n");
+                log_debug("Memory allocation error!\n");
                 fclose(fptr);
                 free(str);
                 return NULL;

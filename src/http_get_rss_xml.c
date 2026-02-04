@@ -17,6 +17,7 @@ typedef struct host_and_path {
 } host_and_path;
 
 static int parse_url(const char *url, host_and_path *hp);
+void free_host_and_path(host_and_path *hp);
 
 struct  ssl_connection {
     SSL_CTX  *ctx; // SSL context
@@ -133,7 +134,6 @@ char * get_feed_xml(char *url) {
         log_debug("Failed to parse url, skipping");
         return NULL;
     }
-    log_debug("%s, %s", hp.host, hp.path);
     int                 s; // Socket file descriptor and status variable for getaddrinfo.
     struct addrinfo     hints; // Narrow down results of getaddrinfo.
     struct addrinfo     *results;  // Pointer to head of linked list in which getaddrinfo will
@@ -170,15 +170,8 @@ char * get_feed_xml(char *url) {
     if (!rss) {
         log_debug("Failed to get RSS XML for feed url: %s", hp.host);
     }
+    free_host_and_path(&hp);
     return rss;
-}
-
-void free_host_and_path(host_and_path *hp) {
-    free(hp->host);
-    free(hp->path);
-
-    hp->host = NULL;
-    hp->path = NULL;
 }
 
 static char *cp_range_to_buffer(UriTextRangeA *rng, size_t max_len) {
@@ -230,4 +223,12 @@ static int parse_url(const char *url, host_and_path *hp) {
     log_debug("%s", hp->host); 
 
     return 0;
+}
+
+void free_host_and_path(host_and_path *hp) {
+    free(hp->host);
+    free(hp->path);
+
+    hp->host = NULL;
+    hp->path = NULL;
 }

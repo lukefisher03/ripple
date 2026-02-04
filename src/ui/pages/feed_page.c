@@ -62,16 +62,26 @@ void main_feed(app_state *app, local_state *state){
 
     menu_result result = display_menu(y, items->elements, sizeof(article_with_channel_name *), items->count, &render_feed_article_selections);
     article_with_channel_name *selected_item = items->elements[result.selection];
-    int selected_article_id = selected_item->item->channel_id;
+    int selected_article_id = selected_item->item->id;
 
+    for (size_t i = 0; i < items->count; i++) {
+        free_article_with_channel_name(items->elements[i]);
+    }
     list_free(items);
 
-    navigate(ARTICLE_PAGE, app, (local_state){
-        .page = ARTICLE_PAGE,
-        .article_state = {
-            .article_id = selected_article_id,
-        },
-    });
+    switch (result.ev.ch) {
+        case 'b':
+            navigate(MAIN_PAGE, app, (local_state){});
+            break;
+        default:
+            navigate(ARTICLE_PAGE, app, (local_state){
+                .page = ARTICLE_PAGE,
+                .article_state = {
+                    .article_id = selected_article_id,
+                },
+            });
+            break;
+    }
 }
 
 static int render_feed_article_selections(int x, int y, bool selected, const void *it) {

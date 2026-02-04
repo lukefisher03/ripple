@@ -132,7 +132,7 @@ static int render_basic_menu(int x, int y, bool selected, const void *txt) {
     char *selected_s = malloc(max_len); 
 
     if (!selected_s) {
-        fprintf(stderr, "Memory allocation failed for rendering selection.\n");
+        log_debug("Failed memory allocation");
         return 0;
     } 
 

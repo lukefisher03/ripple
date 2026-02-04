@@ -55,6 +55,9 @@ void channel_page(app_state *app, local_state *state) {
         case 'h':
             navigate(MAIN_PAGE, app, (local_state){});
             break;
+        case 'b':
+            navigate(CHANNELS_PAGE, app, (local_state){});
+            break;
         default: {
             navigate(ARTICLE_PAGE, app, (local_state){
                 .article_state = {
