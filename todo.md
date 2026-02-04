@@ -10,3 +10,5 @@
 - Unify the error handling
 - Maybe refactor some of the column handling?
 - Refactor makefile
+- Make more things const
+- Add some better comments / documentation at the beginning of files

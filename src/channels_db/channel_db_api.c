@@ -80,28 +80,23 @@ int store_channel_list(size_t channel_count, rss_channel **channels) {
     if (result != SQLITE_OK) goto cleanup;
     
     for (size_t i = 0; i < channel_count; i++) {
-        log_debug("Adding channel");
         rss_channel *chan = channels[i];
         result = store_channel(db, chan);
 
         if (result != SQLITE_OK) {
-            log_debug("SKIPPING CHANNEL");
             continue;
         }
 
         int channel_id = get_channel_id(db, chan);
         if (channel_id < 1) {
-            log_debug("SKIPPING CHANNEL 2");
             continue;
         }
 
         chan->id = channel_id;
         for (size_t j = 0; j < chan->items->count; j++) {
-            log_debug("Adding article");
             rss_item *item = chan->items->elements[j];
             result = store_article(db, item, chan);
             if (result != SQLITE_OK && result != SQLITE_CONSTRAINT_UNIQUE) {
-                log_debug("SKIPPING CHANNEL 3 %d", result);
                 goto cleanup;
             }
         }
@@ -252,7 +247,7 @@ int get_channel_articles(rss_channel *channel, generic_list *out_list) {
     if ((result = db_open(&db)) != SQLITE_OK) goto cleanup;
 
     int channel_id = get_channel_id(db, channel);
-    const char *stmt_str = "SELECT * FROM article WHERE channel_id=?;";
+    const char *stmt_str = "SELECT * FROM article WHERE channel_id=? ORDER BY unix_timestamp DESC;";
     result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
     if (result != SQLITE_OK) goto cleanup;
 
@@ -322,6 +317,8 @@ int get_article(int article_id, rss_item *article) {
 
     while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
         read_article_from_stmt(stmt, article);
+        log_debug("Article title: %s", article->title);
+        log_debug("Article timestamp %d", article->unix_timestamp);
     }
 
 cleanup:
@@ -361,4 +358,9 @@ cleanup:
     sqlite3_finalize(stmt);
     sqlite3_close(db);
     return result; 
+}
+
+void free_article_with_channel_name(article_with_channel_name *article) {
+    free_item(article->item);
+    free(article->channel_name);
 }

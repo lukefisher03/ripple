@@ -17,6 +17,9 @@
 static char *files[] = {
     "test_feeds/stack_overflow.xml",
     "test_feeds/smart_less.xml",
+    "test_feeds/ben_hoyt.xml",
+    "test_feeds/hacker_news.xml",
+    "test_feeds/the_guardian.xml",
 };
 
 static page_handlers page_handlers_table[PAGE_COUNT] = {

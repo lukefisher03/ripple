@@ -53,7 +53,6 @@ int create_article_table(sqlite3 *db, char **err_msg) {
 }
 
 int store_article(sqlite3 *db, const rss_item *item, const rss_channel *channel) {
-    log_debug("Storing new article: %s", item->title);
     if (!item || !db) {
         return 1;
     }

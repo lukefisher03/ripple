@@ -9,8 +9,12 @@ char *article_options[] = {
     "exit",
 };
 
+extern char *thin_divider;
+
 size_t PADDING = 10;
 size_t options_length = sizeof(article_options) / sizeof(article_options[0]);
+
+char *format_description(char *description, int width, int *lines);
 
 void article_page(app_state *app, local_state *state) {
     int width = tb_width();
@@ -21,16 +25,16 @@ void article_page(app_state *app, local_state *state) {
         PADDING = 0;
     }
 
-    char *divider = malloc(width + 1);
-    memset(divider, '-', width);
+    char *divider = calloc(width + 1, sizeof(char));
+    memcpy(divider, thin_divider, width);
     divider[width] = '\0';
-
-    int height = tb_height();
 
     // TODO: Cleanup this part and the state transition stuff
     article_page_state article_state = state->article_state;
     rss_item item = {0};
-    get_article(article_state.article_id, &item);
+    if (get_article(article_state.article_id, &item) != 0) {
+        navigate(MAIN_PAGE, app, (local_state){});
+    }
 
     rss_channel chan = {0};
     get_channel(item.channel_id, &chan);
@@ -44,27 +48,11 @@ void article_page(app_state *app, local_state *state) {
     unix_time_to_formatted(item.unix_timestamp, formatted_time, 128);
     tb_printf(PADDING, y++, TB_GREEN, 0, formatted_time);
     y += 5;
-
-    size_t description_length = strlen(item.description);
-    size_t lines = 0;
-    size_t d_len = 0;
-
-    char *description = malloc(description_length + height);
-
-    for (size_t i = 0; i <= description_length; i++) {
-        char ch = item.description[i];
-        if (ch != '\n') {
-            description[d_len++] = item.description[i];
-        }
-        if (d_len % width == 0) {
-            description[d_len++] = '\n';
-            lines += 1;
-        }
-    }
-    description[d_len] = '\0';
+    int lines = 0;
+    char *description = format_description(item.description, width, &lines);
 
     tb_printf(PADDING, y++, TB_GREEN, 0, "DESCRIPTION");
-    tb_printf(PADDING, y++, TB_GREEN, 0, description);
+    tb_printf(PADDING, y++, TB_GREEN, 0, description ? description : "No description provided");
     y += lines + 5;
     menu_result result = display_basic_menu(y++, article_options, options_length);
 
@@ -82,4 +70,31 @@ void article_page(app_state *app, local_state *state) {
             navigate(EXIT_PAGE, app, (local_state){});
             break;
     }
+}
+
+char *format_description(char *description, int width, int *lines) {
+    int height = tb_height();
+    if (!description) {
+        return NULL;
+    }
+
+    size_t description_length = strlen(description);
+    *lines = 0;
+    size_t d_len = 0;
+
+    char *formatted_description = malloc(description_length + height);
+
+    for (size_t i = 0; i <= description_length; i++) {
+        char ch = description[i];
+        if (ch != '\n') {
+            formatted_description[d_len++] = description[i];
+        }
+        if (d_len % width == 0) {
+            formatted_description[d_len++] = '\n';
+            *lines += 1;
+        }
+    }
+    description[d_len] = '\0';
+
+    return formatted_description;
 }
