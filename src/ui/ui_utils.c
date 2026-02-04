@@ -37,34 +37,29 @@ void reset_dividers() {
     thick_divider[width] = '\0';
 }
 
-menu_result display_menu(int y, 
-                 const void *options, 
-                 size_t option_size,
-                 int option_count, 
-                 option_renderer render_selection
-) 
+menu_result display_menu(menu_config config) 
 {
     // Display a menu and then return the selected option
     int cursor = 0;
-    int screen_height = tb_height();
-    int new_y = y;
+    int screen_height = tb_height() - 3;
+    int new_y = config.y;
 
     int option_height = 1;
-    int window = (screen_height - y) / option_height;
+    int window = (screen_height - config.y) / option_height;
     int offset = 0;
 
     while (1) {
         struct tb_event ev;
-        for (int i = offset; i < option_count && i < offset + window; i++) {
+        for (int i = offset; i < config.option_count && i < offset + window; i++) {
             // Convert void pointer to char * so we can do pointer arithmetic.
             // add the index multiplied by the size to increment the pointer.
-            void *option = (char *)options + (i * option_size);
+            void *option = (char *)config.options + (i * config.option_size);
 
             bool selected = i == cursor;
-            option_height = render_selection(0, new_y, selected, option);
+            option_height = config.renderer(0, new_y, selected, option);
 
             new_y += option_height;
-            window = ((screen_height - y) / option_height);
+            window = ((screen_height - config.y) / option_height);
         }
 
         tb_present();
@@ -82,20 +77,25 @@ menu_result display_menu(int y,
                 }
             }
         } else if (ev.key == TB_KEY_ARROW_DOWN || ev.ch == 'j') {
-            if (cursor < option_count - 1) {
+            if (cursor < config.option_count - 1) {
                 cursor++;
                 if (cursor >= offset + window ) {
                     offset++;
                 }
             }
         } else {
-            return (menu_result) {
-                .selection = cursor,
-                .ev = ev,
-            };
+            for (size_t i = 0; i < config.valid_input_count; i++) {
+                char ch = config.valid_input_list[i];
+                if (ch == ev.ch) {
+                    return (menu_result) {
+                        .selection = cursor,
+                        .ev = ev,
+                    };
+                }
+            }
         }
 
-        new_y = y;
+        new_y = config.y;
     }
 }
 
@@ -104,7 +104,17 @@ menu_result display_basic_menu(
                 const void *options, 
                 int option_count
 ) {
-    return display_menu(y, options, sizeof(char *), option_count, &render_basic_menu);
+    menu_config config = {
+        .y = y,
+        .options = options,
+        .option_count = option_count,
+        .option_size = sizeof(char *),
+        .renderer = &render_basic_menu,
+        .valid_input_list = NULL,
+        .valid_input_count = 0,
+    };
+    
+    return display_menu(config);
 }
 
 menu_result display_confirmation_menu(const char *msg, char **options, int option_count) {
@@ -151,7 +161,7 @@ static int render_basic_menu(int x, int y, bool selected, const void *txt) {
 }
 
 
-int display_logo(int x, int y, uintattr_t fg, uintattr_t bg) {
+int print_logo(int x, int y, uintattr_t fg, uintattr_t bg) {
     int new_y = y;
 
     tb_printf(x, new_y++, fg, bg, "    ___  _           __    "); 
@@ -162,6 +172,18 @@ int display_logo(int x, int y, uintattr_t fg, uintattr_t bg) {
 
     return new_y - y;
 }
+
+int print_navigation_help(int x, int y, char key, char *instruction) {
+    if (!instruction) {
+        log_debug("Could not print navigation help, no instruction provided");
+    }
+    tb_printf(x, y, TB_GREEN, 0, "|  ");
+    tb_printf(x + 2, y, TB_BLACK, TB_BLUE, " %c ", key);
+    tb_printf(x + 6, y, TB_GREEN, 0, "%s |", instruction);
+    
+    return strlen(instruction) + 7;
+}
+
 
 size_t add_column(char *row, int col_width, const char *col_str) {
     assert(row != NULL);

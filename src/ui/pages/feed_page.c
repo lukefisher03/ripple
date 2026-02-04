@@ -58,9 +58,23 @@ void main_feed(app_state *app, local_state *state){
     write_centered(y++, TB_GREEN, 0, "ARTICLE FEED");
     tb_printf(0, y++, TB_GREEN, 0, row);
     tb_printf(0, y++, TB_GREEN, 0, thick_divider);
+
+    int nav_help_offset = 3;
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'b', "BACK");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'E', "EXIT");
     free(row);
 
-    menu_result result = display_menu(y, items->elements, sizeof(article_with_channel_name *), items->count, &render_feed_article_selections);
+    menu_config config = {
+        .y = y,
+        .options = items->elements,
+        .option_size = sizeof(article_with_channel_name*),
+        .option_count = items->count,
+        .renderer = &render_feed_article_selections,
+        .valid_input_list = "bE",
+        .valid_input_count = 2,
+    };
+
+    menu_result result = display_menu(config);
     article_with_channel_name *selected_item = items->elements[result.selection];
     int selected_article_id = selected_item->item->id;
 
@@ -73,14 +87,20 @@ void main_feed(app_state *app, local_state *state){
         case 'b':
             navigate(MAIN_PAGE, app, (local_state){});
             break;
-        default:
-            navigate(ARTICLE_PAGE, app, (local_state){
-                .page = ARTICLE_PAGE,
-                .article_state = {
-                    .article_id = selected_article_id,
-                },
-            });
+        case 'E':
+            navigate(EXIT_PAGE, app, (local_state){});
             break;
+        default:
+           break;
+    }
+
+    if (result.ev.key == TB_KEY_ENTER) {
+        navigate(ARTICLE_PAGE, app, (local_state){
+            .page = ARTICLE_PAGE,
+            .article_state = {
+                .article_id = selected_article_id,
+            },
+        });
     }
 }
 

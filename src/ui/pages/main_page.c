@@ -15,7 +15,7 @@ void main_menu(app_state *app, local_state *state) {
     (void) state;
 
     int y = 5;
-    y += display_logo((tb_width() / 2) - 14, y, TB_WHITE, TB_BLACK);
+    y += print_logo((tb_width() / 2) - 14, y, TB_WHITE, TB_BLACK);
     y += 2;
     
     write_centered(y + 8, TB_GREEN, 0, "Made by Luke Fisher");
