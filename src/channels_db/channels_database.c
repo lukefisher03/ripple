@@ -15,10 +15,11 @@ int create_channel_table(sqlite3 *db, char **err_msg) {
                                     "description TEXT,"
                                     "language TEXT,"
                                     "link TEXT UNIQUE NOT NULL,"
+                                    "rss_link TEXT UNIQUE NOT NULL,"
                                     "last_updated INTEGER DEFAULT (unixepoch()));";
 
     int result = sqlite3_exec(db, create_feeds_table_cmd, NULL, NULL, err_msg);
-    if (result != SQLITE_OK) {
+    if (result != SQLITE_OK && result != SQLITE_CONSTRAINT_UNIQUE) {
         fprintf(stderr, "Error: Failed to create channels table - %s\n", *err_msg);
         sqlite3_free(*err_msg);
         *err_msg = NULL;
@@ -82,8 +83,8 @@ int store_article(sqlite3 *db, const rss_item *item, const rss_channel *channel)
     result = sqlite3_step(stmt);
 
     cleanup:
-        if (result != SQLITE_DONE && result != SQLITE_OK) {
-            log_debug("DB Error storing article, %s", sqlite3_errmsg(db));
+        if (result != SQLITE_DONE && result != SQLITE_OK && sqlite3_extended_errcode(db) != SQLITE_CONSTRAINT_UNIQUE) {
+            log_debug("DB Error storing article: %s, %s", item->title, sqlite3_errmsg(db));
         } else {
             result = SQLITE_OK;
         }
@@ -96,7 +97,7 @@ int store_channel(sqlite3 *db, const rss_channel *channel) {
         return 1;
     }
 
-    char *insert_channel_sql = "INSERT INTO channel(title, description, language, link) VALUES (?, ?, ?, ?);";
+    char *insert_channel_sql = "INSERT INTO channel(title, description, language, link, rss_link) VALUES (?, ?, ?, ?, ?);";
     sqlite3_stmt *stmt;
     int result;
 
@@ -113,11 +114,13 @@ int store_channel(sqlite3 *db, const rss_channel *channel) {
     if (result != SQLITE_OK) goto cleanup;
     result = sqlite3_bind_text(stmt, argument_idx++, channel->link, -1, NULL);
     if (result != SQLITE_OK) goto cleanup;
+    result = sqlite3_bind_text(stmt, argument_idx++, channel->rss_link, -1, NULL);
+    if (result != SQLITE_OK) goto cleanup;
 
     result = sqlite3_step(stmt);
 
     cleanup:
-        if (result != SQLITE_DONE && result != SQLITE_OK) {
+        if (result != SQLITE_DONE && result != SQLITE_OK && sqlite3_extended_errcode(db) != SQLITE_CONSTRAINT_UNIQUE) {
             log_debug("DB Error failed to store channel, %s, %d", sqlite3_errmsg(db), result);
         } else {
             result = SQLITE_OK;
@@ -143,6 +146,9 @@ int read_channel_from_stmt(sqlite3_stmt *stmt, rss_channel *channel) {
 
     const unsigned char *link = sqlite3_column_text(stmt, arg_idx++);
     channel->link = link ? strdup((const char *)link) : NULL;
+
+    const unsigned char *rss_link = sqlite3_column_text(stmt, arg_idx++);
+    channel->rss_link = rss_link ? strdup((const char *)rss_link) : NULL;
 
     channel->last_updated = sqlite3_column_int(stmt, arg_idx++);
 

@@ -1,5 +1,3 @@
-// Prevent redefinitions by putting this before
-// the definition of TB_IMPL
 #include "ui.h"
 #include "ui_utils.h" 
 #include "../list.h"
@@ -9,18 +7,8 @@
 
 #define TB_IMPL
 
-// Now after TB_IMPL is defined, the definitions will be included here.
 #include "../termbox2/termbox2.h"
-
 #include <string.h>
-
-static char *files[] = {
-    "test_feeds/stack_overflow.xml",
-    "test_feeds/smart_less.xml",
-    "test_feeds/ben_hoyt.xml",
-    "test_feeds/hacker_news.xml",
-    "test_feeds/the_guardian.xml",
-};
 
 static page_handlers page_handlers_table[PAGE_COUNT] = {
     [MAIN_PAGE] = {
@@ -43,21 +31,26 @@ static page_handlers page_handlers_table[PAGE_COUNT] = {
         .create = channel_page,
         .destroy = NULL,
     },
+    [IMPORT_PAGE] = {
+        .create = import_page,
+        .destroy = NULL,
+    },
+    [REFRESH_PAGE] = {
+        .create = refresh_page,
+        .destroy = NULL,
+    }
 };
 
 // ------ Main UI Call ------ //
-void ui_start() {
+void ui_start(initial_state init_state) {
     // Initialize the global app state
-    app_state app = {0};
+    app_state app = {
+        .init_state = init_state,
+    };
     app_init(&app);
 
-    if (!app.channel_list) {
-        log_debug("Loading channels");
-        app.channel_count = sizeof(files) / sizeof(files[0]);
-        load_channels(files, app.channel_count);
-    }
-
     tb_init();
+
     navigate(MAIN_PAGE, &app, (local_state){});
 
     while(app.current_page.type != EXIT_PAGE) {

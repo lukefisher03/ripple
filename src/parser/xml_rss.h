@@ -16,17 +16,18 @@ enum tag_type {
     TAG_SELF_CLOSE,
 };
 
-typedef struct Tag {
+typedef struct {
     char            *name;
     enum tag_type   tag_type;
     size_t          total_length;
-} Tag;
+} xml_tag;
 
-typedef struct rss_channel {
+typedef struct {
     int64_t         id;
     char            *title;
     char            *description;
     char            *link;
+    char            *rss_link;
     int64_t         last_updated;
     char            *language;
     generic_list     *items; // List of items
@@ -34,7 +35,7 @@ typedef struct rss_channel {
 
 #define MAX_RSS_ITEM_DATE_LEN 64
 
-typedef struct rss_item {
+typedef struct {
     int64_t         id;
     char            *title;
     char            *author;
@@ -51,7 +52,7 @@ enum container_type {
     // IMG, // Not going to worry about this for now. TODO: Add image support?
 };
 
-typedef struct rss_container {
+typedef struct {
     enum container_type     type;
     union {
         rss_item     *item;
@@ -59,14 +60,7 @@ typedef struct rss_container {
     };
 } rss_container;
 
-rss_node *construct_parse_tree(const char *xml, size_t length);
-
-void print_parse_tree(const rss_node *root, int depth);
-
-bool build_channel(rss_channel *chan, rss_node *parse_tree);
-
-// TODO: Remove load_channels in favor of the http stuff
-int load_channels(char *files[], size_t size);
+rss_channel *build_channel(char *xml_rss, size_t size, char *link);
 rss_channel *channel_init(void);
 rss_item *item_init(void);
 

@@ -5,13 +5,19 @@
 #include "../list.h"
 #include "channels_database.h"
 
-#define DB_PATH "ripple.db"
+typedef enum HOST_OS {
+    DARWIN,
+    LINUX,
+    UNSUPPORTED,
+} HOST_OS;
 
-typedef struct article_with_channel_name {
+typedef struct {
     rss_item    *item;
     char        *channel_name;
 } article_with_channel_name;
 
+void get_db_path(void);
+int get_stale_channels(time_t cutoff, generic_list *out_list);
 void free_article_with_channel_name(article_with_channel_name *article);
 int build_ripple_database(void);
 int store_channel_list(size_t channel_count, rss_channel **channels);

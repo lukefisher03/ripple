@@ -10,15 +10,15 @@ typedef enum node_type {
     DUMMY,
 } node_type;
 
-typedef struct xml_rss_node {
-    struct generic_list         *children;      // Children are strictly other nodes
+typedef struct {
+    generic_list        *children;      // Children are strictly other nodes
     char                *name;          // Name of the element.
 } xml_rss_node;
 
-typedef struct rss_node {
+typedef struct {
     enum node_type type;
     union {
-        struct xml_rss_node     xml;
+        xml_rss_node     xml;
         char                *text; // Text nodes just hold text
     };
 } rss_node;

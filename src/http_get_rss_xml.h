@@ -4,6 +4,8 @@
 #define MAX_DOMAIN_LEN 255
 #define MAX_PATH_LEN 4096
 
-char * get_feed_xml(char *url);
+#include <stdlib.h>
+
+char * get_feed_xml(char *url, size_t *size);
 
 #endif

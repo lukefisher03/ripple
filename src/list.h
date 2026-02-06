@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct generic_list {
+typedef struct {
     size_t capacity;
     size_t count;
     void **elements;

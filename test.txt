@@ -1,0 +1,5 @@
+https://benhoyt.com/writings/rss.xml       
+https://www.benshoemaker.us/rss.xml
+https://news.ycombinator.com/rss
+https://feeds.arstechnica.com/arstechnica/index/
+https://www.cultofmac.com/feed

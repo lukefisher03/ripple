@@ -14,7 +14,7 @@ extern char *blank_line;
 char *row = NULL;
 
 static void set_column_widths(channel_page_column_widths *widths, int screen_width); 
-static int render_article_list(int x, int y, bool selected, const void *article);
+static int render_article_list(renderer_params *params);
 
 void channel_page(app_state *app, local_state *state) {
     int width = tb_width();
@@ -42,12 +42,13 @@ void channel_page(app_state *app, local_state *state) {
     get_channel_articles(&channel, article_list);
 
     int nav_help_offset = 3;
-    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'b', "BACK");
-    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'h', "HOME");
-    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, 'E', "EXIT");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "b", "BACK");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "h", "HOME");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "E", "EXIT");
 
     menu_config config = {
         .y = y,
+        .x = 0,
         .options = article_list->elements,
         .option_size = sizeof(rss_item*),
         .option_count = article_list->count,
@@ -55,6 +56,9 @@ void channel_page(app_state *app, local_state *state) {
         .valid_input_list = "hbE",
         .valid_input_count = 3,
     };
+
+    // This gets overwritten if there's articles to display
+    write_centered(y + 2, TB_GREEN, 0, "no articles, start by adding a channel");
 
     menu_result result = display_menu(config);
 
@@ -94,9 +98,9 @@ static void set_column_widths(channel_page_column_widths *widths, int screen_wid
     widths->date = screen_width * 0.2;
 }
 
-static int render_article_list(int x, int y, bool selected, const void *cur_article) {
+static int render_article_list(renderer_params *params) {
     int width = tb_width();
-    rss_item *article = *(rss_item **)cur_article;
+    rss_item *article = *(rss_item **)params->option;
     
     int offset = 0;
     offset += add_column(row + offset, col_widths.title, article->title);
@@ -107,12 +111,12 @@ static int render_article_list(int x, int y, bool selected, const void *cur_arti
     memset(row + offset, ' ',width - offset);
     row[width] = '\0';
 
-    int new_y = y;
-    uintattr_t bg = selected ? TB_BLACK : 0;
+    int new_y = params->start_y;
+    uintattr_t bg = params->selected ? TB_BLACK : 0;
     tb_printf(0, new_y++, TB_GREEN, bg, blank_line);
     tb_printf(0, new_y++, TB_GREEN, bg, row);
     tb_printf(0, new_y++, TB_GREEN, bg, blank_line);
     tb_printf(0, new_y++, TB_GREEN, 0, thin_divider);
 
-    return new_y - y;
+    return new_y - params->start_y;
 }

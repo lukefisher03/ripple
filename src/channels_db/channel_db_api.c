@@ -1,14 +1,67 @@
 #include "channel_db_api.h"
 #include "../logger.h"
 
+#include <sys/types.h>
+#include <errno.h>
+#include <sys/stat.h>
 #include <sqlite3.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
+#ifdef __APPLE__ 
+    HOST_OS host_os = DARWIN;
+#elif __linux__
+    HOST_OS host_os = LINUX;
+#else
+    HOST_OS host_os = UNSUPPORTED;
+#endif
+
+#define MAX_DB_PATH_LEN 128 
+
+char DB_PATH[MAX_DB_PATH_LEN];
+
+void get_db_path(void) {
+    char *user = getlogin();
+    char db_directory[MAX_DB_PATH_LEN];
+
+    switch (host_os) {
+        case DARWIN:
+            if (snprintf(db_directory, MAX_DB_PATH_LEN, "/Users/%s/Library/Application Support/ripple_rss", user) >= MAX_DB_PATH_LEN) {
+                log_debug("Could not access database! Path is too long: %s", db_directory);
+                abort();
+            }
+            break;
+        case LINUX: 
+            if (snprintf(db_directory, MAX_DB_PATH_LEN, "/home/%s/.local/ripple_rss", user) >= MAX_DB_PATH_LEN) {
+                log_debug("Could not access database! Path is too long: %s", db_directory);
+                abort();
+            }
+            break;
+        case UNSUPPORTED:
+            log_debug("Unsupported platform!");
+            break;
+        default:
+            break;
+    }
+    
+    if (mkdir(db_directory, 0777) == -1) {
+        if (errno != EEXIST) {
+            log_debug("Error: Failed to make ripple directory at %s", db_directory);
+            abort();
+        }
+    }
+
+    if (snprintf(DB_PATH, MAX_DB_PATH_LEN, "%s/ripple.db", db_directory) >= MAX_DB_PATH_LEN) {
+        log_debug("Error: Failed to build path! %s", db_directory);
+        abort();
+    } 
+}
+
 // TODO: Refactor error handling and database closing here.
 int db_open(sqlite3 **db) {
     char *err_msg = NULL;
     int result = 1;
-
     result = sqlite3_open(DB_PATH, db);
     if (result != SQLITE_OK) {
         fprintf(stderr, "Error connecting to database: %s\n", sqlite3_errmsg(*db));
@@ -25,13 +78,14 @@ int db_open(sqlite3 **db) {
 } 
 
 int build_ripple_database(void) {
+    log_debug("Creating database tables");
     sqlite3 *db = NULL;
     char *err_msg = NULL;
     int result = 1; 
 
     result = db_open(&db);
     if (result != SQLITE_OK) {
-        fprintf(stderr, "Error storing channel list\n");
+        log_debug("Error storing channel list\n");
         return result;
     }
 
@@ -41,6 +95,10 @@ int build_ripple_database(void) {
     if (result != SQLITE_OK) goto out;
 
     out:
+        if (result != SQLITE_OK) {
+            log_debug("Failed to create database tables, %s %i", sqlite3_errmsg(db), result);
+        }
+        sqlite3_close(db);
         return result;
 }
 
@@ -96,7 +154,8 @@ int store_channel_list(size_t channel_count, rss_channel **channels) {
         for (size_t j = 0; j < chan->items->count; j++) {
             rss_item *item = chan->items->elements[j];
             result = store_article(db, item, chan);
-            if (result != SQLITE_OK && result != SQLITE_CONSTRAINT_UNIQUE) {
+            // Should processing stop here?
+            if (result != SQLITE_OK && sqlite3_extended_errcode(db) != SQLITE_CONSTRAINT_UNIQUE) {
                 goto cleanup;
             }
         }
@@ -324,6 +383,43 @@ int get_article(int article_id, rss_item *article) {
 cleanup:
     if (result != SQLITE_DONE && result != SQLITE_OK) {
         log_debug("DB Error getting article, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return result;
+}
+
+int get_stale_channels(time_t cutoff, generic_list *out_list) {
+    sqlite3 *db = NULL; 
+    sqlite3_stmt *stmt = NULL;
+
+    int result = 1;
+    if ((result = db_open(&db)) != SQLITE_OK) goto cleanup;
+
+    const char *stmt_str = "SELECT * FROM channel WHERE last_updated < ?;";
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
+
+    result = sqlite3_bind_int64(stmt, 1, (sqlite_int64)cutoff);
+    if (result != SQLITE_OK) goto cleanup;
+
+    while ((result = sqlite3_step(stmt) == SQLITE_ROW)) {
+        rss_channel *new_channel = channel_init();
+        if (!new_channel) {
+            result = SQLITE_ERROR;
+            log_debug("Failed to allocate new channel");
+            goto cleanup;
+        }
+
+        read_channel_from_stmt(stmt, new_channel);
+        list_append(out_list, new_channel);
+    }
+
+cleanup:
+    if (result != SQLITE_OK && result != SQLITE_DONE) {
+        log_debug("Error getting stale channels, %s", sqlite3_errmsg(db));
     } else {
         result = SQLITE_OK;
     }

@@ -10,7 +10,7 @@ char *thin_divider = NULL;
 char *blank_line = NULL;
 char *thick_divider = NULL;
 
-static int render_basic_menu(int x, int y, bool selected, const void *txt);
+static int render_basic_menu(renderer_params *params);
 
 void reset_dividers() {
     free(thin_divider);
@@ -56,7 +56,13 @@ menu_result display_menu(menu_config config)
             void *option = (char *)config.options + (i * config.option_size);
 
             bool selected = i == cursor;
-            option_height = config.renderer(0, new_y, selected, option);
+            option_height = config.renderer(&(renderer_params){
+                .idx = i,
+                .option = option,
+                .selected = selected,
+                .start_y = new_y,
+                .config = &config,
+            });
 
             new_y += option_height;
             window = ((screen_height - config.y) / option_height);
@@ -106,6 +112,7 @@ menu_result display_basic_menu(
 ) {
     menu_config config = {
         .y = y,
+        .x = 0,
         .options = options,
         .option_count = option_count,
         .option_size = sizeof(char *),
@@ -133,11 +140,10 @@ int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text) {
     return v;
 }
 
-static int render_basic_menu(int x, int y, bool selected, const void *txt) {
-    (void) x; // x is not used for this selection renderer
-    char *text = *(char **)txt;
+static int render_basic_menu(renderer_params *params) {
+    char *text = *(char **)params->option;
     // There's potentially a better way to do this, but this works for now
-    int new_y = y;
+    int new_y = params->start_y;
     size_t max_len = strlen(text) + 5;
     char *selected_s = malloc(max_len); 
 
@@ -146,7 +152,7 @@ static int render_basic_menu(int x, int y, bool selected, const void *txt) {
         return 0;
     } 
 
-    if (selected) {
+    if (params->selected) {
         snprintf(selected_s, max_len,"[ %s ]", text);
         for (size_t i = 0; i < max_len; i++) {
             char ch = selected_s[i];
@@ -157,7 +163,7 @@ static int render_basic_menu(int x, int y, bool selected, const void *txt) {
     }
     write_centered(new_y++, TB_GREEN, 0, selected_s);
     free(selected_s);
-    return new_y - y;
+    return new_y - params->start_y;
 }
 
 
@@ -173,15 +179,19 @@ int print_logo(int x, int y, uintattr_t fg, uintattr_t bg) {
     return new_y - y;
 }
 
-int print_navigation_help(int x, int y, char key, char *instruction) {
+int print_navigation_help(int x, int y, char *key, char *instruction) {
     if (!instruction) {
         log_debug("Could not print navigation help, no instruction provided");
     }
-    tb_printf(x, y, TB_GREEN, 0, "|  ");
-    tb_printf(x + 2, y, TB_BLACK, TB_BLUE, " %c ", key);
-    tb_printf(x + 6, y, TB_GREEN, 0, "%s |", instruction);
+    int offset = 0;
+    tb_printf(x + offset, y, TB_GREEN, 0, "| ");
+    offset += 2;
+    tb_printf(x + offset, y, TB_BLACK, TB_BLUE, " %s ", key);
+    offset += strlen(key) + 3;
+    tb_printf(x + offset, y, TB_GREEN, 0, "%s |", instruction);
+    offset += strlen(instruction) + 1;
     
-    return strlen(instruction) + 7;
+    return offset;
 }
 
 

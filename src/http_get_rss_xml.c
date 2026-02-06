@@ -11,7 +11,7 @@
 #include <uriparser/Uri.h>
 #include <netdb.h>
 
-typedef struct host_and_path {
+typedef struct {
     char *host;
     char *path;
 } host_and_path;
@@ -78,8 +78,9 @@ static struct ssl_connection *_ssl_connect(struct addrinfo *results, const char 
     return ssl_items;
 }
 
-static char * request_rss_xml(struct ssl_connection *ssl_items, const char * host, const char * path) {
+static char * request_rss_xml(struct ssl_connection *ssl_items, const char * host, const char * path, size_t *size) {
     size_t bytes_read = 0;
+    *size = 0;
     size_t cap = 64000;
 
     char *response = malloc(cap);
@@ -125,10 +126,11 @@ static char * request_rss_xml(struct ssl_connection *ssl_items, const char * hos
     }
 
     response[bytes_read] = '\0';
+    *size = bytes_read;
     return response;
 }
 
-char * get_feed_xml(char *url) {
+char * get_feed_xml(char *url, size_t *size) {
     host_and_path hp;
     if (parse_url(url, &hp) != 0) {
         log_debug("Failed to parse url, skipping");
@@ -160,7 +162,7 @@ char * get_feed_xml(char *url) {
 
     struct ssl_connection *ssl = _ssl_connect(results, hp.host);
     freeaddrinfo(results);
-    char * rss = request_rss_xml(ssl, hp.host, hp.path);
+    char * rss = request_rss_xml(ssl, hp.host, hp.path, size);
    
     SSL_shutdown(ssl->ssl);
     SSL_free(ssl->ssl);

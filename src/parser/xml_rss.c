@@ -12,7 +12,7 @@
 #define TRSS_OK 0
 #define TRSS_ERR -1
 
-typedef struct xml_entity {
+typedef struct {
     char    ch;
     char    *s;
 } xml_entity;
@@ -34,7 +34,7 @@ void free_container(rss_container *c);
 
 // ======== Build parse tree ======== //
 
-bool read_tag(const char *str, size_t length, Tag *t) {
+bool read_tag(const char *str, size_t length, xml_tag *t) {
     // Given a string starting with `<`, extract the tag name and
     // return the length of the tag.
 
@@ -165,7 +165,7 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
         size_t l = length - i;
         
         if (!strncmp(s, "<", 1) && strncmp(s, "<!", 2) && strncmp(s, "<?", 2)) {
-            Tag new_tag;
+            xml_tag new_tag;
             if (read_tag(s, l, &new_tag)) { 
                 if (new_tag.tag_type == TAG_OPEN) {
                     rss_node *top = list_peek(stack); 
@@ -303,7 +303,7 @@ int process_node(rss_container *c, const rss_node *n) {
     return TRSS_OK;
 }
 
-bool build_channel(rss_channel *chan, rss_node *root_node) {
+bool build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
     // Perform iterative DFS to build a channel from a parse tree
 
     generic_list *container_stack = list_init();
@@ -382,23 +382,13 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
     return true;
 }
 
-int load_channels(char *files[], size_t size) {
-    rss_channel **channel_list = calloc(size, sizeof(*channel_list));
-    if (!channel_list) {
-        return 0;
-    }
-
-    for (size_t i = 0; i < size; i++) {
-        size_t size;
-        char *rss = file_to_string(files[i], &size);
-        rss_node *tree = construct_parse_tree(rss, size);
-        free(rss);
-        channel_list[i] = channel_init();
-        build_channel(channel_list[i], tree);
-        free_tree(tree);
-    }
-
-    return store_channel_list(size, channel_list);
+rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
+    rss_channel *new_channel = channel_init();
+    rss_node *tree = construct_parse_tree(xml_rss, size);
+    build_channel_from_parse_tree(new_channel, tree);
+    free(tree);
+    new_channel->rss_link = strdup(link);
+    return new_channel;
 }
 
 // ======== Initializers ======== //
@@ -476,6 +466,7 @@ void free_channel(rss_channel *c) {
     free(c->title);
     free(c->language);
     free(c->link);
+    free(c->rss_link);
 
     // TODO: Make separate objects for DB representation and parser representation.
     // DB will never return the list of items.
