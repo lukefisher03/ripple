@@ -33,9 +33,15 @@ void get_db_path(void) {
             }
             break;
         case LINUX: 
-            if (snprintf(db_directory, MAX_DB_PATH_LEN, "/home/%s/.local/ripple_rss", user) >= MAX_DB_PATH_LEN) {
+            if (!user) {
+                snprintf(db_directory, MAX_DB_PATH_LEN, "/var/lib/ripple_rss");
+            } else if (snprintf(db_directory, MAX_DB_PATH_LEN, "/home/%s/.local/ripple_rss", user) >= MAX_DB_PATH_LEN) {
                 log_debug("Could not access database! Path is too long: %s", db_directory);
                 abort();
+            } 
+            
+            if (!user || snprintf(db_directory, MAX_DB_PATH_LEN, "/home/%s/.local/ripple_rss", user) >= MAX_DB_PATH_LEN) {
+                snprintf(db_directory, MAX_DB_PATH_LEN, "/home/ripple_rss");
             }
             break;
         case UNSUPPORTED:

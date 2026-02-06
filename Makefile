@@ -1,17 +1,10 @@
-CLANG = clang -Wall -Werror -std=gnu11 -O0 -g 
+TEST_IMPORT_FILE = "channel_list.txt"
+
+CLANG_DEBUG = clang -Wall -Werror -std=gnu11 -O0 -g -fsanitize=address
+CLANG_PROD = clang -Wall -Werror -std=gnu11 -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE 
 
 CFLAGS_MAIN := $(shell pkg-config --cflags openssl liburiparser)
-CFLAGS_SOCK_TEST := $(shell pkg-config --cflags openssl liburiparser)
-LDFLAGS_SOCK_TEST := $(shell pkg-config --libs openssl liburiparser)
 LDFLAGS_MAIN := $(shell pkg-config --libs sqlite3 openssl liburiparser)
-
-PARSER = src/parser
-
-http_get_rss_xml: src/http_get_rss_xml.c src/http_get_rss_xml.h
-	${CLANG} ${CFLAGS_SOCK_TEST} src/http_get_rss_xml.c src/logger.c ${LDFLAGS_SOCK_TEST} -o main
-
-run_http_get_rss_xml: http_get_rss_xml 
-	./main
 
 MAIN_DEPS =   src/*.c \
 			  src/*.h \
@@ -25,25 +18,21 @@ MAIN_DEPS =   src/*.c \
 			  src/ui/pages/*.h
 
 SOURCES = 	src/*.c \
-			${PARSER}/*.c \
+			src/parser/*.c \
 			src/ui/*.c \
 			src/ui/pages/*.c \
 			src/channels_db/*.c
-CLANG_CMD = ${CLANG} ${CFLAGS_MAIN} ${LDFLAGS_MAIN} -o main ${SOURCES}
-ASAN_CLANG_CMD = ${CLANG} ${CFLAGS_MAIN} ${LDFLAGS_MAIN} -fsanitize=address -o main ${SOURCES}
+
+MAIN_BUILD = -o main ${SOURCES} ${CFLAGS_MAIN} ${LDFLAGS_MAIN} 
 
 main: ${MAIN_DEPS}
-	${CLANG_CMD}
+	${CLANG_PROD} ${MAIN_BUILD}
 
-asan_main: ${MAIN_DEPS}
-	${ASAN_CLANG_CMD}
+debug_main: ${MAIN_DEPS}
+	${CLANG_DEBUG} ${MAIN_BUILD}
 
-db_testing: src/channels_db/*
-	rm ripple.db || true
-	${CLANG} ${LDFLAGS_MAIN} -o db_testing src/channels_db/*.c
-	./db_testing	
+test_run_main: main
+	./main $(TEST_IMPORT_FILE)
 
-run_main: main
-	./main test.txt
-run_main_asan: asan_main
-	./main test.txt
+test_debug_main: debug_main
+	./main $(TEST_IMPORT_FILE)

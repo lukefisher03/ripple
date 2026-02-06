@@ -4,6 +4,8 @@
 #include "ui.h"
 
 #include <assert.h>
+#include <stdint.h>
+#include <ctype.h>
 
 int COL_GAP = 3;
 char *thin_divider = NULL;
