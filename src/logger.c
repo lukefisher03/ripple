@@ -1,5 +1,6 @@
 #include "logger.h"
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
 
@@ -9,10 +10,10 @@ static FILE *log_file = NULL;
 
 void log_init(void) {
     log_file = fopen(LOG_FILE_NAME, "w");
+    if (!log_file) {
+        fprintf(stderr, "Failed to open log file!");
+    }
     log_debug("New session started");
-    fclose(log_file);
-    // Open it for appending
-    fopen(LOG_FILE_NAME, "a");
 }
 
 void log_debug(const char *fmt, ...) {

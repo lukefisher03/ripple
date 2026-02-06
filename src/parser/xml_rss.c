@@ -270,8 +270,10 @@ int process_node(rss_container *c, const rss_node *n) {
             free(item->title);
             item->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "author")) {
+            free(item->author);
             item->author = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
+            free(item->link);
             item->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "pubDate")) {
             char *pub_date_rfc822 = strdup(text_node->text);
@@ -281,6 +283,8 @@ int process_node(rss_container *c, const rss_node *n) {
             } else {
                 log_debug("Could not parse publish date string: %s, skipping", pub_date_rfc822);
             }
+
+            free(pub_date_rfc822);
             
         } else if (!strcmp(node_name, "description")) {
             free(item->description);
@@ -294,11 +298,13 @@ int process_node(rss_container *c, const rss_node *n) {
             free(channel->title);
             channel->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
+            free(channel->link);
             channel->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "description")) {
             free(channel->description);
             channel->description = strdup(text_node->text);
         }  else if (!strcmp(node_name, "language")) {
+            free(channel->language);
             channel->language = strdup(text_node->text);
         } else {
             // printf("No place for %s in container type %i\n", node_name, c->type);
@@ -396,6 +402,15 @@ rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
     build_channel_from_parse_tree(new_channel, tree);
     free(tree);
     new_channel->rss_link = strdup(link);
+    if (!new_channel->link) {
+        free(new_channel);
+        log_debug("<channel> is missing or has an empty <link> tag.");
+        return NULL;
+    }
+    if (!new_channel->title) {
+        log_debug("Channel has no title tag, replacing with the link, %s", new_channel->link);
+        new_channel->title = strdup(new_channel->link);
+    }
     return new_channel;
 }
 
@@ -404,8 +419,11 @@ rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
 rss_item *item_init(void) {
     rss_item *new_item = calloc(1, sizeof(*new_item));
     // Defaults must be heap allocated
-    new_item->title = strdup("No item title provided");
-    new_item->description = strdup("No item description");
+    new_item->title = strdup("No article title");
+    new_item->description = strdup("No article description");
+    new_item->link = strdup("No article link provided");
+    new_item->author = strdup("No author");
+
     if (!new_item) {
         return NULL;
     }
@@ -415,8 +433,9 @@ rss_item *item_init(void) {
 
 rss_channel *channel_init(void) {
     rss_channel *new_channel = calloc(1, sizeof(*new_channel));
-    new_channel->title = strdup("No channel title");
-    new_channel->description = strdup("No channel description");
+    new_channel->description = strdup("No article description");
+    new_channel->language = strdup("No language provided");
+
     if (!new_channel) {
         return NULL;
     }

@@ -16,3 +16,4 @@ Not in any particular order. Although, things prefixed with a double bang are im
 - [ ] Add tests.
 - [ ] Add more support docs and make the documentation look better.
 - [ ] Hit it with valgrind for any mem leaks.
+- [ ] Refresh shouldn't delete the entire channel, it should check if it exists, and then update instead.
