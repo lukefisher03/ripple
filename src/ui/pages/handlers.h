@@ -5,14 +5,13 @@
 
 // ----- MAIN MENU PAGE ------ //
 void main_menu(app_state *app, local_state *state);
-void main_feed_destroy(void);
+
 // ----- FEED PAGE ------ //
 void main_feed(app_state *app, local_state *state);
 typedef struct {
-    int  channel_name;
-    int  title;
-    int  author;
-    int  pub_date;
+    float channel_name;
+    float title;
+    float pub_date;
 } feed_column_widths;
 
 // ----- ARTICLE PAGE ------ //
@@ -21,17 +20,17 @@ void article_page(app_state *app, local_state *state);
 // ----- CHANNELS PAGE ------ //
 void manage_channels_page(app_state *app, local_state *state);
 typedef struct {
-    int channel_name;
-    int article_count;
-    int last_updated;
+    float channel_name;
+    float article_count;
+    float last_updated;
 } channel_column_widths;
 
 // ----- INDIVIDUAL CHANNEL PAGE ------ //
 void channel_page(app_state *app, local_state *state);
 typedef struct {
-    int title;
-    int author;
-    int date;
+    float title;
+    float author;
+    float date;
 } channel_page_column_widths;
 
 // ----- CONFIRMATION PAGE ------ //

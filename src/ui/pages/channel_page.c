@@ -6,29 +6,32 @@
 #include "../../termbox2/termbox2.h"
 #include "../../utils.h"
 
-channel_page_column_widths  col_widths = {0};
+static channel_page_column_widths col_widths = {
+    .title = 0.5,
+    .author = 0.3,
+    .date = 0.2,
+};
+
 extern char *thick_divider;
 extern char *thin_divider;
 extern char *blank_line;
 // TODO: Update how we do rows
-char *row = NULL;
 
-static void set_column_widths(channel_page_column_widths *widths, int screen_width); 
 static int render_article_list(renderer_params *params);
 
 void channel_page(app_state *app, local_state *state) {
     int width = tb_width();
-    row = calloc(width + 1, sizeof(char));
-    set_column_widths(&col_widths, width);
+    char *row = calloc(width + 1, sizeof(char));
     rss_channel channel = {0};
+    log_debug("Getting channel: %d", state->channel_state.channel_id);
     if (get_channel(state->channel_state.channel_id, &channel) != 0) {
         log_debug("Failed to get channel!");
     }
 
     int offset = 0;
-    offset += add_column(row + offset, col_widths.title, "TITLE");
-    offset += add_column(row + offset, col_widths.author, "AUTHOR");
-    offset += add_column(row + offset, col_widths.date, "DATE");
+    offset += add_column(row + offset, col_widths.title * width, "TITLE");
+    offset += add_column(row + offset, col_widths.author * width, "AUTHOR");
+    offset += add_column(row + offset, col_widths.date * width, "DATE");
     memset(row + offset, ' ', width - offset);
     row[width] = '\0';
 
@@ -55,6 +58,8 @@ void channel_page(app_state *app, local_state *state) {
         .renderer = &render_article_list,
         .valid_input_list = "hbE",
         .valid_input_count = 3,
+        .row = row,
+        .row_length = width,
     };
 
     // This gets overwritten if there's articles to display
@@ -92,24 +97,20 @@ void channel_page(app_state *app, local_state *state) {
     tb_present();
 }
 
-static void set_column_widths(channel_page_column_widths *widths, int screen_width) {
-    widths->title = screen_width * 0.5;
-    widths->author = screen_width * 0.3;
-    widths->date = screen_width * 0.2;
-}
-
 static int render_article_list(renderer_params *params) {
-    int width = tb_width();
     rss_item *article = *(rss_item **)params->option;
+
+    char *row = params->config->row;
+    int row_length = params->config->row_length;
     
     int offset = 0;
-    offset += add_column(row + offset, col_widths.title, article->title);
-    offset += add_column(row + offset, col_widths.author, article->author);
+    offset += add_column(row + offset, col_widths.title * row_length, article->title);
+    offset += add_column(row + offset, col_widths.author * row_length, article->author);
     char formatted_date[256]; // TODO: clean this up
     unix_time_to_formatted(article->unix_timestamp, formatted_date, 256);
-    offset += add_column(row + offset, col_widths.date, formatted_date);
-    memset(row + offset, ' ',width - offset);
-    row[width] = '\0';
+    offset += add_column(row + offset, col_widths.date * row_length, formatted_date);
+    memset(row + offset, ' ',row_length - offset);
+    row[row_length] = '\0';
 
     int new_y = params->start_y;
     uintattr_t bg = params->selected ? TB_BLACK : 0;

@@ -23,6 +23,9 @@ static xml_entity xml_entities[] = {
     {.ch = '"', .s = "&quot;"},
     {.ch = '\'', .s = "&#x27;"},
     {.ch = '\'', .s = "&apos;"},
+    {.ch = '\'', .s = "&#39;"},
+    {.ch = '/', .s = "&#x2F"},
+    {.ch = '/', .s = "&#x2f"},
 };
 
 // ======== Forward declarations ======== //
@@ -263,6 +266,8 @@ int process_node(rss_container *c, const rss_node *n) {
         if (!strcmp(node_name, "guid")) { 
             item->guid = strdup(text_node->text);
         } else if (!strcmp(node_name, "title")) {
+            // Ensure we free the default value 
+            free(item->title);
             item->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "author")) {
             item->author = strdup(text_node->text);
@@ -278,6 +283,7 @@ int process_node(rss_container *c, const rss_node *n) {
             }
             
         } else if (!strcmp(node_name, "description")) {
+            free(item->description);
             item->description = strdup(text_node->text);
         } else {
             // printf("No place for %s in container type %i\n", node_name, c->type);
@@ -285,13 +291,15 @@ int process_node(rss_container *c, const rss_node *n) {
     } else if (c->type == CHANNEL) {
         rss_channel *channel = c->channel;
         if (!strcmp(node_name, "title")) {
-           channel->title = strdup(text_node->text);
+            free(channel->title);
+            channel->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
-           channel->link = strdup(text_node->text);
+            channel->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "description")) {
-           channel->description = strdup(text_node->text);
+            free(channel->description);
+            channel->description = strdup(text_node->text);
         }  else if (!strcmp(node_name, "language")) {
-           channel->language = strdup(text_node->text);
+            channel->language = strdup(text_node->text);
         } else {
             // printf("No place for %s in container type %i\n", node_name, c->type);
         }
@@ -395,6 +403,9 @@ rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
 
 rss_item *item_init(void) {
     rss_item *new_item = calloc(1, sizeof(*new_item));
+    // Defaults must be heap allocated
+    new_item->title = strdup("No item title provided");
+    new_item->description = strdup("No item description");
     if (!new_item) {
         return NULL;
     }
@@ -404,6 +415,8 @@ rss_item *item_init(void) {
 
 rss_channel *channel_init(void) {
     rss_channel *new_channel = calloc(1, sizeof(*new_channel));
+    new_channel->title = strdup("No channel title");
+    new_channel->description = strdup("No channel description");
     if (!new_channel) {
         return NULL;
     }

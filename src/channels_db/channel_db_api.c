@@ -155,7 +155,7 @@ int store_channel_list(size_t channel_count, rss_channel **channels) {
             result = store_article(db, item, chan);
             // Should processing stop here?
             if (result != SQLITE_OK && sqlite3_extended_errcode(db) != SQLITE_CONSTRAINT_UNIQUE) {
-                goto cleanup;
+                log_debug("Failed to store article: %s, skipping", item->title);
             }
         }
     }
@@ -172,7 +172,7 @@ int get_channel_list(generic_list *article_list) {
     result = db_open(&db);
     if (result != SQLITE_OK) goto cleanup;
 
-    const char *stmt_str = "SELECT * FROM channel ORDER BY title DESC;";
+    const char *stmt_str = "SELECT * FROM channel ORDER BY last_updated DESC, title DESC;";
 
     result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
     if (result != SQLITE_OK) goto cleanup;

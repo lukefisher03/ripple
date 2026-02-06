@@ -13,7 +13,7 @@
 
 // We only refresh channels that the user looks at.
 int refresh_channels(void) {
-    time_t stale_channel_cutoff = time(NULL) - (REFRESH_PERIOD_HOURS);
+    time_t stale_channel_cutoff = time(NULL) - (REFRESH_PERIOD_HOURS * 3600);
     generic_list *stale_channels = list_init(); 
     generic_list *new_channels = list_init();
 

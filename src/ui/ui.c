@@ -17,7 +17,7 @@ static page_handlers page_handlers_table[PAGE_COUNT] = {
     },
     [FEED_PAGE] = {
         .create = main_feed,
-        .destroy = main_feed_destroy,
+        .destroy = NULL,
     }, 
     [ARTICLE_PAGE] = {
         .create = article_page,
@@ -58,7 +58,6 @@ void ui_start(initial_state init_state) {
     navigate(MAIN_PAGE, &app, (local_state){});
 
     while(app.current_page.type != EXIT_PAGE) {
-        log_debug("Clearing screen for current page %i", app.current_page.type);
         tb_clear();
         local_state *st = &app.current_page.state;
         page_create create = app.current_page.handlers.create;

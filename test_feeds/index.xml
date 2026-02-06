@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MrBruh&#39;s Epic Blog</title>
+    <link>https://mrbruh.com/</link>
+    <description>Recent content on MrBruh&#39;s Epic Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="https://mrbruh.com/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>The RCE that AMD won&#39;t fix!</title>
+      <link>https://mrbruh.com/amd/</link>
+      <pubDate>Thu, 05 Feb 2026 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/amd/</guid>
+      <description>The RCE that AMD won&amp;rsquo;t fix After being interrupted multiple times by an annoying console window that would pop up periodically on my new gaming PC, I managed to track the offending executable down to AMD&amp;rsquo;s AutoUpdate software.
+In my anger, I decided to punish this software by decompiling it to figure out how it worked, and accidentally discovered a trivial Remote Code Execution (RCE) vulnerability in the process.
+The first thing I found, is that they store their update URL in the program&amp;rsquo;s app.</description>
+    </item>
+    
+    <item>
+      <title>Firewreck 2.0</title>
+      <link>https://mrbruh.com/firewreck2/</link>
+      <pubDate>Tue, 27 Jan 2026 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/firewreck2/</guid>
+      <description>1.4 Billion user records exposed by insecure Firebase instances in top Android apps TLDR: Out of the top 1.5 Million Android apps on the Play Store, 11,126 were insecure and exposed users&amp;rsquo; PII. In total these 11 thousand apps exposed 1.43 Billion user records. This includes 5 apps with 100 Million downloads and 10 apps with 50 Million downloads.
+Two years ago, along with a few friends, we looked into scanning the internet for insecure Firebase instances (read here).</description>
+    </item>
+    
+    <item>
+      <title>Firewreck 2.0</title>
+      <link>https://mrbruh.com/firewreckv2/</link>
+      <pubDate>Tue, 27 Jan 2026 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/firewreckv2/</guid>
+      <description>1.4 Billion user records exposed by insecure Firebase instances in top Android apps TLDR: Out of the top 1.5 Million Android apps on the Play Store, 11,126 were insecure and exposed users&amp;rsquo; PII. In total these 11 thousand apps exposed 1.43 Billion user records. This includes 5 apps with 100 Million downloads and 10 apps with 50 Million downloads.
+Two years ago, along with a few friends, we looked into scanning the internet for insecure Firebase instances (read here).</description>
+    </item>
+    
+    <item>
+      <title>ASUSpicious Flaw - Millions of Users’ Information Exposed Since 2022</title>
+      <link>https://mrbruh.com/asus_p2/</link>
+      <pubDate>Thu, 19 Jun 2025 22:05:19 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/asus_p2/</guid>
+      <description>ASUSpicious Flaw - Millions of Users&amp;rsquo; Information Exposed Since 2022 Please note that it&amp;rsquo;s not particularly suspicious, it just made for a good play-on-words title.
+Introduction What do most people do when they&amp;rsquo;re mistreated by a multi-billion dollar company after reporting a zero-day RCE to them? Certainly not find another zero-day exploit, but that&amp;rsquo;s exactly what I ended up doing. Read part one of this series on ASUS here.
+I had recently spent a lot of hours trawling through decompiled C/C++ code in part one so I wanted something a little easier to read.</description>
+    </item>
+    
+    <item>
+      <title>One-Click RCE in ASUS&#39;s Preinstalled Driver Software</title>
+      <link>https://mrbruh.com/asusdriverhub/</link>
+      <pubDate>Fri, 09 May 2025 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/asusdriverhub/</guid>
+      <description>One-Click RCE in ASUS&amp;rsquo;s Preinstalled Driver Software Part Two of the ASUS series is out, read it here.
+Introduction This story begins with a conversation about new PC parts.
+After ignoring the advice from my friend, I bought a new ASUS motherboard for my PC. I was a little concerned about having a BIOS that would by default silently install software into my OS in the background. But it could be turned off so I figured I would just do that.</description>
+    </item>
+    
+    <item>
+      <title>Pwning a major New Zealand service provider</title>
+      <link>https://mrbruh.com/majorprovider/</link>
+      <pubDate>Mon, 24 Mar 2025 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/majorprovider/</guid>
+      <description>Note: The name of local company asked very politely to have their name redacted so it has been replaced with KiwiServices as suggested by ChatGPT
+Pwning a major New Zealand service provider On the evening of the 19th February 2025 I had an itch, an itch to do good in the world and to continue to polish my pen testing skills.
+First I went through a list of trending apps on the Google Play Store, and looked for an &amp;ldquo;&amp;lsquo;semi&amp;rdquo; popular app in New Zealand.</description>
+    </item>
+    
+    <item>
+      <title>How I pwned half of America&#39;s fast food chains, simultaneously</title>
+      <link>https://mrbruh.com/chattr/</link>
+      <pubDate>Tue, 09 Jan 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/chattr/</guid>
+      <description>How I pwned half of America&amp;rsquo;s fast food chains, simultaneously. Also checkout Eva&amp;rsquo;s blogpost of this event.
+With an upbeat pling my console alerted me that my script had finished running, to be precise it was searching for exposed Firebase credentials on any of the hundreds of recent AI startups.
+This was achieved through a public list of sites using the .ai TLD and parsing the site data (and any referenced .</description>
+    </item>
+    
+    <item>
+      <title>The Up Phone Is a Fucking Disaster</title>
+      <link>https://mrbruh.com/unplugged/</link>
+      <pubDate>Tue, 26 Dec 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/unplugged/</guid>
+      <description>Unplugged Some months ago, I was watching Mental Outlaw&amp;rsquo;s video talking about the UP Phone. Overall it definitely sparked some interest in me as it seemed to be very similar to the infamous Freedom Phone and Anom phone honeypot made by the feds.
+The only difference being that I actually had the opportunity to investigate it before it inevitably crumbled back into dust.
+TL:DR Overpriced phone Proprietary software and App Suite Reselling FOSS app’s under a monthly subscription ($13 a month) Removing all credit and software licenses from the stolen app’s Hostile user base &amp;amp; technologically incompetent owners Previously hosting CSAM channels on their Matrix homeserver Reconnaissance As with all jobs, casing the joint is a pretty good place to start.</description>
+    </item>
+    
+    <item>
+      <title>Dismantling a Crappy Malware Operation</title>
+      <link>https://mrbruh.com/dismantling_malware_operation/</link>
+      <pubDate>Sat, 25 Mar 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/dismantling_malware_operation/</guid>
+      <description>Dismantling a Crappy Malware Operation The Discovery I had been made aware of a malware spreading site called obspremium.com. This site is claiming to offer a so-called &amp;ldquo;premium&amp;rdquo; version of the popular open source recording and streaming program Open Broadcaster Software at obsproject.com. &amp;ldquo;OBS Premium&amp;rdquo; hosts a direct rip of it&amp;rsquo;s legitimate counterparts landing page with a few sentences changed.
+The real OBS
+The malware site
+Aside from the text, the other difference between these sites is one offers installers for a very useful recording tool, and the other offers crappy malware.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>https://mrbruh.com/music/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://mrbruh.com/music/</guid>
+      <description>Bold is Albums, non bold is singles.
+The ♥️ tag means that this is one of my favourite artists.
+The 🔥 tag means that I am currently binging this Artist/Album/Song.
+The 🌀 tag means that this Artist/Album/Song is considered Psychedelic or Psychedelia
+Pop / Indie Crumb - Jinx, Locket ♥️🌀 Melody&amp;rsquo;s Echo Chamber - Self-Titled, Unfold ♥️🌀 Men I Trust - Oncle Jazz ♥️ Alt-J - An Awesome Wave Beach House - Teen Dream, Bloom, Space Song Beck - Colors Coldplay - A Rush of Blood to the Head Electric Guest - Mondo In The Valley Below - The Belt, The Pink Chateau Jealous of the Birds - Parma Violets 🌀 MGMT - Little Dark Age 🌀 Mac DeMarco - Salad Days Mega Mango - Fun and Games Mild High Club - Skiptracing 🌀 Miracle Musical - Hawaii: Part II No Vacation - Intermission 🔥 Project AER - Growth Patterns Sugar Candy Mountain - 666 🌀 Twenty One Pilots - Blurryface Vacations - Days, Vibes Allah-Las - Raspberry Jam 🌀 Altın Gün - Goca Dünya 🌀 bôa - Duvet, Twilight Cannons - Tunnel of You Cigarettes After Sex - Sunsetz Citrona - August, Hippies Cults - Monolithic, Always Forever Dumbo Gets Mad - Indian Food 🌀 Elliot Moss - Slip Freak Slug - Radio Glue Trip - Elbow Pain 🌀 Goth Babe - Topanga, Velvet Sheets HOMESHAKE - Real Love Her’s - If You Know What’s Right Huan Huan - Lauren Jack Stauber - Buttercup, Oh Klahoma Kina Grannis - Stressed Out (Cover) Liana Flores - Rises the Moon 🔥 Loving - If I Am Only My Thoughts Mild Orange - Some Feeling 🌀 MorMor - Heaven’s Only Wishful Moses Gunn Collective - Shalala 🌀 Nilüfer Yanya - Company Palace - Live Well Parcels - Bemyself Peach Pit - Alrighty Aphrodite, Shampoo Bottles Pllush - 50/50 20/20 Plums - Parking Lots Puma Blue - Hounds, Midnight Blue, (She&amp;rsquo;s) Just a Phase Rainbow Kitten Surprise - It’s Called: Freefall Ralph Castelli - Morning Sex STRFKR - Maps, Being No One Going Nowhere 🔥🌀 Sir Chloe - Sedona Skinshape - I Didn’t Know, Don’t Call My Name 🌀 Slow Pulp - Preoccupied Snail Mail - Heat Wave Sports - You Are the Right One Summer Salt - Candy Wrappers Sunbeam Sound Machine - In Your Arms 🌀 Tamino - Indigo Night, Cigar The Drums - Money The Wombats - Cheetah Tongue Unknown Mortal Orchestra - Hunnybee, Necessary Evil 🌀 Wabie - Hey Lover!</description>
+    </item>
+    
+  </channel>
+</rss>
