@@ -35,8 +35,8 @@ void channel_page(app_state *app, local_state *state) {
     int y = 1;
     write_centered(y++, TB_GREEN, 0, channel.title);
     y++;
-    tb_printf(0, y++, TB_GREEN, 0, row);
-    tb_printf(0, y++, TB_GREEN, 0, thick_divider);
+    tb_printf(0, y++, TB_GREEN, 0, "%s", row);
+    tb_printf(0, y++, TB_GREEN, 0, "%s", thick_divider);
 
     generic_list *article_list = list_init();
     get_channel_articles(&channel, article_list);
@@ -113,10 +113,10 @@ static int render_article_list(renderer_params *params) {
 
     int new_y = params->start_y;
     uintattr_t bg = params->selected ? TB_BLACK : 0;
-    tb_printf(0, new_y++, TB_GREEN, bg, blank_line);
-    tb_printf(0, new_y++, TB_GREEN, bg, row);
-    tb_printf(0, new_y++, TB_GREEN, bg, blank_line);
-    tb_printf(0, new_y++, TB_GREEN, 0, thin_divider);
+    tb_printf(0, new_y++, TB_GREEN, bg, "%s", blank_line);
+    tb_printf(0, new_y++, TB_GREEN, bg, "%s", row);
+    tb_printf(0, new_y++, TB_GREEN, bg, "%s", blank_line);
+    tb_printf(0, new_y++, TB_GREEN, 0, "%s", thin_divider);
 
     return new_y - params->start_y;
 }

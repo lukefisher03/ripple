@@ -15,12 +15,8 @@ int main(int argc, char *argv[]) {
     log_init();
     get_db_path();
 
-    for(size_t i = 0; i < argc; i++) {
-        log_debug("ARG %i: %s", i + 1, argv[i]);
-    }
-
     if (build_ripple_database() != 0) {
-        fprintf(stderr, "Failed to create db, exiting.\n");
+        log_debug("Failed to create db, exiting.\n");
         return 1;
     }
 

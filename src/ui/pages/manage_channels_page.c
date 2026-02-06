@@ -23,7 +23,7 @@ void manage_channels_page(app_state *app, local_state *state) {
     screen_width = tb_width();
     set_channels_page_column_widths(&col_widths);
     int y = 1;
-    write_centered(y++, TB_GREEN, 0, "MODIFY CHANNELS");
+    write_centered(y++, TB_GREEN, 0, "CHANNELS");
 
     generic_list *channel_list = list_init();
     get_channel_list(channel_list);
@@ -53,8 +53,8 @@ void manage_channels_page(app_state *app, local_state *state) {
     row[screen_width] = '\0';
 
     y += 1;
-    tb_printf(0, y++, TB_GREEN, 0, row);
-    tb_printf(0, y++, TB_GREEN, 0, thick_divider);
+    tb_printf(0, y++, TB_GREEN, 0, "%s", row);
+    tb_printf(0, y++, TB_GREEN, 0, "%s", thick_divider);
 
     int nav_help_offset = 3;
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "ENTER", "VIEW ARTICLES");
@@ -94,9 +94,7 @@ void manage_channels_page(app_state *app, local_state *state) {
     list_free(channel_list);
 
     tb_present();
-    log_debug("GOT HERE!");
     if (result.ev.key == TB_KEY_ENTER && selected_channel) {
-        log_debug("NAVIGATING TO CHANNEL PAGE!");
         navigate(CHANNEL_PAGE, app, (local_state){
             .channel_state = {
                 .channel_id = selected_channel_id,
@@ -170,10 +168,10 @@ static int render_channel_list(renderer_params *params) {
     memset(row + offset, ' ', screen_width - offset);
     row[screen_width] = '\0';
 
-    tb_printf(0, new_y++, TB_GREEN, bg, blank_line);
-    tb_printf(0, new_y++, TB_GREEN, bg, row);
-    tb_printf(0, new_y++, TB_GREEN, bg, blank_line);
-    tb_printf(0, new_y++, TB_GREEN, 0, thin_divider);
+    tb_printf(0, new_y++, TB_GREEN, bg, "%s", blank_line);
+    tb_printf(0, new_y++, TB_GREEN, bg, "%s", row);
+    tb_printf(0, new_y++, TB_GREEN, bg, "%s", blank_line);
+    tb_printf(0, new_y++, TB_GREEN, 0, "%s", thin_divider);
     return new_y - params->start_y;
 }
 

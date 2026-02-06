@@ -6,6 +6,7 @@ static const char *main_menu_options[] = {
     "feed",
     "channels",
     "refresh",
+    "help",
     "feedback",
     "exit",
 };
@@ -34,6 +35,9 @@ void main_menu(app_state *app, local_state *state) {
         break;
     case 2:
         navigate(REFRESH_PAGE, app, (local_state){});
+        break;
+    case 4:
+        navigate(FEEDBACK_PAGE, app, (local_state){});
         break;
     default:
         navigate(EXIT_PAGE, app, (local_state){});

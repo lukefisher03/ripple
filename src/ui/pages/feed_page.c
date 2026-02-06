@@ -56,8 +56,8 @@ void main_feed(app_state *app, local_state *state){
 
 
     write_centered(y++, TB_GREEN, 0, "ARTICLE FEED");
-    tb_printf(0, y++, TB_GREEN, 0, row);
-    tb_printf(0, y++, TB_GREEN, 0, thick_divider);
+    tb_printf(0, y++, TB_GREEN, 0, "%s", row);
+    tb_printf(0, y++, TB_GREEN, 0, "%s", thick_divider);
 
     int nav_help_offset = 3;
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "ENTER", "VIEW ARTICLE");
@@ -132,10 +132,10 @@ static int render_feed_article_selections(renderer_params *params) {
 
     uintattr_t bg = params->selected ? TB_BLACK : 0;
 
-    tb_printf(0, new_y++, 0, bg, blank_line);
-    tb_printf(0, new_y++, TB_GREEN, bg, row);   
-    tb_printf(0, new_y++, 0, bg, blank_line);
-    tb_printf(0, new_y++, TB_GREEN, 0, thin_divider);
+    tb_printf(0, new_y++, 0, bg, "%s", blank_line);
+    tb_printf(0, new_y++, TB_GREEN, bg, "%s", row);   
+    tb_printf(0, new_y++, 0, bg, "%s", blank_line);
+    tb_printf(0, new_y++, TB_GREEN, 0, "%s", thin_divider);
 
     return new_y - params->start_y;
 }

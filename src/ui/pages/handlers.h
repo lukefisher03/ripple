@@ -47,4 +47,7 @@ void import_page(app_state *app, local_state *state);
 // ----- REFRESH PAGE ------ //
 void refresh_page(app_state *app, local_state *state);
 
+// ----- FEEDBACK PAGE ------ //
+void feedback_page(app_state *app, local_state *state);
+
 #endif

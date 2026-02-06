@@ -38,6 +38,10 @@ static page_handlers page_handlers_table[PAGE_COUNT] = {
     [REFRESH_PAGE] = {
         .create = refresh_page,
         .destroy = NULL,
+    },
+    [FEEDBACK_PAGE] = {
+        .create = feedback_page,
+        .destroy = NULL,
     }
 };
 
@@ -73,7 +77,6 @@ void app_destroy(app_state *app) {
 }
 
 void navigate(page_type page_id, app_state *app, local_state state) {
-    log_debug("Navigating from: %i to %i", app->current_page.type, page_id);
     // A page that is pushed, gets immediately rendered.
     reset_dividers();
     page previous_page = app->current_page;

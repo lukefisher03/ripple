@@ -130,7 +130,6 @@ int get_channel_id(sqlite3 *db, const rss_channel *channel) {
 }
 
 int store_channel_list(size_t channel_count, rss_channel **channels) {
-    log_debug("Storing channel list");
     sqlite3 *db = NULL;
     int result = 1;
 
@@ -376,8 +375,6 @@ int get_article(int article_id, rss_item *article) {
 
     while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
         read_article_from_stmt(stmt, article);
-        log_debug("Article title: %s", article->title);
-        log_debug("Article timestamp %d", article->unix_timestamp);
     }
 
 cleanup:

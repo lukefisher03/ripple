@@ -107,7 +107,7 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     new_node->text = malloc(content_length + 1);
     size_t len = 0;
     const char *s = str + i;
-
+    
     for (size_t k = 0; k < content_length; k++) {
         // Perform XML entity replacement
         if ((unsigned char)s[k] < 0x80) {

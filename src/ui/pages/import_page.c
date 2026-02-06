@@ -91,7 +91,7 @@ static int render_link_list(renderer_params *params) {
 
     uintattr_t bg = params->selected ? TB_BLACK : 0;
     int new_y = params->start_y;
-    tb_printf(params->config->x, new_y++, TB_GREEN, bg, row);
+    tb_printf(params->config->x, new_y++, TB_GREEN, bg, "%s", row);
 
     return new_y - params->start_y;
 }
@@ -110,10 +110,10 @@ static int show_banner(int x, int y, int width) {
     row[width] = '\0';
     
     int new_y = y;
-    tb_printf(x, new_y++, TB_GREEN, 0, row);
+    tb_printf(x, new_y++, TB_GREEN, 0, "%s", row);
     memset(row, '-', width);
     row[width] = '\0';
-    tb_printf(x, new_y++, TB_GREEN, 0, row);
+    tb_printf(x, new_y++, TB_GREEN, 0, "%s", row);
     
     return new_y - y;
 }

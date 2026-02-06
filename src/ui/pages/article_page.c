@@ -40,19 +40,19 @@ void article_page(app_state *app, local_state *state) {
     get_channel(item.channel_id, &chan);
 
     int y = 5;
-    tb_printf(PADDING, y++, TB_GREEN, 0, item.title);
-    tb_printf(PADDING, y++, TB_GREEN, 0, divider);
-    tb_printf(PADDING, y++, TB_GREEN, 0, chan.title);
-    tb_printf(PADDING, y++, TB_GREEN, 0, item.link);
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", item.title);
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", divider);
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", chan.title);
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", item.link);
     char formatted_time[128];
     unix_time_to_formatted(item.unix_timestamp, formatted_time, 128);
-    tb_printf(PADDING, y++, TB_GREEN, 0, formatted_time);
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", formatted_time);
     y += 5;
     int lines = 0;
     char *description = format_description(item.description, width, &lines);
 
     tb_printf(PADDING, y++, TB_GREEN, 0, "DESCRIPTION");
-    tb_printf(PADDING, y++, TB_GREEN, 0, description ? description : "No description provided");
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", description ? description : "No description provided");
     y += lines + 5;
     menu_result result = display_basic_menu(y++, article_options, options_length);
 

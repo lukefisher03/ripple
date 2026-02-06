@@ -17,9 +17,10 @@ typedef enum page_type {
     ARTICLE_PAGE,
     REFRESH_PAGE,
     IMPORT_PAGE,
+    FEEDBACK_PAGE,
 } page_type;
 
-#define PAGE_COUNT 10
+#define PAGE_COUNT 15 
 
 /**
  * Breakdown of the UI structure

@@ -136,7 +136,7 @@ menu_result display_confirmation_menu(const char *msg, char **options, int optio
 int write_centered(int y, uintattr_t fg, uintattr_t bg, const char *text) {
     size_t text_len = strlen(text);
     int mid = tb_width() / 2;
-    int v = tb_printf((mid - text_len / 2), y, fg, bg, text);
+    int v = tb_printf((mid - text_len / 2), y, fg, bg, "%s", text);
     return v;
 }
 
