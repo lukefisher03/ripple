@@ -88,7 +88,7 @@ static int render_link_list(renderer_params *params) {
     memset(row + offset, ' ', row_len - offset);
     row[row_len] = '\0';
 
-    uintattr_t bg = params->selected ? TB_BLACK : 0;
+    uintattr_t bg = params->selected ? SELECTED_COLOR : 0;
     int new_y = params->start_y;
     tb_printf(params->config->x, new_y++, TB_GREEN, bg, "%s", row);
 

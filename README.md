@@ -27,6 +27,11 @@ Load new channels via their links from this page. To import channels create a fi
 See todo.txt for what's next
 
 ### Building Ripple
+You'll need to clone the repository and include the `termbox2` submodule. You can clone and include submodules by default by using:
+```
+git clone --recurse-submodules https://github.com/lukefisher03/ripple
+```
+
 #### Using the Dockerfile
 The `Dockerfile` uses a multistage Alpine Linux build. The first stage compiles the binary and the second produces the final image with just the binary and dependencies.
 
@@ -61,7 +66,7 @@ This project only has a few dependencies.
 - openssl
 
 Ensure that `pkg-config` can locate these dependencies and run 
-``` bash
+``` 
 make main
 ./main <optional text file for importing new channels> 
 ```

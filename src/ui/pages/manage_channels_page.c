@@ -161,7 +161,7 @@ static int render_channel_list(renderer_params *params) {
     int row_length = params->config->row_length;
 
     int new_y = params->start_y;
-    uintattr_t bg = params->selected ? TB_BLACK : 0;
+    uintattr_t bg = params->selected ? SELECTED_COLOR : 0;
     int offset = 0;
     offset += add_column(row + offset, col_widths.channel_name * row_length, chan->title);
     char article_count_str[28];
