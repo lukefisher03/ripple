@@ -79,7 +79,7 @@ static int render_link_list(renderer_params *params) {
 
     int offset = 0;
     char idx_str[64];
-    if (snprintf(idx_str, 64, "%d", params->idx) >= 64) {
+    if (snprintf(idx_str, 64, "%d", params->idx + 1) >= 64) {
         log_debug("Too many rows, index number too large!");
         // TODO: Handle this error
     }
