@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define SELECTED_COLOR TB_RED
+
 typedef struct renderer_params renderer_params;
 typedef int (*option_renderer)(renderer_params *params);
 

@@ -115,7 +115,7 @@ static int render_article_list(renderer_params *params) {
     row[row_length] = '\0';
 
     int new_y = params->start_y;
-    uintattr_t bg = params->selected ? TB_BLACK : 0;
+    uintattr_t bg = params->selected ? SELECTED_COLOR : 0;
     tb_printf(0, new_y++, TB_GREEN, bg, "%s", blank_line);
     tb_printf(0, new_y++, TB_GREEN, bg, "%s", row);
     tb_printf(0, new_y++, TB_GREEN, bg, "%s", blank_line);
