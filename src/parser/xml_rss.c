@@ -12,7 +12,7 @@
 #define TRSS_OK 0
 #define TRSS_ERR -1
 
-typedef struct xml_entity {
+typedef struct {
     char    ch;
     char    *s;
 } xml_entity;
@@ -23,6 +23,9 @@ static xml_entity xml_entities[] = {
     {.ch = '"', .s = "&quot;"},
     {.ch = '\'', .s = "&#x27;"},
     {.ch = '\'', .s = "&apos;"},
+    {.ch = '\'', .s = "&#39;"},
+    {.ch = '/', .s = "&#x2F"},
+    {.ch = '/', .s = "&#x2f"},
 };
 
 // ======== Forward declarations ======== //
@@ -34,7 +37,7 @@ void free_container(rss_container *c);
 
 // ======== Build parse tree ======== //
 
-bool read_tag(const char *str, size_t length, Tag *t) {
+bool read_tag(const char *str, size_t length, xml_tag *t) {
     // Given a string starting with `<`, extract the tag name and
     // return the length of the tag.
 
@@ -107,7 +110,7 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     new_node->text = malloc(content_length + 1);
     size_t len = 0;
     const char *s = str + i;
-
+    
     for (size_t k = 0; k < content_length; k++) {
         // Perform XML entity replacement
         if ((unsigned char)s[k] < 0x80) {
@@ -165,7 +168,7 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
         size_t l = length - i;
         
         if (!strncmp(s, "<", 1) && strncmp(s, "<!", 2) && strncmp(s, "<?", 2)) {
-            Tag new_tag;
+            xml_tag new_tag;
             if (read_tag(s, l, &new_tag)) { 
                 if (new_tag.tag_type == TAG_OPEN) {
                     rss_node *top = list_peek(stack); 
@@ -263,6 +266,8 @@ int process_node(rss_container *c, const rss_node *n) {
         if (!strcmp(node_name, "guid")) { 
             item->guid = strdup(text_node->text);
         } else if (!strcmp(node_name, "title")) {
+            // Ensure we free the default value 
+            free(item->title);
             item->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "author")) {
             item->author = strdup(text_node->text);
@@ -278,6 +283,7 @@ int process_node(rss_container *c, const rss_node *n) {
             }
             
         } else if (!strcmp(node_name, "description")) {
+            free(item->description);
             item->description = strdup(text_node->text);
         } else {
             // printf("No place for %s in container type %i\n", node_name, c->type);
@@ -285,13 +291,15 @@ int process_node(rss_container *c, const rss_node *n) {
     } else if (c->type == CHANNEL) {
         rss_channel *channel = c->channel;
         if (!strcmp(node_name, "title")) {
-           channel->title = strdup(text_node->text);
+            free(channel->title);
+            channel->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
-           channel->link = strdup(text_node->text);
+            channel->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "description")) {
-           channel->description = strdup(text_node->text);
+            free(channel->description);
+            channel->description = strdup(text_node->text);
         }  else if (!strcmp(node_name, "language")) {
-           channel->language = strdup(text_node->text);
+            channel->language = strdup(text_node->text);
         } else {
             // printf("No place for %s in container type %i\n", node_name, c->type);
         }
@@ -303,7 +311,7 @@ int process_node(rss_container *c, const rss_node *n) {
     return TRSS_OK;
 }
 
-bool build_channel(rss_channel *chan, rss_node *root_node) {
+bool build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
     // Perform iterative DFS to build a channel from a parse tree
 
     generic_list *container_stack = list_init();
@@ -382,29 +390,22 @@ bool build_channel(rss_channel *chan, rss_node *root_node) {
     return true;
 }
 
-int load_channels(char *files[], size_t size) {
-    rss_channel **channel_list = calloc(size, sizeof(*channel_list));
-    if (!channel_list) {
-        return 0;
-    }
-
-    for (size_t i = 0; i < size; i++) {
-        size_t size;
-        char *rss = file_to_string(files[i], &size);
-        rss_node *tree = construct_parse_tree(rss, size);
-        free(rss);
-        channel_list[i] = channel_init();
-        build_channel(channel_list[i], tree);
-        free_tree(tree);
-    }
-
-    return store_channel_list(size, channel_list);
+rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
+    rss_channel *new_channel = channel_init();
+    rss_node *tree = construct_parse_tree(xml_rss, size);
+    build_channel_from_parse_tree(new_channel, tree);
+    free(tree);
+    new_channel->rss_link = strdup(link);
+    return new_channel;
 }
 
 // ======== Initializers ======== //
 
 rss_item *item_init(void) {
     rss_item *new_item = calloc(1, sizeof(*new_item));
+    // Defaults must be heap allocated
+    new_item->title = strdup("No item title provided");
+    new_item->description = strdup("No item description");
     if (!new_item) {
         return NULL;
     }
@@ -414,6 +415,8 @@ rss_item *item_init(void) {
 
 rss_channel *channel_init(void) {
     rss_channel *new_channel = calloc(1, sizeof(*new_channel));
+    new_channel->title = strdup("No channel title");
+    new_channel->description = strdup("No channel description");
     if (!new_channel) {
         return NULL;
     }
@@ -476,6 +479,7 @@ void free_channel(rss_channel *c) {
     free(c->title);
     free(c->language);
     free(c->link);
+    free(c->rss_link);
 
     // TODO: Make separate objects for DB representation and parser representation.
     // DB will never return the list of items.

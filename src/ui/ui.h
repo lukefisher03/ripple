@@ -4,6 +4,7 @@
 #include "../list.h"
 #include "../parser/xml_rss.h"
 #include "pages/local_states.h"
+#include "../list.h"
 #include <stdbool.h>
 
 typedef enum page_type {
@@ -14,9 +15,12 @@ typedef enum page_type {
     CHANNEL_PAGE,
     PREFERENCES_PAGE,
     ARTICLE_PAGE,
+    REFRESH_PAGE,
+    IMPORT_PAGE,
+    FEEDBACK_PAGE,
 } page_type;
 
-#define PAGE_COUNT 10
+#define PAGE_COUNT 15 
 
 /**
  * Breakdown of the UI structure
@@ -30,11 +34,11 @@ typedef enum page_type {
  *
  */
 
-typedef struct app_configuration {
+typedef struct {
     // Store global state stuff in here
 } app_configuration;
 
-typedef struct local_state {
+typedef struct {
     page_type   page;
     union {
        // different local state structs 
@@ -48,27 +52,33 @@ typedef struct app_state app_state;
 typedef void (*page_create)(app_state *, local_state *state);
 typedef void (*page_destroy)(void);
 
-typedef struct page_handlers {
+typedef struct {
     page_create     create;
     page_destroy    destroy;
 } page_handlers;
 
-typedef struct page {
+typedef struct {
     page_type       type;
     local_state     state;
     page_handlers   handlers;
 } page;
 
-typedef struct app_state {
+typedef struct {
+    char *new_channel_links_file_path;
+} initial_state;
+
+struct app_state {
     page                current_page;
     page                previous_page;
     rss_channel         **channel_list;
     size_t              channel_count;
     app_configuration   config;
-} app_state;
+    initial_state       init_state;
+};
+
 
 void app_init(app_state *app);
 void app_destroy(app_state *app);
-void ui_start();
+void ui_start(initial_state init_state);
 void navigate(page_type page_id, app_state *app, local_state state);
 #endif

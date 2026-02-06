@@ -1,0 +1,5 @@
+https://www.rfleury.com/feed
+https://newsletter.semianalysis.com/feed
+https://newsletter.pragmaticengineer.com/feed
+https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml
+https://scottaaronson.blog/?feed=rss2

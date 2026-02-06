@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-char *file_to_string(const char *path, size_t *size) {
+char *file_to_string(const char *path, size_t *out_size) {
     char *str; // Buffer for storing the output file string content
     FILE *fptr;
     
@@ -66,7 +66,7 @@ char *file_to_string(const char *path, size_t *size) {
     str[buf_sz] = '\0'; // Add a null terminating character so it's useable.
 
     fclose(fptr);
-    *size = buf_sz;
+    *out_size = buf_sz;
     return str;
 }
 
