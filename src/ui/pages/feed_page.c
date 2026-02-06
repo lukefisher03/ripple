@@ -47,7 +47,6 @@ void main_feed(app_state *app, local_state *state){
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "ENTER", "view article");
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "b", "back");
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "E", "exit");
-    free(row);
 
     menu_config config = {
         .y = y,

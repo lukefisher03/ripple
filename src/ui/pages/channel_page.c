@@ -22,9 +22,9 @@ static int render_article_list(renderer_params *params);
 void channel_page(app_state *app, local_state *state) {
     int width = tb_width();
     char *row = calloc(width + 1, sizeof(char));
-    rss_channel channel = {0};
+    rss_channel *channel = channel_init();
     log_debug("Getting channel: %d", state->channel_state.channel_id);
-    if (get_channel(state->channel_state.channel_id, &channel) != 0) {
+    if (get_channel(state->channel_state.channel_id, channel) != 0) {
         log_debug("Failed to get channel!");
     }
 
@@ -36,13 +36,13 @@ void channel_page(app_state *app, local_state *state) {
     row[width] = '\0';
 
     int y = 1;
-    write_centered(y++, TB_GREEN, 0, channel.title);
+    write_centered(y++, TB_GREEN, 0, channel->title);
     y++;
     tb_printf(0, y++, TB_GREEN, 0, "%s", row);
     tb_printf(0, y++, TB_GREEN, 0, "%s", thick_divider);
 
     generic_list *article_list = list_init();
-    get_channel_articles(&channel, article_list);
+    get_channel_articles(channel, article_list);
 
     int nav_help_offset = 3;
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "b", "BACK");

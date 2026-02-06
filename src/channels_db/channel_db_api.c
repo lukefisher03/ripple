@@ -86,15 +86,15 @@ int build_ripple_database(void) {
     result = db_open(&db);
     if (result != SQLITE_OK) {
         log_debug("Error storing channel list\n");
-        return result;
+        goto cleanup;
     }
 
     result = create_channel_table(db, &err_msg);
-    if (result != SQLITE_OK) goto out;
+    if (result != SQLITE_OK) goto cleanup;
     result = create_article_table(db, &err_msg);
-    if (result != SQLITE_OK) goto out;
+    if (result != SQLITE_OK) goto cleanup;
 
-    out:
+    cleanup:
         if (result != SQLITE_OK) {
             log_debug("Failed to create database tables, %s %i", sqlite3_errmsg(db), result);
         }
@@ -178,7 +178,7 @@ int get_channel_list(generic_list *article_list) {
     if (result != SQLITE_OK) goto cleanup;
 
     while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
-        rss_channel *chan = malloc(sizeof(*chan));
+        rss_channel *chan = channel_init();
         if (!chan) {
             log_debug("Failed memory allocation");
             goto cleanup;
@@ -211,7 +211,6 @@ int get_channel_article_count(const rss_channel *channel, int *out_count) {
     result = db_open(&db);
     if (result != SQLITE_OK) goto cleanup;
     
-
     int id = get_channel_id(db, channel);
     if (id < 1) {
         goto cleanup;
@@ -270,7 +269,7 @@ int get_main_feed_articles(generic_list *article_list) {
             goto cleanup;
         }
 
-        rss_item *item = malloc(sizeof(*item));
+        rss_item *item = item_init();
         if (!item) {
             log_debug("Failed memory allocation");
             goto cleanup;
@@ -294,7 +293,7 @@ cleanup:
     }
     sqlite3_finalize(stmt);
     sqlite3_close(db);
-    return 0;
+    return result;
 }
 
 int get_channel_articles(rss_channel *channel, generic_list *out_list) {
@@ -313,7 +312,7 @@ int get_channel_articles(rss_channel *channel, generic_list *out_list) {
     if (result != SQLITE_OK) goto cleanup;
 
     while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
-        rss_item *article = malloc(sizeof(*article));
+        rss_item *article = item_init();
         read_article_from_stmt(stmt, article);
         list_append(out_list, article);
     }
@@ -327,7 +326,7 @@ cleanup:
     }
     sqlite3_finalize(stmt);
     sqlite3_close(db);
-    return 0;
+    return result;
 }
 
 int get_channel(int channel_id, rss_channel *channel) {

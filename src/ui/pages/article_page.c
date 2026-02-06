@@ -94,7 +94,8 @@ char *format_description(char *description, int width, int *lines) {
             *lines += 1;
         }
     }
-    description[d_len] = '\0';
+
+    formatted_description[d_len] = '\0';
 
     return formatted_description;
 }

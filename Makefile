@@ -46,4 +46,4 @@ db_testing: src/channels_db/*
 run_main: main
 	./main test.txt
 run_main_asan: asan_main
-	./main
+	./main test.txt
