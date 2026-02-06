@@ -29,7 +29,7 @@ void main_feed(app_state *app, local_state *state){
 
     int y = 1;
     
-    char *row = malloc(width + 1);
+    char *row = calloc(width + 1, sizeof(char));
     size_t offset = 0;
 
     offset += add_column(row + offset, col_widths.channel_name * width, "CHANNEL");
@@ -65,6 +65,8 @@ void main_feed(app_state *app, local_state *state){
     write_centered(y + 2, TB_GREEN, 0, "no articles, start by adding a channel");
 
     menu_result result = display_menu(config);
+    free(row);
+
     article_with_channel_name *selected_item = NULL;
     int selected_article_id = -1;
 

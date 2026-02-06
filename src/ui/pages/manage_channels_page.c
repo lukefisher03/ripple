@@ -79,6 +79,8 @@ void manage_channels_page(app_state *app, local_state *state) {
     write_centered(y + 2, TB_GREEN, 0, "no channels, start by importing some channels");
 
     menu_result result = display_menu(config);
+    free(row);
+
     rss_channel *selected_channel = NULL;
     char *selected_channel_title = NULL;
     int selected_channel_id = -1;

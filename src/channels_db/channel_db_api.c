@@ -455,4 +455,5 @@ cleanup:
 void free_article_with_channel_name(article_with_channel_name *article) {
     free_item(article->item);
     free(article->channel_name);
+    free(article);
 }

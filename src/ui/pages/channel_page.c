@@ -66,6 +66,7 @@ void channel_page(app_state *app, local_state *state) {
     write_centered(y + 2, TB_GREEN, 0, "no articles, start by adding a channel");
 
     menu_result result = display_menu(config);
+    free(row);
 
     rss_item *selected_article = article_list->elements[result.selection];
     int selected_article_id = selected_article->id;

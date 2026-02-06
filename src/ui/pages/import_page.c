@@ -44,7 +44,6 @@ void import_page(app_state *app, local_state *state) {
     nav_offset += print_navigation_help(padding + nav_offset, tb_height() - 2, "h", "home");
 
     menu_result result = display_menu(config);
-    
     free(row);
 
     switch (result.ev.ch) {
