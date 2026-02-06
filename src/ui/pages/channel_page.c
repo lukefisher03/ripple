@@ -37,6 +37,7 @@ void channel_page(app_state *app, local_state *state) {
 
     int y = 1;
     write_centered(y++, TB_GREEN, 0, channel->title);
+    write_centered(y++, TB_GREEN, 0, channel->link);
     y++;
     tb_printf(0, y++, TB_GREEN, 0, "%s", row);
     tb_printf(0, y++, TB_GREEN, 0, "%s", thick_divider);
