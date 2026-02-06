@@ -48,7 +48,7 @@ void manage_channels_page(app_state *app, local_state *state) {
     offset += add_column(row + offset, col_widths.channel_name * width, "CHANNEL NAME");
     offset += add_column(row + offset, col_widths.article_count * width, "ARTICLE COUNT");
     offset += add_column(row + offset, col_widths.last_updated * width, "LAST UPDATED");
-    memset(row, ' ', width - offset);
+    memset(row + offset, ' ', width - offset);
     row[width] = '\0';
 
     y += 1;
