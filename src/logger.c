@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <time.h>
 
-#define LOG_FILE_NAME "ripple_debug.log"
+#define LOG_FILE_NAME "config/ripple_debug.log"
 
 static FILE *log_file = NULL;
 

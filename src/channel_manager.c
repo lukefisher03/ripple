@@ -61,7 +61,11 @@ int get_new_channel_links(const char *feeds_file, size_t length, generic_list *l
     for(size_t i = 0; i < length; i++) {
         // Skip whitespace
         for (; is_blank(feeds_file[i]) && i < length; i++);
-
+        if ((i == 0 || is_blank(feeds_file[i-1])) && feeds_file[i] == '#') {
+            // Skip comments
+            for (; feeds_file[i] != '\n'; i++);
+        }
+        for (; is_blank(feeds_file[i]) && i < length; i++);
         // Read characters
         start = i;
         for (; !is_blank(feeds_file[i]) && i < length; i++);

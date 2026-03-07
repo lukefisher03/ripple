@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "logger.h"
 
+#include <time.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -73,13 +74,14 @@ char *file_to_string(const char *path, size_t *out_size) {
 // ------ Convert RFC 822 timestamps to tm structs ------ //
 
 bool rfc_822_to_tm(char *timestamp, struct tm *tm) {
+    log_debug("Attempting conversion of %s to a tm struct", timestamp);
     // All variants of the RFC 822 date format
     char *date_strings[] = {
-        "%a, %d %b %Y %H:%M:%S %z",
+        "%a, %d %b %Y %H:%M:%S",
         "%a, %d %b %Y %H:%M:%S GMT",
-        "%a, %d %b %Y %H:%M %z",
+        "%a, %d %b %Y %H:%M",
         "%a, %d %b %Y %H:%M GMT",
-        "%d %b %Y %H:%M:%S %z",
+        "%d %b %Y %H:%M:%S",
         "%d %b %Y %H:%M:%S GMT",
     };
 
@@ -87,7 +89,7 @@ bool rfc_822_to_tm(char *timestamp, struct tm *tm) {
         struct tm tmp_tm = {0};
         char *end = strptime(timestamp, date_strings[i], &tmp_tm);
 
-        if (end && *end == '\0') {
+        if (end != NULL) {
             *tm = tmp_tm;
             return true;
         }

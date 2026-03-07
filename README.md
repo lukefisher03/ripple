@@ -1,72 +1,87 @@
 # Terminal RSS Aggregator
-A lightweight RSS Aggregator that runs in your terminal. Written in C. Backed by a SQLite database to persistently store RSS channels and articles. 
 
-*Dockerfile instructions at the bottom of the page*
+A lightweight RSS Aggregator that runs in your terminal. Written in C. Backed by a SQLite database to persistently store RSS channels and articles.
+
+_Dockerfile instructions at the bottom of the page_
 
 ### Main menu
+
 ![Main Menu](assets/main_menu.png)
 
 ### Feed reader
+
 ![Feed Reader](assets/feed_reader.png)
 
-### Articles 
+### Articles
+
 ![Article Page](assets/article.png)
 
 ### Channels
+
 Browse articles by channel, delete channels, or import new channels from this page.
 ![Channels Page](assets/view_channels.png)
 
 ### Channel
+
 View the articles from a specific channel.
 ![Channel Page](assets/view_channel.png)
 
 ### Import channels
+
 Load new channels via their links from this page. To import channels create a file and store the links to each channel separated by newlines. Start the application and provide the path to the file as the first argument. You will will see the links populate in this list. Press ENTER to import the new channels.
 ![Import Page](assets/import_channels.png)
 
 See todo.txt for what's next
 
 ### Building Ripple
+
 You'll need to clone the repository and include the `termbox2` submodule. You can clone and include submodules by default by using:
+
 ```
 git clone --recurse-submodules https://github.com/lukefisher03/ripple
 ```
 
 #### Using the Dockerfile
+
 The `Dockerfile` uses a multistage Alpine Linux build. The first stage compiles the binary and the second produces the final image with just the binary and dependencies.
 
-In this example, I'm using Podman, but the docker commands are very similar.
+In this example, I'm using Podman with compose, but the docker commands are very similar.
 
-Build the image.
-``` bash
-podman build -t ripple .
+Run this to stand build/pull images and stand up the container. The `-d` flag is required to run the container in detached mode. Include the `--build` flag if you need to rebuild the images.
+
+```bash
+podman compose up -d
 ```
 
-Start a container.
-``` bash
-podman run -it --name rip ripple
+Delete intermediate images from the multistage build.
+
+```bash
+podman image prune -f --filter label=stage=build
 ```
 
-From here you'll see the application start up. If you exit the application, you'll need to re-enter the container instead of creating a new one. 
-``` bash
-podman container start -ai rip
+Exec into the container. Modify `config/channel_list.txt` in the host to add new feeds. You can review the debug log within the `config` directory.
+
+```bash
+podman compose exec ripple config/channel_list.txt
 ```
 
-If you want to import new channels you need to exec into the container and modify the `channel_list.txt` file. While the container is running, run:
-``` bash
-podman container exec -it rip sh
-vim channel_list.txt
+Tear everything down, note this will delete the database and any imported feeds will be lost.
+
+```bash
+podman compose down
 ```
-After modifying the list, you will see updates in the channel import page. No need to exit the container and start it again, just go back a page and re-enter the import page.
 
 #### Building from source
+
 This project only has a few dependencies.
+
 - sqlite3
 - uriparser
 - openssl
 
-Ensure that `pkg-config` can locate these dependencies and run 
-``` 
+Ensure that `pkg-config` can locate these dependencies and run
+
+```
 make main
-./main <optional text file for importing new channels> 
+./main <optional text file for importing new channels>
 ```

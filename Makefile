@@ -1,4 +1,4 @@
-TEST_IMPORT_FILE = "channel_list.txt"
+TEST_IMPORT_FILE = "./config/channel_list.txt"
 
 CLANG_DEBUG = clang -Wall -Werror -std=gnu11 -O0 -g -fsanitize=address
 CLANG_PROD = clang -Wall -Werror -std=gnu11 -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE 

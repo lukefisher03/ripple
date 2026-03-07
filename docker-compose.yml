@@ -1,0 +1,7 @@
+services:
+  ripple:
+    build: .
+    volumes:
+      - ./config:/config
+    tty: true
+    stdin_open: true
