@@ -278,7 +278,7 @@ int process_node(rss_container *c, const rss_node *n) {
         } else if (!strcmp(node_name, "pubDate")) {
             char *pub_date_rfc822 = strdup(text_node->text);
             struct tm tm = {0};
-            if (rfc_822_to_tm(pub_date_rfc822, &tm)) {
+            if (rfc_822_to_utc_tm(pub_date_rfc822, &tm)) {
                 item->unix_timestamp = timegm(&tm);
             } else {
                 log_debug("Could not parse publish date string: %s, skipping", pub_date_rfc822);
