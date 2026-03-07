@@ -41,13 +41,13 @@ You'll need to clone the repository and include the `termbox2` submodule. You ca
 git clone --recurse-submodules https://github.com/lukefisher03/ripple
 ```
 
-#### Using the Dockerfile
+#### Using Docker Compose 
 
-The `Dockerfile` uses a multistage Alpine Linux build. The first stage compiles the binary and the second produces the final image with just the binary and dependencies.
+The `Dockerfile` uses a multistage Alpine Linux build. The first stage compiles and the second produces the final image with just the binary and dependencies.
 
 In this example, I'm using Podman with compose, but the docker commands are very similar.
 
-Run this to stand build/pull images and stand up the container. The `-d` flag is required to run the container in detached mode. Include the `--build` flag if you need to rebuild the images.
+Run this to build/pull images and stand up the container. The `-d` flag is required to run the container in detached mode. Include the `--build` flag if you need to rebuild the images.
 
 ```bash
 podman compose up -d
@@ -65,7 +65,7 @@ Exec into the container. Modify `config/channel_list.txt` in the host to add new
 podman compose exec ripple config/channel_list.txt
 ```
 
-Tear everything down, note this will delete the database and any imported feeds will be lost.
+Tear everything down, this will delete the database and any imported feeds will be lost.
 
 ```bash
 podman compose down
