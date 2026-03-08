@@ -168,7 +168,10 @@ static int render_basic_menu(renderer_params *params) {
     } else {
         snprintf(selected_s, max_len, "  %s  ", text);
     }
-    write_centered(new_y++, TB_GREEN, 0, selected_s);
+    
+    int text_color = params->selected ? SELECTED_FG_COLOR : TB_GREEN;
+
+    write_centered(new_y++, text_color, 0, selected_s);
     free(selected_s);
     return new_y - params->start_y;
 }
