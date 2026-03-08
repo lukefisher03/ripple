@@ -38,18 +38,25 @@ rss_node *dummy_node_init(void) {
 // -------- Cleanup -------- //
 
 static void free_text_node(rss_node *node) {
+    if (!node) return;
     free(node->text);
     free(node);
 }
 
 static void free_xml_node(rss_node *node) {
+    if (!node) return;
+    for (size_t i = 0; i < node->xml.children->count; i++) {
+        free_node(node->xml.children->elements[i]);
+    }
     free(node->xml.name);
     list_free(node->xml.children);
     free(node);
 }
 
 void free_node(rss_node *node) {
+    if (!node) return;
     switch (node->type) {
+    case ROOT_NODE:
     case XML_NODE:
         free_xml_node(node);
         break;
@@ -59,29 +66,5 @@ void free_node(rss_node *node) {
     default:
         free(node);
         break;
-    }
-}
-
-// TODO: Convert to iterative to avoid stack overflow
-void free_tree(rss_node *node) {
-    // Free an entire tree of nodes. The tree must ONLY contain
-    // nodes defined in this file.
-    if (!node) {
-        return;
-    }
-
-    switch (node->type) {
-        case DUMMY:
-        case TEXT_NODE:
-            free_node(node);
-            break;
-        case ROOT_NODE:
-        case XML_NODE:
-            for (size_t i = 0; i < node->xml.children->count; i++) {
-                free_tree(node->xml.children->elements[i]);
-            }
-            free_node(node);
-        default:
-            break;
     }
 }

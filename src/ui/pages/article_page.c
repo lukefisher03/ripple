@@ -31,31 +31,33 @@ void article_page(app_state *app, local_state *state) {
 
     // TODO: Cleanup this part and the state transition stuff
     article_page_state article_state = state->article_state;
-    rss_item item = {0};
-    if (get_article(article_state.article_id, &item) != 0) {
+    rss_item *item = item_init();
+    if (get_article(article_state.article_id, item) != 0) {
         navigate(MAIN_PAGE, app, (local_state){});
     }
 
-    rss_channel chan = {0};
-    get_channel(item.channel_id, &chan);
+    rss_channel *chan = channel_init(); 
+    get_channel(item->channel_id, chan);
 
     int y = 5;
-    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", item.title);
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", item->title);
     tb_printf(PADDING, y++, TB_GREEN, 0, "%s", divider);
-    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", chan.title);
-    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", item.link);
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", chan->title);
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", item->link);
     char formatted_time[128];
-    unix_time_to_formatted(item.unix_timestamp, formatted_time, 128);
+    unix_time_to_formatted(item->unix_timestamp, formatted_time, 128);
     tb_printf(PADDING, y++, TB_GREEN, 0, "%s", formatted_time);
     y += 5;
     int lines = 0;
-    char *description = format_description(item.description, width, &lines);
+    char *description = format_description(item->description, width, &lines);
 
     tb_printf(PADDING, y++, TB_GREEN, 0, "DESCRIPTION");
     tb_printf(PADDING, y++, TB_GREEN, 0, "%s", description ? description : "No description provided");
     y += lines + 5;
     menu_result result = display_basic_menu(y++, article_options, options_length);
 
+    free_item(item);
+    free_channel(chan);
     free(divider);
     free(description);
 

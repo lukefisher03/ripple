@@ -91,9 +91,9 @@ int store_new_channels(char **links, size_t link_count) {
         size_t rss_size = 0;
         char *feed_xml = get_feed_xml(link, &rss_size);
         rss_channel *new_channel = build_channel(feed_xml, rss_size, link);
+        free(feed_xml);
         if (!new_channel) {
             log_debug("Failed to build new channel from link: %s", link);
-            free(feed_xml);
             result = 1;
             goto cleanup;
         }

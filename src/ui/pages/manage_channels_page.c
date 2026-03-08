@@ -26,7 +26,7 @@ void manage_channels_page(app_state *app, local_state *state) {
 
     generic_list *channel_list = list_init();
     get_channel_list(channel_list);
-    channel_with_extras **channels_with_extras = calloc(channel_list->count, sizeof(*channels_with_extras));
+    channel_with_article_count **channels_with_extras = calloc(channel_list->count, sizeof(*channels_with_extras));
 
     if (!channels_with_extras) {
         log_debug("Failed to allocate memory for the channel list!");
@@ -36,7 +36,7 @@ void manage_channels_page(app_state *app, local_state *state) {
         rss_channel *chan = channel_list->elements[i];
         int article_count = 0;
         get_channel_article_count(chan, &article_count);
-        channel_with_extras *new_chan = malloc(sizeof(*new_chan));
+        channel_with_article_count *new_chan = malloc(sizeof(*new_chan));
         new_chan->chan = chan;
         new_chan->article_count = article_count;
         channels_with_extras[i] = new_chan;
@@ -67,7 +67,7 @@ void manage_channels_page(app_state *app, local_state *state) {
         .y = y,
         .x = 0,
         .options = channels_with_extras,
-        .option_size = sizeof(channel_with_extras*),
+        .option_size = sizeof(channel_with_article_count*),
         .option_count = channel_list->count,
         .renderer = &render_channel_list,
         .valid_input_list = "DbEiv",
@@ -84,19 +84,23 @@ void manage_channels_page(app_state *app, local_state *state) {
     free(row);
 
     rss_channel *selected_channel = NULL;
-    char *selected_channel_title = NULL;
+    char selected_channel_title[512] = "";
     int selected_channel_id = -1;
    
     if (!list_is_empty(channel_list)) {
         selected_channel = channel_list->elements[result.selection];
-        selected_channel_title = strdup(selected_channel->title);
+        snprintf(selected_channel_title, 512, "%s", selected_channel->title);
         selected_channel_id = selected_channel->id;
     }
 
     for (size_t i = 0; i < channel_list->count; i++) {
         free_channel(channel_list->elements[i]);
+        free(channels_with_extras[i]);
     }
+
     list_free(channel_list);
+
+    free(channels_with_extras);
 
     tb_present();
     if (result.ev.key == TB_KEY_ENTER && selected_channel) {
@@ -114,7 +118,6 @@ void manage_channels_page(app_state *app, local_state *state) {
             char *options[2]; 
             if (selected_channel_id > -1) {
                 chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "Are you sure you wish to delete channel, %s?", selected_channel_title);
-                free(selected_channel_title);
                 options[0] = "yes";
                 options[1] = "no";
             } else {
@@ -164,7 +167,7 @@ void manage_channels_page(app_state *app, local_state *state) {
 }
 
 static int render_channel_list(renderer_params *params) {
-    const channel_with_extras *chan_with_extras = *(channel_with_extras**)params->option;
+    const channel_with_article_count *chan_with_extras = *(channel_with_article_count**)params->option;
     const rss_channel *chan = chan_with_extras->chan;
 
     char *row = params->config->row;

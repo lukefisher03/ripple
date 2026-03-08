@@ -176,7 +176,6 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
                     rss_node *top = list_peek(stack); 
                     rss_node *node = xml_node_init(); 
                     node->xml.name = strndup(new_tag.name, strlen(new_tag.name));
-                    free(new_tag.name);
                     list_append(top->xml.children, node);
                     list_append(stack, node);
 
@@ -184,6 +183,7 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
                     list_pop(stack);
                 }
 
+                free(new_tag.name);
                 i += new_tag.total_length;
             }
         } else if (!strncmp(s, "<!--", 3)) {
@@ -201,8 +201,9 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
 
             if (text_length < 1) {
                 i++;
+                free_node(t_node);
                 continue;
-            } 
+            }
 
             i += text_length;
             rss_node *top = list_peek(stack);
@@ -210,7 +211,7 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
         }
     }
 
-    free(stack);
+    list_free(stack);
     if (err != TRSS_OK) {
         return NULL;
     }
@@ -269,13 +270,10 @@ int process_node(rss_container *c, const rss_node *n) {
             item->guid = strdup(text_node->text);
         } else if (!strcmp(node_name, "title")) {
             // Ensure we free the default value 
-            free(item->title);
             item->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "author")) {
-            free(item->author);
             item->author = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
-            free(item->link);
             item->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "pubDate")) {
             char *pub_date_rfc822 = strdup(text_node->text);
@@ -289,27 +287,18 @@ int process_node(rss_container *c, const rss_node *n) {
             free(pub_date_rfc822);
             
         } else if (!strcmp(node_name, "description")) {
-            free(item->description);
             item->description = strdup(text_node->text);
-        } else {
-            // printf("No place for %s in container type %i\n", node_name, c->type);
         }
     } else if (c->type == CHANNEL) {
         rss_channel *channel = c->channel;
         if (!strcmp(node_name, "title")) {
-            free(channel->title);
             channel->title = strdup(text_node->text);
         } else if (!strcmp(node_name, "link")) {
-            free(channel->link);
             channel->link = strdup(text_node->text);
         } else if (!strcmp(node_name, "description")) {
-            free(channel->description);
             channel->description = strdup(text_node->text);
         }  else if (!strcmp(node_name, "language")) {
-            free(channel->language);
             channel->language = strdup(text_node->text);
-        } else {
-            // printf("No place for %s in container type %i\n", node_name, c->type);
         }
     } else {
         fprintf(stderr, "CONTAINER NOT RECOGNIZED: %i\n", c->type);
@@ -339,7 +328,10 @@ bool build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
             case DUMMY:
                 // If we encounter a dummy node, we know that we just finished
                 // iterating through a container's children
-                free(list_pop(container_stack));
+                free(list_pop(container_stack)); // We don't want to free the item in
+                                                 // the container, just the container
+                                                 // itself.   
+                free_node(node);
                 break;
             case XML_NODE:
                 if (!strcmp(node->xml.name,"item")) {
@@ -385,12 +377,12 @@ bool build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
         }
     }
 
-    // We're only cleaning up the containers
+    // We're only cleaning up the containers, not the items or channels in them
     for (size_t i = 0; i < container_stack->count; i++) {
         free(container_stack->elements[i]);
     }
     for (size_t i = 0; i < dfs_stack->count; i++) {
-        free(dfs_stack->elements[i]);
+        free_node(dfs_stack->elements[i]);
     }
 
     list_free(container_stack);
@@ -402,7 +394,7 @@ rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
     rss_channel *new_channel = channel_init();
     rss_node *tree = construct_parse_tree(xml_rss, size);
     build_channel_from_parse_tree(new_channel, tree);
-    free(tree);
+    free_node(tree);
     new_channel->rss_link = strdup(link);
     if (!new_channel->link) {
         free(new_channel);
@@ -421,10 +413,6 @@ rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
 rss_item *item_init(void) {
     rss_item *new_item = calloc(1, sizeof(*new_item));
     // Defaults must be heap allocated
-    new_item->title = strdup("No article title");
-    new_item->description = strdup("No article description");
-    new_item->link = strdup("No article link provided");
-    new_item->author = strdup("No author");
 
     if (!new_item) {
         return NULL;
@@ -435,8 +423,6 @@ rss_item *item_init(void) {
 
 rss_channel *channel_init(void) {
     rss_channel *new_channel = calloc(1, sizeof(*new_channel));
-    new_channel->description = strdup("No article description");
-    new_channel->language = strdup("No language provided");
 
     if (!new_channel) {
         return NULL;
@@ -509,7 +495,7 @@ void free_channel(rss_channel *c) {
             rss_item *it = c->items->elements[i];
             free_item(it);
         }
-        free(c->items);
+        list_free(c->items);
     }
     free(c);
 }

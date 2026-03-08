@@ -205,6 +205,7 @@ static int parse_url(const char *url, host_and_path *hp) {
     if (uriParseSingleUriA(&uri, url, &errorPos) != URI_SUCCESS) {
         log_debug("Failed to parse uri: %s", url);
         log_debug("Error: %s", errorPos);
+        uriFreeUriMembersA(&uri);
         return 1;
     }
     if (!uri.hostText.first) {
@@ -223,6 +224,7 @@ static int parse_url(const char *url, host_and_path *hp) {
         return 1;
     }
     log_debug("%s", hp->host); 
+    uriFreeUriMembersA(&uri);
 
     return 0;
 }

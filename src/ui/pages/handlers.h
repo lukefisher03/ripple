@@ -38,7 +38,7 @@ typedef struct {
 typedef struct {
     rss_channel     *chan;
     int             article_count;
-} channel_with_extras;
+} channel_with_article_count;
 
 // ----- IMPORT PAGE ------ //
 void import_page(app_state *app, local_state *state);

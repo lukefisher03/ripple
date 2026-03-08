@@ -28,6 +28,5 @@ rss_node *text_node_init(void);
 rss_node *dummy_node_init(void);
 
 void free_node(rss_node *node);
-void free_tree(rss_node *node);
 
 #endif

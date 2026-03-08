@@ -20,7 +20,7 @@ void import_page(app_state *app, local_state *state) {
     char *new_channels_file = file_to_string(app->init_state.new_channel_links_file_path, &size);
 
     get_new_channel_links(new_channels_file, size, links);
-
+    free(new_channels_file);
     int padding = tb_width() * 0.2;
     int width = tb_width() * 0.6;
     y += show_banner(padding, y, width);
@@ -69,7 +69,7 @@ void import_page(app_state *app, local_state *state) {
     for (size_t i = 0; i < links->count; i++) {
         free(links->elements[i]);
     }
-    free(links);
+    list_free(links);
 }
 
 static int render_link_list(renderer_params *params) {
@@ -113,7 +113,7 @@ static int show_banner(int x, int y, int width) {
     memset(row, '-', width);
     row[width] = '\0';
     tb_printf(x, new_y++, TB_GREEN, 0, "%s", row);
-    
+    free(row);
     return new_y - y;
 }
 
