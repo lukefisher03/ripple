@@ -75,7 +75,6 @@ char *file_to_string(const char *path, size_t *out_size) {
 // ------ Convert RFC 822 timestamps to tm structs ------ //
 
 bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
-    log_debug("Attempting conversion of %s to a tm struct", timestamp);
     // All variants of the RFC 822 date format
     char *date_strings[] = {
         "%a, %d %b %Y %H:%M:%S", "%a, %d %b %Y %H:%M:%S GMT",
@@ -100,7 +99,7 @@ bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
             return false;
         }
         if (*end == 'G') {
-            log_debug("GMT time detected for %s", timestamp);
+            // GMT time has a UTC offset of +0
             *tm = tmp_tm;
             return true;
         }

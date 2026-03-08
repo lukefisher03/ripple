@@ -84,9 +84,9 @@ static char * request_rss_xml(struct ssl_connection *ssl_items, const char * hos
     size_t cap = 64000;
 
     char *response = malloc(cap);
-    char request[1024]; // TODO: Investigate if this is the proper size for this buffer
+    char request[4096]; // TODO: Investigate if this is the proper size for this buffer
 
-    snprintf(request, sizeof(request), 
+    int res = snprintf(request, sizeof(request), 
                 "GET %s HTTP/1.1\r\n"
                 "Host: %s\r\n"
                 "Connection: close\r\n"
@@ -96,6 +96,13 @@ static char * request_rss_xml(struct ssl_connection *ssl_items, const char * hos
                 "user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\r\n"
                 "\r\n",
             path, host);
+
+    if (res < 0 || res >= sizeof(request)) {
+        free(response);
+        log_debug("Failed to write request. Either it was too large or an error occurred.");
+        log_debug("Associated request: %s", request);
+        return NULL;
+    }
 
     int ret_code;
     if ((ret_code = SSL_write(ssl_items->ssl, request, strlen(request))) <= 0) {
@@ -112,6 +119,12 @@ static char * request_rss_xml(struct ssl_connection *ssl_items, const char * hos
             return NULL;
         }
         bytes_read += bytes;
+        if (bytes_read >= MAX_REQUEST_RESPONSE_SIZE) {
+            free(response);
+            log_debug("Request response too large to process. Response size capped at %i", MAX_REQUEST_RESPONSE_SIZE);
+            log_debug("Associated request: %s", request);
+            return NULL;
+        }
         if (bytes_read >= cap - 1) {
             cap *= 2; // Amortized O(1) append
             char *tmp = realloc(response, cap);
@@ -156,7 +169,7 @@ char * get_feed_xml(char *url, size_t *size) {
     s = getaddrinfo(hp.host, "https", &hints, &results);
 
     if (s != 0) {
-        fprintf(stderr, "getaddrinfo error: %d %s\n", s, gai_strerror(s));
+        log_debug("getaddrinfo error: %d %s\n", s, gai_strerror(s));
         return NULL;
     }
 

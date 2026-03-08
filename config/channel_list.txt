@@ -1,5 +1,6 @@
 # Add your channels here. This is a comment
 https://news.ycombinator.com/rss
 https://benhoyt.com/writings/rss.xml
-https://andreasfertig.com/feed.xml
-https://mariozechner.at/rss.xml
+# This is a test comment 
+#this is a another test comment
+####thisis the final test comment

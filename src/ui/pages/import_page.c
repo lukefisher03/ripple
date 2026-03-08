@@ -21,10 +21,13 @@ void import_page(app_state *app, local_state *state) {
 
     get_new_channel_links(new_channels_file, size, links);
     free(new_channels_file);
+
     int padding = tb_width() * 0.2;
     int width = tb_width() * 0.6;
+
     y += show_banner(padding, y, width);
     char *row = calloc(tb_width(), sizeof(char));
+
     menu_config config = {
         .y = y,
         .x = padding,
@@ -61,9 +64,31 @@ void import_page(app_state *app, local_state *state) {
         tb_clear();
         write_centered(tb_height() / 2 - 1, TB_GREEN, 0, "Importing channels, please wait");
         tb_present();
-        if (store_new_channels((char**)links->elements, links->count) == 0) {
-            navigate(CHANNELS_PAGE, app, (local_state){});
+        int channels_imported_count = store_new_channels((char**)links->elements, links->count);  
+
+        tb_clear();
+        struct tb_event ev;
+
+        char *message = " Successfully imported channels ";
+        int bg = SELECTED_BG_COLOR;
+
+        if (channels_imported_count < 0) {
+            message = " Failed to import channels, see debug log for details ";
+            bg = ERROR_BG_COLOR;
+        } else if (channels_imported_count == 0) {
+            message = " No channels to import ";
+        } else if (channels_imported_count < links->count) {
+            message = " Partial failure during import, see debug log to see which channels failed ";
+            bg = ERROR_BG_COLOR;
         }
+
+        write_centered(tb_height() / 2 - 1, TB_WHITE, bg, message);
+
+        write_centered(tb_height() / 2 + 1, TB_GREEN, 0, "Press any key to go back...");
+        tb_present();
+        tb_poll_event(&ev);
+        
+        navigate(CHANNELS_PAGE, app, (local_state){});
     }
 
     for (size_t i = 0; i < links->count; i++) {

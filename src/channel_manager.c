@@ -58,51 +58,60 @@ int get_new_channel_links(const char *feeds_file, size_t length, generic_list *l
     if (!feeds_file) return 1;
     size_t start = 0;
     size_t link_len = 0;
+
     for(size_t i = 0; i < length; i++) {
         // Skip whitespace
-        for (; is_blank(feeds_file[i]) && i < length; i++);
+        for (; i < length && is_blank(feeds_file[i]); i++);
         if ((i == 0 || is_blank(feeds_file[i-1])) && feeds_file[i] == '#') {
             // Skip comments
-            for (; feeds_file[i] != '\n'; i++);
+            for (; i < length && feeds_file[i] != '\n'; i++);
+            continue;
         }
-        for (; is_blank(feeds_file[i]) && i < length; i++);
+
         // Read characters
         start = i;
-        for (; !is_blank(feeds_file[i]) && i < length; i++);
+        for (; i < length && !is_blank(feeds_file[i]); i++);
         link_len = i - start;
         char *new_channel_link = calloc(link_len + 1, sizeof(char));
+        
         if (!new_channel_link) return 1;
+
         memcpy(new_channel_link, feeds_file + start, link_len);
+
         new_channel_link[link_len] = '\0';
         log_debug("New channel: %s", new_channel_link);
         list_append(list, new_channel_link);
     }
 
-    return 0;
+    return list->count;
 }
 
 int store_new_channels(char **links, size_t link_count) {
-    log_debug("STORING NEW CHANNELS!");
-    int result = 0;
+    int count = 0;
     generic_list *new_channels = list_init();
 
     for (size_t i = 0; i < link_count; i++) {
         char *link = links[i];
         size_t rss_size = 0;
         char *feed_xml = get_feed_xml(link, &rss_size);
+        if (!feed_xml) {
+            log_debug("Could not retrieve feed XML for %s. Skipping", link);
+            continue; 
+        }
         rss_channel *new_channel = build_channel(feed_xml, rss_size, link);
         free(feed_xml);
         if (!new_channel) {
             log_debug("Failed to build new channel from link: %s", link);
-            result = 1;
-            goto cleanup;
+            continue; 
         }
         list_append(new_channels, new_channel);
+        count++;
     }
 
-    result = store_channel_list(new_channels->count, (rss_channel**)new_channels->elements);
+    int result = store_channel_list(new_channels->count, (rss_channel**)new_channels->elements);
     if (result != 0) {
         log_debug("Failure when storing channels");
+        count = -1;
         goto cleanup;
     }
 
@@ -111,5 +120,5 @@ cleanup:
         free_channel(new_channels->elements[i]);
     }
     list_free(new_channels);
-    return 0;
+    return count;
 }

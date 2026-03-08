@@ -3,6 +3,7 @@
 
 #define MAX_DOMAIN_LEN 255
 #define MAX_PATH_LEN 4096
+#define MAX_REQUEST_RESPONSE_SIZE (10 * 1024 * 1024)
 
 #include <stdlib.h>
 

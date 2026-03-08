@@ -70,13 +70,13 @@ int db_open(sqlite3 **db) {
     int result = 1;
     result = sqlite3_open(DB_PATH, db);
     if (result != SQLITE_OK) {
-        fprintf(stderr, "Error connecting to database: %s\n", sqlite3_errmsg(*db));
+        log_debug("Error connecting to database: %s\n", sqlite3_errmsg(*db));
         return result;
     };
 
     result = sqlite3_exec(*db, "PRAGMA foreign_keys = ON;", NULL, NULL, &err_msg);
     if (result != SQLITE_OK) {
-        fprintf(stderr, "Error enabling foreign key constraints: %s\n", sqlite3_errmsg(*db));
+        log_debug("Error enabling foreign key constraints: %s\n", sqlite3_errmsg(*db));
         return result;
     }
 

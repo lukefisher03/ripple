@@ -230,7 +230,7 @@ void print_parse_tree(const rss_node *root, int depth) {
     char *spacer = get_spacer(depth);
 
     if (!spacer) {
-        fprintf(stderr, "Memory allocation failed!!");
+        log_debug("Memory allocation failed!!");
         return;
     }
 
@@ -301,7 +301,7 @@ int process_node(rss_container *c, const rss_node *n) {
             channel->language = strdup(text_node->text);
         }
     } else {
-        fprintf(stderr, "CONTAINER NOT RECOGNIZED: %i\n", c->type);
+        log_debug("CONTAINER NOT RECOGNIZED: %i\n", c->type);
         return TRSS_ERR;
     }
 

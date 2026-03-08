@@ -21,7 +21,7 @@ int create_channel_table(sqlite3 *db, char **err_msg) {
 
     int result = sqlite3_exec(db, create_feeds_table_cmd, NULL, NULL, err_msg);
     if (result != SQLITE_OK && result != SQLITE_CONSTRAINT_UNIQUE) {
-        fprintf(stderr, "Error: Failed to create channels table - %s\n", *err_msg);
+        log_debug("Error: Failed to create channels table - %s\n", *err_msg);
         sqlite3_free(*err_msg);
         *err_msg = NULL;
     }
@@ -46,7 +46,7 @@ int create_article_table(sqlite3 *db, char **err_msg) {
     int result = sqlite3_exec(db, create_articles_table_cmd, NULL, NULL, err_msg);
 
     if (result != SQLITE_OK) {
-        fprintf(stderr, "Error: Failed to build articles table - %s\n", *err_msg);
+        log_debug("Error: Failed to build articles table - %s\n", *err_msg);
         sqlite3_free(*err_msg);
         *err_msg = NULL;
     }
