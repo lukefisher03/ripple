@@ -101,7 +101,8 @@ bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         }
         if (*end == 'G') {
             log_debug("GMT time detected for %s", timestamp);
-            return -1;
+            *tm = tmp_tm;
+            return true;
         }
 
         // Get the UTC offset
