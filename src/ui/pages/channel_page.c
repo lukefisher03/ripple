@@ -23,7 +23,6 @@ void channel_page(app_state *app, local_state *state) {
     int width = tb_width();
     char *row = calloc(width + 1, sizeof(char));
     rss_channel *channel = channel_init();
-    log_debug("Getting channel: %d", state->channel_state.channel_id);
     if (get_channel(state->channel_state.channel_id, channel) != 0) {
         log_debug("Failed to get channel!");
     }

@@ -3,6 +3,8 @@
 #include "../../logger.h"
 #include "../../utils.h"
 
+#define MAX_ARTICLE_DESCRIPTION 1024
+
 char *article_options[] = {
     "back",
     "home",
@@ -52,9 +54,12 @@ void article_page(app_state *app, local_state *state) {
     char *description = format_description(item->description, width, &lines);
 
     tb_printf(PADDING, y++, TB_GREEN, 0, "DESCRIPTION");
-    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", description ? description : "No description provided");
+    log_debug("Article description \n\n%s", description);
+    errno = 0;
+    int res = tb_printf(PADDING, y++, TB_GREEN, 0, "%s", description != NULL ? description : "No description provided");
+    log_debug("printf result %d | %s", res, strerror(errno));
     y += lines + 5;
-    menu_result result = display_basic_menu(y++, article_options, options_length);
+    menu_result result = display_basic_menu(tb_height() - 10, article_options, options_length);
 
     free_item(item);
     free_channel(chan);
@@ -80,13 +85,16 @@ char *format_description(char *description, int width, int *lines) {
         return NULL;
     }
 
-    size_t description_length = strlen(description);
+    size_t description_length = strlen(description); 
+    int description_overflow = description_length > MAX_ARTICLE_DESCRIPTION;
+
+    size_t final_length = description_overflow ? MAX_ARTICLE_DESCRIPTION : description_length;
+
     *lines = 0;
     size_t d_len = 0;
 
-    char *formatted_description = malloc(description_length + height);
-
-    for (size_t i = 0; i <= description_length; i++) {
+    char *formatted_description = malloc(final_length + height);
+    for (size_t i = 0; i <= final_length; i++) {
         char ch = description[i];
         if (ch != '\n') {
             formatted_description[d_len++] = description[i];
@@ -97,6 +105,9 @@ char *format_description(char *description, int width, int *lines) {
         }
     }
 
+    if (d_len >= MAX_ARTICLE_DESCRIPTION - 3) {
+        memset(formatted_description + d_len - 3, '.', 3);
+    }
     formatted_description[d_len] = '\0';
 
     return formatted_description;

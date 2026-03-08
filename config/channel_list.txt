@@ -1,6 +1,5 @@
-# Add your channels here. This is a comment
-https://news.ycombinator.com/rss
-https://benhoyt.com/writings/rss.xml
-# This is a test comment 
-#this is a another test comment
-####thisis the final test comment
+https://evanhahn.com/blog/index.xml
+https://growingswe.com/feed.xml
+https://www.seangoedecke.com/rss.xml
+https://tonystr.net/rss.xml
+https://aicoding.leaflet.pub/rss
