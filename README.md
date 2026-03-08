@@ -2,7 +2,7 @@
 
 A lightweight RSS Aggregator that runs in your terminal. Written in C. Backed by a SQLite database to persistently store RSS channels and articles.
 
-_ Docker instructions at the bottom of the page_
+_Docker instructions at the bottom of the page_
 
 See [todo.md](todo.md) for what's happened and what's next.
 See [PAGES.md](PAGES.md) to take a brief tour of the application.
