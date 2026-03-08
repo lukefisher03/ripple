@@ -509,6 +509,7 @@ void free_channel(rss_channel *c) {
             rss_item *it = c->items->elements[i];
             free_item(it);
         }
+        free(c->items);
     }
     free(c);
 }
