@@ -7,3 +7,4 @@ output.txt
 ripple_debug.log
 *.db
 .DS_Store
+leak_report*

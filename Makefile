@@ -1,6 +1,6 @@
 TEST_IMPORT_FILE = "./config/channel_list.txt"
 
-CLANG_DEBUG = clang -Wall -Werror -std=gnu11 -O0 -g -fsanitize=address
+CLANG_DEBUG = clang -Wall -Werror -std=gnu11 -O0 -g 
 CLANG_PROD = clang -Wall -Werror -std=gnu11 -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE 
 
 CFLAGS_MAIN := $(shell pkg-config --cflags openssl liburiparser)
@@ -31,8 +31,14 @@ main: ${MAIN_DEPS}
 debug_main: ${MAIN_DEPS}
 	${CLANG_DEBUG} ${MAIN_BUILD}
 
+debug_asan_main: ${MAIN_DEPS}
+	${CLANG_DEBUG} -fsanitize=address ${MAIN_BUILD}
+
 test_run_main: main
 	./main $(TEST_IMPORT_FILE)
 
-test_debug_main: debug_main
+test_debug_main: debug_main 
+	./main $(TEST_IMPORT_FILE)
+
+test_debug_asan_main: debug_asan_main
 	./main $(TEST_IMPORT_FILE)

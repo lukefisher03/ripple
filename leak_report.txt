@@ -1,4 +1,0 @@
-leaks Report Version: 4.0, multi-line stacks
-Process 61118: 1069 nodes malloced for 132 KB
-Process 61118: 0 leaks for 0 total leaked bytes.
-
