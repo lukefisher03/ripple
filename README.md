@@ -2,36 +2,12 @@
 
 A lightweight RSS Aggregator that runs in your terminal. Written in C. Backed by a SQLite database to persistently store RSS channels and articles.
 
-_Dockerfile instructions at the bottom of the page_
+_ Docker instructions at the bottom of the page_
 
-### Main menu
+See [todo.md](todo.md) for what's happened and what's next.
+See [PAGES.md](PAGES.md) to take a brief tour of the application.
 
-![Main Menu](assets/main_menu.png)
-
-### Feed reader
-
-![Feed Reader](assets/feed_reader.png)
-
-### Articles
-
-![Article Page](assets/article.png)
-
-### Channels
-
-Browse articles by channel, delete channels, or import new channels from this page.
-![Channels Page](assets/view_channels.png)
-
-### Channel
-
-View the articles from a specific channel.
-![Channel Page](assets/view_channel.png)
-
-### Import channels
-
-Load new channels via their links from this page. To import channels create a file and store the links to each channel separated by newlines. Start the application and provide the path to the file as the first argument. You will will see the links populate in this list. Press ENTER to import the new channels.
-![Import Page](assets/import_channels.png)
-
-See todo.txt for what's next
+![Feed Reader](assets/feeds_page.png)
 
 ### Building Ripple
 
@@ -45,30 +21,28 @@ git clone --recurse-submodules https://github.com/lukefisher03/ripple
 
 The `Dockerfile` uses a multistage Alpine Linux build. The first stage compiles and the second produces the final image with just the binary and dependencies.
 
-In this example, I'm using Podman with compose, but the docker commands are very similar.
-
 Run this to build/pull images and stand up the container. The `-d` flag is required to run the container in detached mode. Include the `--build` flag if you need to rebuild the images.
 
 ```bash
-podman compose up -d
+docker compose up -d
 ```
 
 Delete intermediate images from the multistage build.
 
 ```bash
-podman image prune -f --filter label=stage=build
+docker image prune -f --filter label=stage=build
 ```
 
-Exec into the container. Modify `config/channel_list.txt` in the host to add new feeds. You can review the debug log within the `config` directory.
+Exec into the container. Modify `config/channel_list.txt` in the host to add new feeds. You can also see the debug log in the `config` directory.
 
 ```bash
-podman compose exec ripple config/channel_list.txt
+docker compose exec ripple config/channel_list.txt
 ```
 
 Tear everything down, this will delete the database and any imported feeds will be lost.
 
 ```bash
-podman compose down
+docker compose down
 ```
 
 #### Building from source
