@@ -13,6 +13,15 @@ typedef struct {
 } confirmation_page_state;
 
 typedef struct {
+    int default_selection;
+} feeds_page_state;
+
+typedef struct {
+    int default_selection;
     int channel_id;
 } channel_page_state;
 #endif
+
+typedef struct {
+    int default_selection;
+} channels_page_state;

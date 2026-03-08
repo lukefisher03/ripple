@@ -27,5 +27,6 @@ int get_channel(int channel_id, rss_channel *channel);
 int get_channel_article_count(const rss_channel *channel, int *out_count);
 int get_channel_articles(rss_channel *channel, generic_list *out_list);
 int delete_channel(int channel_id);
+int toggle_channel_visibility(int channel_id);
 
 #endif

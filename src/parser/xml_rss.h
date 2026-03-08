@@ -30,6 +30,7 @@ typedef struct {
     char            *rss_link;
     int64_t         last_updated;
     char            *language;
+    int             shown;
     generic_list     *items; // List of items
 } rss_channel;
 

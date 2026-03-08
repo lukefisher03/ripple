@@ -18,11 +18,13 @@ typedef struct {
     const void          *options;
     size_t              option_size;
     int                 option_count;
+    int                 option_height;
     option_renderer     renderer;
     char                *valid_input_list;
     int                 valid_input_count;
     char                *row;
     int                 row_length;
+    int                 default_selection;
 } menu_config;
 
 struct renderer_params{

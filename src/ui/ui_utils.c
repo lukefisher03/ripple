@@ -43,12 +43,16 @@ menu_result display_menu(menu_config config)
 {
     // Display a menu and then return the selected option
     int cursor = 0;
+    if (config.default_selection < config.option_count) {
+        cursor = config.default_selection;
+    }
     int screen_height = tb_height() - 3;
     int new_y = config.y;
 
-    int option_height = 1;
+    int option_height = config.option_height > 0 ? config.option_height : 4;
     int window = (screen_height - config.y) / option_height;
-    int offset = 0;
+    int mid_offset = cursor - (window / 2);
+    int offset = mid_offset > 0 ? mid_offset : 0;
 
     while (1) {
         struct tb_event ev;
@@ -121,6 +125,7 @@ menu_result display_basic_menu(
         .renderer = &render_basic_menu,
         .valid_input_list = NULL,
         .valid_input_count = 0,
+        .default_selection = 0,
     };
     
     return display_menu(config);

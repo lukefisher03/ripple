@@ -59,6 +59,7 @@ void main_feed(app_state *app, local_state *state){
         .valid_input_count = 2,
         .row = row,
         .row_length = width,
+        .default_selection = state->feed_state.default_selection,
     };
 
     // This gets overwritten if there's articles to display
@@ -92,6 +93,7 @@ void main_feed(app_state *app, local_state *state){
     }
 
     if (result.ev.key == TB_KEY_ENTER && selected_item != NULL) {
+        state->feed_state.default_selection = result.selection;
         navigate(ARTICLE_PAGE, app, (local_state){
             .page = ARTICLE_PAGE,
             .article_state = {

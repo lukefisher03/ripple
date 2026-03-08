@@ -44,6 +44,8 @@ typedef struct {
        // different local state structs 
        article_page_state article_state;
        channel_page_state channel_state;
+       channels_page_state channels_state;
+       feeds_page_state feed_state;
     };
 } local_state;
 

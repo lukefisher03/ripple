@@ -261,6 +261,7 @@ int get_main_feed_articles(generic_list *article_list) {
     const char *stmt_str = "SELECT a.id AS article_id, a.title AS article_title, a.author, a.description, a.link, a.unix_timestamp, c.id AS channel_id, c.title AS channel_title"
                             " FROM article AS a JOIN channel AS c"
                             " ON a.channel_id=c.id"
+                            " WHERE c.shown=1"
                             " ORDER BY a.unix_timestamp DESC;";
 
     result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
@@ -422,6 +423,35 @@ int get_stale_channels(time_t cutoff, generic_list *out_list) {
 cleanup:
     if (result != SQLITE_OK && result != SQLITE_DONE) {
         log_debug("Error getting stale channels, %s", sqlite3_errmsg(db));
+    } else {
+        result = SQLITE_OK;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return result;
+}
+
+int toggle_channel_visibility(int channel_id) {
+    log_debug("Toggling visibility for channel %i", channel_id);
+    sqlite3 *db = NULL;
+    sqlite3_stmt *stmt = NULL;
+
+    int result = 1;
+    if ((result = db_open(&db)) != SQLITE_OK) goto cleanup;
+    
+    const char *stmt_str = "UPDATE channel SET shown = NOT shown WHERE id=?";
+
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
+
+    result = sqlite3_bind_int(stmt, 1, channel_id);
+    if (result != SQLITE_OK) goto cleanup;
+
+    if ((result = sqlite3_step(stmt)) != SQLITE_DONE) goto cleanup;
+
+cleanup:
+    if (result != SQLITE_DONE && result != SQLITE_OK) {
+        log_debug("Error toggling the channel visibility for channel: %i: %s", channel_id, sqlite3_errmsg(db));
     } else {
         result = SQLITE_OK;
     }

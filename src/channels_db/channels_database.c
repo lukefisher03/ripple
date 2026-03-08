@@ -16,6 +16,7 @@ int create_channel_table(sqlite3 *db, char **err_msg) {
                                     "language TEXT,"
                                     "link TEXT UNIQUE NOT NULL,"
                                     "rss_link TEXT UNIQUE NOT NULL,"
+                                    "shown INTEGER DEFAULT 1,"
                                     "last_updated INTEGER DEFAULT (unixepoch()));";
 
     int result = sqlite3_exec(db, create_feeds_table_cmd, NULL, NULL, err_msg);
@@ -150,6 +151,7 @@ int read_channel_from_stmt(sqlite3_stmt *stmt, rss_channel *channel) {
     const unsigned char *rss_link = sqlite3_column_text(stmt, arg_idx++);
     channel->rss_link = rss_link ? strdup((const char *)rss_link) : NULL;
 
+    channel->shown = sqlite3_column_int(stmt, arg_idx++);
     channel->last_updated = sqlite3_column_int(stmt, arg_idx++);
 
     return arg_idx;

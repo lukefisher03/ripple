@@ -61,6 +61,7 @@ void channel_page(app_state *app, local_state *state) {
         .valid_input_count = 3,
         .row = row,
         .row_length = width,
+        .default_selection = state->channel_state.default_selection,
     };
 
     // This gets overwritten if there's articles to display
@@ -88,6 +89,7 @@ void channel_page(app_state *app, local_state *state) {
             navigate(EXIT_PAGE, app, (local_state){});
             break;
         default: {
+            state->channel_state.default_selection = result.selection;
             navigate(ARTICLE_PAGE, app, (local_state){
                 .article_state = {
                     .article_id = selected_article_id,
