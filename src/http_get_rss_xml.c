@@ -121,7 +121,7 @@ static char * request_rss_xml(struct ssl_connection *ssl_items, const char * hos
         bytes_read += bytes;
         if (bytes_read >= MAX_REQUEST_RESPONSE_SIZE) {
             free(response);
-            log_debug("Request response too large to process. Response size capped at %i", MAX_REQUEST_RESPONSE_SIZE);
+            log_debug("Request response too large to process. Response size capped at %d", MAX_REQUEST_RESPONSE_SIZE);
             log_debug("Associated request: %s", request);
             return NULL;
         }

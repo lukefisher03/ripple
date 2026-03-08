@@ -30,7 +30,7 @@ char *file_to_string(const char *path, size_t *out_size) {
     while (1) {
         if (buf_sz + CHUNK_SIZE >= MAX_FILE_SIZE - 1) {
             // Exit if the file goes over MAX_FILE_SIZE. (Minus 1 for null terminator)
-            log_debug("File is too big. Must be smaller than %i bytes\n", MAX_FILE_SIZE);
+            log_debug("File is too big. Must be smaller than %d bytes\n", MAX_FILE_SIZE);
             fclose(fptr);
             free(str);
             return NULL;

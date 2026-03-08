@@ -102,7 +102,7 @@ int build_ripple_database(void) {
 
     cleanup:
         if (result != SQLITE_OK) {
-            log_debug("Failed to create database tables, %s %i", sqlite3_errmsg(db), result);
+            log_debug("Failed to create database tables, %s %d", sqlite3_errmsg(db), result);
         }
         sqlite3_close(db);
         return result;
@@ -432,7 +432,7 @@ cleanup:
 }
 
 int toggle_channel_visibility(int channel_id) {
-    log_debug("Toggling visibility for channel %i", channel_id);
+    log_debug("Toggling visibility for channel %d", channel_id);
     sqlite3 *db = NULL;
     sqlite3_stmt *stmt = NULL;
 
@@ -451,7 +451,7 @@ int toggle_channel_visibility(int channel_id) {
 
 cleanup:
     if (result != SQLITE_DONE && result != SQLITE_OK) {
-        log_debug("Error toggling the channel visibility for channel: %i: %s", channel_id, sqlite3_errmsg(db));
+        log_debug("Error toggling the channel visibility for channel: %d: %s", channel_id, sqlite3_errmsg(db));
     } else {
         result = SQLITE_OK;
     }

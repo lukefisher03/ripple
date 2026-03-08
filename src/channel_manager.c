@@ -1,3 +1,4 @@
+#include "channel_manager.h"
 #include "channels_db/channel_db_api.h"
 #include "parser/xml_rss.h"
 #include "list.h"
@@ -9,7 +10,6 @@
 #include <time.h>
 #include <string.h>
 
-#define REFRESH_PERIOD_HOURS 10
 
 // We only refresh channels that the user looks at.
 int refresh_channels(void) {

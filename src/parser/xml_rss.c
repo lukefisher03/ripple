@@ -301,7 +301,7 @@ int process_node(rss_container *c, const rss_node *n) {
             channel->language = strdup(text_node->text);
         }
     } else {
-        log_debug("CONTAINER NOT RECOGNIZED: %i\n", c->type);
+        log_debug("CONTAINER NOT RECOGNIZED: %d\n", c->type);
         return TRSS_ERR;
     }
 
