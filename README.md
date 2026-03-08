@@ -1,4 +1,4 @@
-# Terminal RSS Aggregator
+# Ripple RSS Aggregator
 
 A lightweight RSS Aggregator that runs in your terminal. Written in C. Backed by a SQLite database to persistently store RSS channels and articles.
 
