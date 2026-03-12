@@ -86,10 +86,11 @@ char *format_description(char *description, int width, int *lines) {
     }
     size_t description_length = strlen(description); 
     size_t i = 0;
-    for (; i < description_length && (description[i] == ' ' || description[i] == '\n' || description[i] == '\t'); i++);
-    description_length -= i;
-    int description_overflow = description_length > MAX_ARTICLE_DESCRIPTION;
+    for (; i < description_length && (description[i] == ' ' || description[i] == '\n' || description[i] == '\t'); i++) {
+        description_length--; 
+    }
 
+    int description_overflow = description_length > MAX_ARTICLE_DESCRIPTION;
     size_t final_length = description_overflow ? MAX_ARTICLE_DESCRIPTION : description_length;
 
     *lines = 0;
@@ -110,6 +111,9 @@ char *format_description(char *description, int width, int *lines) {
     if (d_len > MAX_ARTICLE_DESCRIPTION - 3) {
         memset(formatted_description + d_len - 3, '.', 3);
     }
+
+    if (d_len == 0) return NULL;
+
     formatted_description[d_len] = '\0';
 
     return formatted_description;
