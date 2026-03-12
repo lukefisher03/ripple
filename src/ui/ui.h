@@ -5,7 +5,6 @@
 #include "../parser/xml_rss.h"
 #include "pages/local_states.h"
 #include "../list.h"
-#include <stdbool.h>
 
 typedef enum page_type {
     EXIT_PAGE,

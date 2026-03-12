@@ -61,7 +61,7 @@ menu_result display_menu(menu_config config)
             // add the index multiplied by the size to increment the pointer.
             void *option = (char *)config.options + (i * config.option_size);
 
-            bool selected = i == cursor;
+            int selected = i == cursor;
             option_height = config.renderer(&(renderer_params){
                 .idx = i,
                 .option = option,
@@ -211,16 +211,16 @@ size_t add_column(char *row, int col_width, const char *col_str) {
 
     const char *src = col_str ? col_str : "None"; 
 
-    size_t whitespace_count = 0;
-    for (; src[whitespace_count] != '\0' && src[whitespace_count] == ' '; whitespace_count++);
-    size_t col_str_len = strlen(src) - whitespace_count;
+    size_t i = 0;
+    for (; src[i] != '\0' && src[i] == ' '; i++);
+    size_t col_str_len = strlen(src) - i;
     
     memset(row, ' ', col_width);
+    for (; i < col_str_len; i++) {
+        row[i] = src[i] == '\n' ?  ' ' : src[i];
+    }
 
-    if (col_str_len <= col_width - COL_GAP) {
-        memcpy(row, src + whitespace_count, col_str_len);
-    } else {
-        memcpy(row, src + whitespace_count, col_width - COL_GAP - 3);
+    if (col_str_len >= col_width - COL_GAP) {
         memset(row + col_width - COL_GAP - 3, '.', 3);
     } 
 

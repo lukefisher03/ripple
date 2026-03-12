@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
     
     create_thread_pools();
     create_database_thread();
+
     initial_state init_state = {0};
 
     init_state.new_channel_links_file_path = argc > 1 ? argv[1] : NULL;

@@ -74,7 +74,7 @@ char *file_to_string(const char *path, size_t *out_size) {
 
 // ------ Convert RFC 822 timestamps to tm structs ------ //
 
-bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
+int rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
     // All variants of the RFC 822 date format
     char *date_strings[] = {
         "%a, %d %b %Y %H:%M:%S", "%a, %d %b %Y %H:%M:%S GMT",
@@ -96,12 +96,12 @@ bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         if (*end == '\0') {
             log_debug("No timezone information given for timestamp: %s",
                       timestamp);
-            return false;
+            return 1;
         }
         if (*end == 'G') {
             // GMT time has a UTC offset of +0
             *tm = tmp_tm;
-            return true;
+            return 0;
         }
 
         // Get the UTC offset
@@ -109,7 +109,7 @@ bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         int offset_str_len = strlen(end);
         if (offset_str_len < 5 || offset_str_len > 6) {
             log_debug("Given offset isn't valid: %s", end);
-            return false;
+            return 1;
         }
 
         int direction = *end++ == '+' ? 1 : -1;
@@ -126,7 +126,7 @@ bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         if (errno == EINVAL || errno == ERANGE) {
             log_debug("Failed to parse UTC offset: '%s' - %s", hours_str,
                       strerror(errno));
-            return false;
+            return 1;
         }
 
         // Skip colon if present
@@ -145,7 +145,7 @@ bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         if (errno == EINVAL || errno == ERANGE) {
             log_debug("Failed to parse UTC offset: '%s' - %s", hours_str,
                       strerror(errno));
-            return false;
+            return 1;
         }
 
         tmp_tm.tm_hour += (direction * hour_offset);
@@ -154,10 +154,10 @@ bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         tmp_tm.tm_min %= 24;
 
         *tm = tmp_tm;
-        return true;
+        return 0;
     }
 
-    return false;
+    return 0;
 }
 
 int unix_time_to_formatted(int64_t unix_timestamp, char *str, size_t buf_len) {

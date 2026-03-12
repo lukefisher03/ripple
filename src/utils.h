@@ -1,7 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
@@ -10,7 +9,7 @@
 #define MAX_FILE_SIZE 5000000
 
 char *file_to_string(const char *path, size_t *out_size);
-bool rfc_822_to_utc_tm(char *timestamp, struct tm *tm);
+int rfc_822_to_utc_tm(char *timestamp, struct tm *tm);
 int unix_time_to_formatted(int64_t unix_timestamp, char *str, size_t buf_len);
 
 #endif

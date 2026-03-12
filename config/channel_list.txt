@@ -3,3 +3,6 @@ https://growingswe.com/feed.xml
 https://www.seangoedecke.com/rss.xml
 https://tonystr.net/rss.xml
 https://aicoding.leaflet.pub/rss
+https://blog.sebastiansastre.co/index.xml
+https://entropicthoughts.com/feed
+https://timstr.website/rss.xml

@@ -4,7 +4,6 @@
 #include "../termbox2/termbox2.h"
 
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 #define SELECTED_BG_COLOR   TB_GREEN 
@@ -30,7 +29,7 @@ typedef struct {
 } menu_config;
 
 struct renderer_params{
-    bool            selected;
+    int             selected;
     int             idx;
     const void      *option;
     int             start_y;

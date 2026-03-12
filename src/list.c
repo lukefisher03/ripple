@@ -16,7 +16,7 @@ generic_list *list_init(void) {
     return l;
 }
 
-bool list_append(generic_list *l, void *item) {
+int list_append(generic_list *l, void *item) {
     // Push a new item onto the stack.
     if (l->count == l->capacity) {
         // Adding this element would fill the stack entirely
@@ -24,15 +24,15 @@ bool list_append(generic_list *l, void *item) {
         void *tmp = realloc(l->elements, l->capacity * (sizeof(void *)));
         if (!tmp) {
             // Unable to reallocate the stack
-            return false;
+            return 1;
         }
         l->elements = tmp; // Reassign stack to tmp
     }
     l->elements[l->count++] = item;
-    return true;
+    return 0;
 }
 
-inline bool list_is_empty(const generic_list *l) { return l->count == 0; }
+inline int list_is_empty(const generic_list *l) { return l->count == 0; }
 
 void *list_peek(const generic_list *l) {
     if (l->count == 0) {

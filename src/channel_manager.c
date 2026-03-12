@@ -52,7 +52,7 @@ cleanup:
     return 0;
 }
 
-bool is_blank(char c) {
+int is_blank(char c) {
     return c == '\n' || c == ' ' || c == '\t';
 }
 
@@ -102,6 +102,7 @@ void *fetch_and_parse_channel(void *channel_link, void *arg) {
     char *feed_xml = get_feed_xml(link, &rss_size);
     if (!feed_xml) {
         log_debug("Could not retrieve feed XML for %s. Skipping", link);
+        return NULL;
     }
     rss_channel *new_channel = build_channel(feed_xml, rss_size, link);
     free(feed_xml);

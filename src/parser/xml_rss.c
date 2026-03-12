@@ -32,19 +32,19 @@ static xml_entity xml_entities[] = {
 
 // ======== Forward declarations ======== //
 
-static inline bool is_termination_char(char c);
+static inline int is_termination_char(char c);
 static char *get_spacer(int width);
 rss_container *container_init(enum container_type t);
 void free_container(rss_container *c);
 
 // ======== Build parse tree ======== //
 
-bool read_tag(const char *str, size_t length, xml_tag *t) {
+int read_tag(const char *str, size_t length, xml_tag *t) {
     // Given a string starting with `<`, extract the tag name and
     // return the length of the tag.
 
-    if (!t) return false;
-    if (str[0] != '<') return false;
+    if (!t) return 0;
+    if (str[0] != '<') return 0;
 
     size_t i = 1;
     if (str[i] == '/') {
@@ -55,7 +55,7 @@ bool read_tag(const char *str, size_t length, xml_tag *t) {
     t->name = strndup(str+offset, i-offset);
     for (; i < length && str[i] != '>'; i++);
 
-    if (i >= length) return false;
+    if (i >= length) return 0;
 
     if (str[1] == '/') {
         t->tag_type = TAG_CLOSE;
@@ -66,7 +66,7 @@ bool read_tag(const char *str, size_t length, xml_tag *t) {
     }
 
     t->total_length = i+1;
-    return true;
+    return 1;
 }
 
 xml_entity *replace_entity(const char *str) {
@@ -90,14 +90,14 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
 
     ssize_t i = 0;
     size_t total_length = 0;
-    bool entity_replacement_enabled = true;
+    int entity_replacement_enabled = 1;
     // Detect the terminating part of the content
     const char *end_str = "<";
     if (!strncmp(str, "<![CDATA[", strlen("<![CDATA["))) {
         i += 9;
         end_str = "]]>";
         total_length += 3;
-        entity_replacement_enabled = false;
+        entity_replacement_enabled = 0;
     }
 
     // Get the total length of the string
@@ -278,7 +278,7 @@ int process_node(rss_container *c, const rss_node *n) {
         } else if (!strcmp(node_name, "pubDate")) {
             char *pub_date_rfc822 = strdup(text_node->text);
             struct tm tm = {0};
-            if (rfc_822_to_utc_tm(pub_date_rfc822, &tm)) {
+            if (rfc_822_to_utc_tm(pub_date_rfc822, &tm) == 0) {
                 item->unix_timestamp = timegm(&tm);
             } else {
                 log_debug("Could not parse publish date string: %s, skipping", pub_date_rfc822);
@@ -308,12 +308,18 @@ int process_node(rss_container *c, const rss_node *n) {
     return TRSS_OK;
 }
 
-bool build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
+int build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
     // Perform iterative DFS to build a channel from a parse tree
 
     generic_list *container_stack = list_init();
+    if (!container_stack) return 1;
     
     generic_list *dfs_stack = list_init();
+    if (!dfs_stack) {
+        list_free(container_stack);
+        return 1;
+    }
+
     list_append(dfs_stack, root_node); 
 
     while (!list_is_empty(dfs_stack)) {
@@ -387,7 +393,7 @@ bool build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
 
     list_free(container_stack);
     list_free(dfs_stack);
-    return true;
+    return 0;
 }
 
 rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
@@ -466,7 +472,7 @@ static char *get_spacer(int width) {
     return spacer;
 }
 
-static inline bool is_termination_char(char c) {
+static inline int is_termination_char(char c) {
     return (c == ' ' || c == ':' || c == '/' || c == '>');
 }
 

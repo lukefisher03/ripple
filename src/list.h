@@ -1,7 +1,6 @@
 #ifndef LIST_H
 #define LIST_H
 
-#include <stdbool.h>
 #include <stdlib.h>
 
 typedef struct {
@@ -12,9 +11,9 @@ typedef struct {
 
 generic_list *list_init(void);
 
-bool list_append(generic_list *stk, void *item);
+int list_append(generic_list *stk, void *item);
 
-bool list_is_empty(const generic_list *stk);
+int list_is_empty(const generic_list *stk);
 
 void *list_pop(generic_list *stk);
 
