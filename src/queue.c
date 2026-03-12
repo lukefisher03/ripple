@@ -1,4 +1,5 @@
 #include "queue.h"
+#include "logger.h"
 
 #include <stdio.h>
 
@@ -50,11 +51,11 @@ int queue_enqueue(void *element, message_queue *q) {
 
 void *queue_dequeue(message_queue *q) {
     if (!q) {
-        printf("QUEUE OBJECT IS NULL\n");   
+        log_debug("QUEUE OBJECT IS NULL");   
         return NULL;
     }
     if (queue_empty(q)) {
-        printf("EMPTY QUEUE\n");
+        log_debug("EMPTY QUEUE");
         return NULL;
     }
     void *element = q->items[q->front];
@@ -72,27 +73,27 @@ void queue_free(message_queue *q) {
 
 void print_queue(message_queue *q) {
     if (!q) {
-        printf("NULL pointer exception\n");
+        log_debug("NULL pointer exception");
         return;
     }
-    if (queue_empty(q)) printf("Queue is empty!\n");
+    if (queue_empty(q)) log_debug("Queue is empty!");
 
-    printf("Queue:\n");
+    log_debug("Queue:\n");
     for (size_t i = 0; i < q->capacity; i++) {
-        printf("\t %lu. ", i + 1);
+        log_debug("\t %lu. ", i + 1);
         if (!q->items[i]) {
-            printf("NULL ");
+            log_debug("NULL ");
         } else {
-            printf("%d ", *(int *)q->items[i]);
+            log_debug("%d ", *(int *)q->items[i]);
         }
 
         if (i == q->back) {
-            printf(" <- BACK");
+            log_debug(" <- BACK");
         }
 
         if (i == q->front) {
-            printf(" <- FRONT");
+            log_debug(" <- FRONT");
         }
-        printf("\n");
+        log_debug("\n");
     }
 }

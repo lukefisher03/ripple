@@ -2,6 +2,7 @@
 #include "logger.h"
 #include "utils.h"
 #include "channels_db/channels_database.h"
+#include "channels_db/channel_db_api.h"
 #include "channel_manager.h"
 #include "list.h"
 
@@ -14,12 +15,14 @@ int get_new_channel_links(const char *feeds_file, size_t length, generic_list *l
 int main(int argc, char *argv[]) {
     log_init();
     get_db_path();
-
+    
     if (build_ripple_database() != 0) {
         log_debug("Failed to create db, exiting.\n");
         return 1;
     }
-
+    
+    create_thread_pools();
+    create_database_thread();
     initial_state init_state = {0};
 
     init_state.new_channel_links_file_path = argc > 1 ? argv[1] : NULL;

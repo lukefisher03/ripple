@@ -22,5 +22,6 @@ typedef struct {
     thread_info         *info;
 } thread_pool;
 
-
+thread_pool *thread_pool_create(size_t thread_count, size_t queue_cap, thread_function thread_func, void *thread_arg);
+int thread_pool_add_work(void *work, thread_pool *pool);
 #endif

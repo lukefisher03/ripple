@@ -1,5 +1,6 @@
 #include "channel_db_api.h"
 #include "../logger.h"
+#include "../thread_pool.h"
 
 #include <sys/types.h>
 #include <errno.h>
@@ -20,6 +21,65 @@
 #define MAX_DB_PATH_LEN 128 
 
 char DB_PATH[MAX_DB_PATH_LEN];
+
+static thread_pool *tp_database = NULL;
+
+// TODO: Refactor error handling and database closing here.
+static int db_open(sqlite3 **db) {
+    char *err_msg = NULL;
+    int result = 1;
+    result = sqlite3_open(DB_PATH, db);
+    if (result != SQLITE_OK) {
+        log_debug("Error connecting to database: %s\n", sqlite3_errmsg(*db));
+        return result;
+    };
+
+    result = sqlite3_exec(*db, "PRAGMA foreign_keys = ON;", NULL, NULL, &err_msg);
+    if (result != SQLITE_OK) {
+        log_debug("Error enabling foreign key constraints: %s\n", sqlite3_errmsg(*db));
+        return result;
+    }
+
+    return result;
+} 
+
+static void *commit_new_channel(void *channel, void *arg) {
+    rss_channel *c = (rss_channel *)channel;
+    sqlite3 *db = (sqlite3 *)arg;
+    int result = 1;
+
+    if (store_channel(db, c) != 0) goto cleanup;
+
+    int channel_id = get_channel_id(db, c);
+    
+    c->id = channel_id;
+    for (size_t j = 0; j < c->items->count; j++) {
+        rss_item *item = c->items->elements[j];
+        result = store_article(db, item, c);
+        if (result != SQLITE_OK && sqlite3_extended_errcode(db) != SQLITE_CONSTRAINT_UNIQUE) {
+            log_debug("Failed to store article: %s, skipping", item->title);
+        }
+    }
+    log_debug("STORED NEW CHANNEL: %s", c->title);
+
+cleanup:
+    free_channel(c);
+    return NULL;
+}
+
+int create_database_thread(void) {
+    sqlite3 *db = NULL;
+    if (db_open(&db) != SQLITE_OK) {
+        return 1;
+    }
+
+    tp_database = thread_pool_create(1, 100, commit_new_channel, db);
+    return 0;
+}
+
+int db_tp_enqueue(rss_channel *channel) {
+    return thread_pool_add_work(channel, tp_database);
+}
 
 void get_db_path(void) {
     char *user = getlogin();
@@ -63,25 +123,6 @@ void get_db_path(void) {
         abort();
     } 
 }
-
-// TODO: Refactor error handling and database closing here.
-int db_open(sqlite3 **db) {
-    char *err_msg = NULL;
-    int result = 1;
-    result = sqlite3_open(DB_PATH, db);
-    if (result != SQLITE_OK) {
-        log_debug("Error connecting to database: %s\n", sqlite3_errmsg(*db));
-        return result;
-    };
-
-    result = sqlite3_exec(*db, "PRAGMA foreign_keys = ON;", NULL, NULL, &err_msg);
-    if (result != SQLITE_OK) {
-        log_debug("Error enabling foreign key constraints: %s\n", sqlite3_errmsg(*db));
-        return result;
-    }
-
-    return result;
-} 
 
 int build_ripple_database(void) {
     log_debug("Creating database tables");
@@ -133,41 +174,6 @@ int get_channel_id(sqlite3 *db, const rss_channel *channel) {
 
         sqlite3_finalize(stmt);
     return id;
-}
-
-int store_channel_list(size_t channel_count, rss_channel **channels) {
-    sqlite3 *db = NULL;
-    int result = 1;
-
-    result = db_open(&db);
-    if (result != SQLITE_OK) goto cleanup;
-    
-    for (size_t i = 0; i < channel_count; i++) {
-        rss_channel *chan = channels[i];
-        result = store_channel(db, chan);
-
-        if (result != SQLITE_OK) {
-            continue;
-        }
-
-        int channel_id = get_channel_id(db, chan);
-        if (channel_id < 1) {
-            continue;
-        }
-
-        chan->id = channel_id;
-        for (size_t j = 0; j < chan->items->count; j++) {
-            rss_item *item = chan->items->elements[j];
-            result = store_article(db, item, chan);
-            // Should processing stop here?
-            if (result != SQLITE_OK && sqlite3_extended_errcode(db) != SQLITE_CONSTRAINT_UNIQUE) {
-                log_debug("Failed to store article: %s, skipping", item->title);
-            }
-        }
-    }
-cleanup:
-    sqlite3_close(db);
-    return result;
 }
         
 int get_channel_list(generic_list *article_list) {

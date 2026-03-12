@@ -5,11 +5,22 @@
 #include "logger.h"
 #include "http_get_rss_xml.h"
 #include "utils.h"
+#include "thread_pool.h"
 
 #include <unistd.h>
 #include <time.h>
 #include <string.h>
 
+#define TP_THREAD_COUNT 5
+
+static thread_pool *fetch_parse_tp = NULL;
+
+void *fetch_and_parse_channel(void *channel_link, void *arg);
+
+int create_thread_pools(void) {
+    fetch_parse_tp = thread_pool_create(TP_THREAD_COUNT, 100, fetch_and_parse_channel, NULL);
+    return fetch_parse_tp != NULL;
+}
 
 // We only refresh channels that the user looks at.
 int refresh_channels(void) {
@@ -33,20 +44,11 @@ int refresh_channels(void) {
         rss_channel *c = stale_channels->elements[i];
         delete_channel(c->id);
         size_t size = 0;
-        char *xml_rss = get_feed_xml(c->rss_link, &size);
-        list_append(new_channels, build_channel(xml_rss, size, c->rss_link));
+        fetch_parse_tp_enqueue(c->rss_link);
     }
-
-    store_channel_list(new_channels->count, (rss_channel**)new_channels->elements);
 
 cleanup:
-    // Free the stale channels
-    for (size_t i = 0; i < stale_channels->count; i++) {
-        free_channel(new_channels->elements[i]);
-        free_channel(stale_channels->elements[i]);
-    }
     list_free(stale_channels);
-    list_free(new_channels);
     return 0;
 }
 
@@ -86,39 +88,32 @@ int get_new_channel_links(const char *feeds_file, size_t length, generic_list *l
     return list->count;
 }
 
-int store_new_channels(char **links, size_t link_count) {
-    int count = 0;
-    generic_list *new_channels = list_init();
+int fetch_parse_tp_enqueue(char *link) {
+    return thread_pool_add_work(link, fetch_parse_tp);
+}
 
-    for (size_t i = 0; i < link_count; i++) {
-        char *link = links[i];
-        size_t rss_size = 0;
-        char *feed_xml = get_feed_xml(link, &rss_size);
-        if (!feed_xml) {
-            log_debug("Could not retrieve feed XML for %s. Skipping", link);
-            continue; 
-        }
-        rss_channel *new_channel = build_channel(feed_xml, rss_size, link);
-        free(feed_xml);
-        if (!new_channel) {
-            log_debug("Failed to build new channel from link: %s", link);
-            continue; 
-        }
-        list_append(new_channels, new_channel);
-        count++;
+
+void *fetch_and_parse_channel(void *channel_link, void *arg) {
+    (void) arg;
+    char *link = (char *)channel_link;
+
+
+    size_t rss_size = 0;
+    char *feed_xml = get_feed_xml(link, &rss_size);
+    if (!feed_xml) {
+        log_debug("Could not retrieve feed XML for %s. Skipping", link);
+    }
+    rss_channel *new_channel = build_channel(feed_xml, rss_size, link);
+    free(feed_xml);
+    if (!new_channel) {
+        log_debug("Failed to build new channel from link: %s", link);
+    } else {
+        log_debug("BUILDING CHANNEL: %s", new_channel->title);
+    }
+   
+    if (db_tp_enqueue(new_channel) != 0) {
+        free_channel(new_channel);
     }
 
-    int result = store_channel_list(new_channels->count, (rss_channel**)new_channels->elements);
-    if (result != 0) {
-        log_debug("Failure when storing channels");
-        count = -1;
-        goto cleanup;
-    }
-
-cleanup:
-    for (size_t i = 0; i < new_channels->count; i++) {
-        free_channel(new_channels->elements[i]);
-    }
-    list_free(new_channels);
-    return count;
+    return NULL;
 }

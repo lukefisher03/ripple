@@ -1,12 +1,13 @@
 #include "thread_pool.h"
 #include "queue.h"
+#include "logger.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 
 void busy_wait_long(void) {
-    printf("Going into busy wait\n");
+    log_debug("Going into busy wait\n");
     for (size_t i = 0; i < 2000000000; i++);
 } 
 
@@ -14,13 +15,12 @@ void busy_wait_short(void) {
     for (size_t i = 0; i < 50000000; i++);
 }
 
-int add_work(void *work, thread_pool *pool) {
+int thread_pool_add_work(void *work, thread_pool *pool) {
     if (!pool) return 1;
     int res;
     pthread_mutex_lock(&pool->info->mut);
     res = queue_enqueue(work, pool->info->work_queue);
     pthread_cond_signal(&pool->info->work_cond);
-    printf("Added work to queue!\n");
     pthread_mutex_unlock(&pool->info->mut);
     return res;
 }
@@ -31,12 +31,11 @@ void *do_work(void *args) {
     while (1) {
         pthread_mutex_lock(&thread_args->mut);
         while (thread_args->work_queue->size == 0 && !thread_args->stop_work) {
-            printf("Waiting for work!\n");
             pthread_cond_wait(&thread_args->work_cond, &thread_args->mut);
         }
 
         if (thread_args->stop_work) {
-            printf("Received stop signal, exiting\n");
+            log_debug("Received stop signal, exiting\n");
             pthread_mutex_unlock(&thread_args->mut);
             break;
         }
@@ -44,7 +43,7 @@ void *do_work(void *args) {
         void *message = queue_dequeue(thread_args->work_queue);
         pthread_mutex_unlock(&thread_args->mut);
         if (!message) {
-            printf("Failed to pull message from queue!!\n");
+            log_debug("Failed to pull message from queue!!\n");
         }
         thread_args->func(message, thread_args->arg);
     }
@@ -120,7 +119,7 @@ thread_pool *thread_pool_create(size_t thread_count, size_t queue_cap, thread_fu
 
     for (size_t i = 0; i < thread_count; i++) {
         if ((err = pthread_create(&pool->threads[i], NULL, do_work, pool->info)) != 0) {
-            printf("Error creating a thread, cleaning up\n");
+            log_debug("Error creating a thread, cleaning up");
             stop_threads(pool);
             for (size_t j = 0; j < i; j++) {
                 pthread_join(pool->threads[j], NULL);
@@ -131,7 +130,6 @@ thread_pool *thread_pool_create(size_t thread_count, size_t queue_cap, thread_fu
     
 cleanup:
     if (err) {
-        printf("COULD NOT MAKE POOL!\n");
         free(pool->threads);
         thread_info_free(pool->info);
         free(pool);
@@ -148,27 +146,32 @@ void join_pool(thread_pool *pool) {
     }
 }
 
-void *test_func(void *message, void *arg) {
-    if (!message) {
-        printf("NO MESSAGE!\n");
-    }
-    int num = *(int *)message;
-    char *str = *(char **)arg;
-    busy_wait_short();
-    printf("Thread received '%d' with '%s'\n", num, str);
-    return NULL;
-}
+// void *test_func(void *message, void *arg) {
+//     if (!message) {
+//         log_debug("NO MESSAGE!");
+//     }
+//     int num = *(int *)message;
+//     char *str = *(char **)arg;
+//     busy_wait_short();
+//     log_debug("Thread received '%d' with '%s'\n", num, str);
+//     return NULL;
+// }
 
-int main(int argc, char *argv[]) {
-    char *hello = "Hi there";
-    thread_pool *pool = thread_pool_create(8, 1000, test_func, &hello);
-    busy_wait_long();
-    int work[200];
-    for (size_t i = 0; i < 200; i++) {
-        work[i] = i + 1;
-        add_work(&work[i], pool);
-    }
+// int main(int argc, char *argv[]) {
+//     char *hello = "Hi there";
+//     thread_pool *pool = thread_pool_create(8, 1000, test_func, &hello);
+//     busy_wait_long();
+//     int work[200];
+//     for (size_t i = 0; i < 200; i++) {
+//         work[i] = i + 1;
+//         thread_pool_add_work(&work[i], pool);
+//     }
 
-    join_pool(pool);
-    return 0;
-}
+//     for (size_t i = 0; i < 50; i++) {
+//         work[i] = i + 1;
+//         thread_pool_add_work(&work[i], pool);
+//     }
+
+//     join_pool(pool);
+//     return 0;
+// }
