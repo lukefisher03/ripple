@@ -90,7 +90,7 @@ char *format_description(char *description, int width, int *lines) {
         description_length--; 
     }
 
-    int description_overflow = description_length > MAX_ARTICLE_DESCRIPTION;
+    int description_overflow = description_length > MAX_ARTICLE_DESCRIPTION - 3;
     size_t final_length = description_overflow ? MAX_ARTICLE_DESCRIPTION : description_length;
 
     *lines = 0;
@@ -108,7 +108,7 @@ char *format_description(char *description, int width, int *lines) {
         }
     }
 
-    if (d_len > MAX_ARTICLE_DESCRIPTION - 3) {
+    if (description_overflow) {
         memset(formatted_description + d_len - 3, '.', 3);
     }
 
