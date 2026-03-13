@@ -18,6 +18,7 @@ typedef struct {
 
 int create_database_thread(void);
 int db_tp_enqueue(rss_channel *channel);
+int db_tp_busy(void);
 
 int build_ripple_database(void);
 
@@ -31,6 +32,8 @@ int get_channel_article_count(const rss_channel *channel, int *out_count);
 int get_channel_articles(rss_channel *channel, generic_list *out_list);
 
 int toggle_channel_visibility(int channel_id);
+
+int channel_link_exists(char *link);
 
 int delete_channel(int channel_id);
 

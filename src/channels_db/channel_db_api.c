@@ -22,7 +22,7 @@
 
 char DB_PATH[MAX_DB_PATH_LEN];
 
-static thread_pool *tp_database = NULL;
+static thread_pool *database_tp = NULL;
 
 // TODO: Refactor error handling and database closing here.
 static int db_open(sqlite3 **db) {
@@ -73,12 +73,18 @@ int create_database_thread(void) {
         return 1;
     }
 
-    tp_database = thread_pool_create(1, 100, commit_new_channel, db);
+    database_tp = thread_pool_create(1, 100, commit_new_channel, db);
     return 0;
 }
 
+int db_tp_busy(void) {
+    if (!database_tp) return 1;
+    return thread_pool_busy(database_tp);
+}
+
 int db_tp_enqueue(rss_channel *channel) {
-    return thread_pool_add_work(channel, tp_database);
+    if (!database_tp) return 1;
+    return thread_pool_add_work(channel, database_tp);
 }
 
 void get_db_path(void) {
@@ -369,6 +375,37 @@ cleanup:
     sqlite3_finalize(stmt);
     sqlite3_close(db);
     return result;
+}
+
+int channel_link_exists(char *link) {
+    sqlite3 *db = NULL;
+    sqlite3_stmt *stmt = NULL;
+
+    int result = 1;
+    int exists = 0;
+    if ((result = db_open(&db)) != SQLITE_OK) goto cleanup;
+
+    const char *stmt_str = "SELECT * FROM channel WHERE rss_link=?;";
+    result = sqlite3_prepare_v2(db, stmt_str, -1, &stmt, NULL);
+    if (result != SQLITE_OK) goto cleanup;
+
+    result = sqlite3_bind_text(stmt, 1, link, -1, NULL);
+    if (result != SQLITE_OK) goto cleanup;
+
+    while ((result = sqlite3_step(stmt)) == SQLITE_ROW) {
+        exists = 1;
+        goto cleanup;
+    }
+
+cleanup:
+    if (result != SQLITE_DONE && result != SQLITE_OK && result != SQLITE_ROW) {
+        log_debug("Error checking if channel exists by link, %s", sqlite3_errmsg(db));
+        exists = -1;
+    } 
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return exists;
 }
 
 int get_article(int article_id, rss_item *article) {

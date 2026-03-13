@@ -26,7 +26,6 @@ int create_thread_pools(void) {
 int refresh_channels(void) {
     time_t stale_channel_cutoff = time(NULL) - (REFRESH_PERIOD_HOURS * 3600);
     generic_list *stale_channels = list_init(); 
-    generic_list *new_channels = list_init();
 
     if (!stale_channels) {
         log_debug("Failed to allocate new memory for refreshing channels");
@@ -43,7 +42,6 @@ int refresh_channels(void) {
     for (size_t i = 0; i < stale_channels->count; i++) {
         rss_channel *c = stale_channels->elements[i];
         delete_channel(c->id);
-        size_t size = 0;
         fetch_parse_tp_enqueue(c->rss_link);
     }
 
@@ -89,14 +87,18 @@ int get_new_channel_links(const char *feeds_file, size_t length, generic_list *l
 }
 
 int fetch_parse_tp_enqueue(char *link) {
+    if (!fetch_parse_tp) return 1;
     return thread_pool_add_work(link, fetch_parse_tp);
 }
 
+int fetch_parse_tp_busy(void) {
+    if (!fetch_parse_tp) return 1;
+    return thread_pool_busy(fetch_parse_tp);
+}
 
 void *fetch_and_parse_channel(void *channel_link, void *arg) {
     (void) arg;
     char *link = (char *)channel_link;
-
 
     size_t rss_size = 0;
     char *feed_xml = get_feed_xml(link, &rss_size);
@@ -111,7 +113,7 @@ void *fetch_and_parse_channel(void *channel_link, void *arg) {
     } else {
         log_debug("BUILDING CHANNEL: %s", new_channel->title);
     }
-   
+
     if (db_tp_enqueue(new_channel) != 0) {
         free_channel(new_channel);
     }

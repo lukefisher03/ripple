@@ -68,7 +68,12 @@ void import_page(app_state *app, local_state *state) {
         // int channels_imported_count = store_new_channels((char**)links->elements, links->count);  
 
         for (size_t i = 0; i < links->count; i++) {
-            fetch_parse_tp_enqueue(links->elements[i]);
+            char *link = links->elements[i];
+            if (channel_link_exists(link)) {
+                log_debug("Feed with link: %s already exists", link);
+                continue;
+            }
+            fetch_parse_tp_enqueue(link);
         }
 
         tb_clear();

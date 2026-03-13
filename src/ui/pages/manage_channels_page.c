@@ -2,6 +2,7 @@
 #include "../ui_utils.h"
 #include "../../logger.h"
 #include "../../channels_db/channel_db_api.h"
+#include "../../channel_manager.h"
 #include "../../list.h"
 #include "../../termbox2/termbox2.h"
 #include "../../utils.h"
@@ -23,6 +24,10 @@ void manage_channels_page(app_state *app, local_state *state) {
     int width = tb_width();
     int y = 1;
     write_centered(y++, TB_GREEN, 0, "CHANNELS");
+
+    if (fetch_parse_tp_busy() || db_tp_busy()) {
+        tb_print(0,0, TB_WHITE, TB_GREEN, "Importing new channels...");
+    }
 
     generic_list *channel_list = list_init();
     get_channel_list(channel_list);
@@ -62,6 +67,7 @@ void manage_channels_page(app_state *app, local_state *state) {
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "i", "import");
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "E", "exit");
     nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "v", "show/hide from main feed");
+    nav_help_offset += print_navigation_help(nav_help_offset, tb_height() - 2, "r", "refresh list");
 
     menu_config config = {
         .y = y,
@@ -70,8 +76,8 @@ void manage_channels_page(app_state *app, local_state *state) {
         .option_size = sizeof(channel_with_article_count*),
         .option_count = channel_list->count,
         .renderer = &render_channel_list,
-        .valid_input_list = "DbEiv",
-        .valid_input_count = 5,
+        .valid_input_list = "DbEivr",
+        .valid_input_count = 6,
         .row = row,
         .row_length = width,
         .default_selection = state->channels_state.default_selection ? state->channels_state.default_selection : 0,
@@ -161,7 +167,7 @@ void manage_channels_page(app_state *app, local_state *state) {
                 }
             });
             break;
-        default:
+        case 'r':
             break;
     }
 }
@@ -179,11 +185,7 @@ static int render_channel_list(renderer_params *params) {
     int offset = 0;
 
     char title[256];
-    if (chan->shown) {
-        snprintf(title, 256, "%s", chan->title);
-    } else {
-        snprintf(title, 256, "* %s", chan->title);
-    }
+    snprintf(title, 256, chan->shown ? "%s" : "* %s", chan->title);
     offset += add_column(row + offset, col_widths.channel_name * row_length, title);
     char article_count_str[28];
     snprintf(article_count_str, 28, "%d", chan_with_extras->article_count);

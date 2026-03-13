@@ -45,7 +45,7 @@ void article_page(app_state *app, local_state *state) {
     tb_printf(PADDING, y++, TB_GREEN, 0, "%s", item->title);
     tb_printf(PADDING, y++, TB_GREEN, 0, "%s", divider);
     tb_printf(PADDING, y++, TB_GREEN, 0, "%s", chan->title);
-    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", item->link);
+    tb_printf(PADDING, y++, TB_WHITE, TB_GREEN, "%s", item->link);
     char formatted_time[128];
     unix_time_to_formatted(item->unix_timestamp, formatted_time, 128);
     tb_printf(PADDING, y++, TB_GREEN, 0, "%s", formatted_time);

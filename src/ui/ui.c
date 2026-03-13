@@ -47,16 +47,15 @@ static page_handlers page_handlers_table[PAGE_COUNT] = {
 
 // ------ Main UI Call ------ //
 void ui_start(initial_state init_state) {
+    tb_init();
     // Initialize the global app state
     app_state app = {
         .init_state = init_state,
     };
     app_init(&app);
 
-    tb_init();
-
     navigate(MAIN_PAGE, &app, (local_state){});
-
+    
     while(app.current_page.type != EXIT_PAGE) {
         tb_clear();
         local_state *st = &app.current_page.state;

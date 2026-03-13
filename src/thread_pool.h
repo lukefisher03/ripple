@@ -11,6 +11,7 @@ typedef struct {
     void                *arg;
     thread_function     func;
     int                 stop_work;
+    int                 working_count;
     pthread_cond_t      work_cond;
     pthread_mutex_t     mut;
     message_queue       *work_queue;
@@ -24,4 +25,5 @@ typedef struct {
 
 thread_pool *thread_pool_create(size_t thread_count, size_t queue_cap, thread_function thread_func, void *thread_arg);
 int thread_pool_add_work(void *work, thread_pool *pool);
+int thread_pool_busy(thread_pool *pool);
 #endif

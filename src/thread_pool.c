@@ -25,6 +25,13 @@ int thread_pool_add_work(void *work, thread_pool *pool) {
     return res;
 }
 
+int thread_pool_busy(thread_pool *pool) {
+    pthread_mutex_lock(&pool->info->mut);
+    int busy = pool->info->working_count > 0;
+    pthread_mutex_unlock(&pool->info->mut);
+    return busy;
+}
+
 void *do_work(void *args) {
     thread_info *thread_args = (thread_info *)args;
 
@@ -40,12 +47,18 @@ void *do_work(void *args) {
             break;
         }
 
+        thread_args->working_count++;
+        
         void *message = queue_dequeue(thread_args->work_queue);
         pthread_mutex_unlock(&thread_args->mut);
         if (!message) {
             log_debug("Failed to pull message from queue!!\n");
         }
         thread_args->func(message, thread_args->arg);
+
+        pthread_mutex_lock(&thread_args->mut);
+        thread_args->working_count--;
+        pthread_mutex_unlock(&thread_args->mut);
     }
 
     return NULL;
