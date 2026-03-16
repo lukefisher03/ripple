@@ -2,6 +2,7 @@
 #define LIST_H
 
 #include <stdlib.h>
+#define LIST_DEFAULT_CAPACITY 4
 
 typedef struct {
     size_t capacity;

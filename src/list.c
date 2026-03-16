@@ -2,16 +2,15 @@
 
 #include <string.h>
 
-#define DEFAULT_CAPACITY 4
 
 generic_list *list_init(void) {
     generic_list *l = malloc(sizeof(*l));
     if (!l) {
         return NULL;
     }
-    l->capacity = DEFAULT_CAPACITY;
+    l->capacity = LIST_DEFAULT_CAPACITY;
     l->count = 0;
-    l->elements = calloc(DEFAULT_CAPACITY, sizeof(void *));
+    l->elements = calloc(LIST_DEFAULT_CAPACITY, sizeof(void *));
 
     return l;
 }

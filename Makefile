@@ -34,8 +34,9 @@ main_debug: compile_debug
 GTEST_CFLAGS := $(shell pkg-config --cflags gtest_main)
 GTEST_LDFLAGS := $(shell pkg-config --libs gtest_main)
 
+# Exclude the "main.o"
 NO_MAIN_OBJS := $(shell find build/debug -name "main.o" -prune -o -type f -name "*.o" -print)
 
-test: $(DEBUG_OBJS)
+test: test/*.cc $(DEBUG_OBJS)
 	clang++ -std=c++17 $(NO_MAIN_OBJS) -o run_tests test/*.cc $(GTEST_CFLAGS) $(LDFLAGS_MAIN) $(GTEST_LDFLAGS)
 	./run_tests
