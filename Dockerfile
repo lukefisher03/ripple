@@ -1,7 +1,7 @@
 FROM alpine
 LABEL stage="build"
 COPY . /usr/src/ripple
-RUN apk update && rm /usr/src/ripple/main || true
+RUN apk update && (rm /usr/src/ripple/main || true) && (rm -r /usr/src/ripple/build || true)
 RUN apk add clang make musl-dev gdb sqlite-dev uriparser-dev openssl-dev
 WORKDIR /usr/src/ripple
 RUN make main

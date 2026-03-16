@@ -23,10 +23,10 @@ build/debug/%.o: src/%.c
 	mkdir -p $(dir $@) 
 	clang $(CFLAGS_MAIN) $(RELEASE_FLAGS) -c $< -o $@
 
-link_release: $(RELEASE_OBJS)  
+main: compile_release 
 	clang $(RELEASE_OBJS) -o main $(LDFLAGS_MAIN)
 
-link_debug: $(DEBUG_OBJS) 
+main_debug: compile_debug
 	clang $(DEBUG_OBJS) -o debug_main $(LDFLAGS_MAIN)
 
 # For running tests
