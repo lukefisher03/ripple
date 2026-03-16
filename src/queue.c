@@ -51,11 +51,9 @@ int queue_enqueue(void *element, message_queue *q) {
 
 void *queue_dequeue(message_queue *q) {
     if (!q) {
-        log_debug("QUEUE OBJECT IS NULL");   
         return NULL;
     }
     if (queue_empty(q)) {
-        log_debug("EMPTY QUEUE");
         return NULL;
     }
     void *element = q->items[q->front];

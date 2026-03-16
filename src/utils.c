@@ -181,3 +181,9 @@ int unix_time_to_formatted(int64_t unix_timestamp, char *str, size_t buf_len) {
 
     return 0;
 }
+
+long current_time_ms(void) {
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return (t.tv_sec * 1000) + (t.tv_nsec / 1000000);
+}

@@ -8,3 +8,6 @@ ripple_debug.log
 *.db
 .DS_Store
 leak_report*
+build/
+debug_main
+run_tests

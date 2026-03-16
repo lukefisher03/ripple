@@ -7,6 +7,8 @@
 #include "../../termbox2/termbox2.h"
 #include "../../utils.h"
 
+#define REFRESH_DEBOUNCE_PERIOD_MS 1000
+
 static channel_column_widths col_widths = {
     .channel_name = 0.5,
     .article_count = 0.2,
@@ -17,9 +19,13 @@ extern char *thick_divider;
 extern char *thin_divider;
 extern char *blank_line;
 
+static long refresh_debounce = 0;
+
+static menu_result delete_confirm(char *channel_title, int channel_id);
 static int render_channel_list(renderer_params *params);
 
 void manage_channels_page(app_state *app, local_state *state) {
+    log_debug("Reloading page!!");
     // struct tb_event ev;
     int width = tb_width();
     int y = 1;
@@ -86,7 +92,17 @@ void manage_channels_page(app_state *app, local_state *state) {
     // This gets overwritten if there's articles to display
     write_centered(y + 2, TB_GREEN, 0, "no channels, start by importing some channels");
 
-    menu_result result = display_menu(config);
+    
+    menu_result result;
+    while (1) {
+        result = display_menu(config); 
+        if (result.ev.ch != 'r') break;
+        if (current_time_ms() - refresh_debounce > REFRESH_DEBOUNCE_PERIOD_MS) {
+            refresh_debounce = current_time_ms();
+            break;
+        }
+    }
+    
     free(row);
 
     rss_channel *selected_channel = NULL;
@@ -116,60 +132,53 @@ void manage_channels_page(app_state *app, local_state *state) {
             },
         });
     }
+    
+    if (result.ev.ch == 'D') {
+        menu_result confirm_result = delete_confirm(selected_channel_title, selected_channel_id);
 
-    switch (result.ev.ch) {
-        case 'D': {
-            char msg[CONFIRMATION_MSG_SIZE];
-            size_t chars_written = 0;
-            char *options[2]; 
-            if (selected_channel_id > -1) {
-                chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "Are you sure you wish to delete channel, %s?", selected_channel_title);
-                options[0] = "yes";
-                options[1] = "no";
-            } else {
-                chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "You must import a channel before you can delete a channel.");
-                options[0] = "back";
-                options[1] = "exit";
-            }
-
-            if (chars_written >= CONFIRMATION_MSG_SIZE) {
-                memcpy(msg + CONFIRMATION_MSG_SIZE - 4, "...", 3);
-                msg[CONFIRMATION_MSG_SIZE - 1] = '\0';
-            }
-            menu_result result = display_confirmation_menu(msg, options, 2);
-            
-            if (result.selection == 0 && selected_channel_id > -1) {
-                delete_channel(selected_channel_id);
-            } 
-                // TODO: Should probably do some error handling here
-            
-            if (result.selection == 1 && !selected_channel) {
-                navigate(EXIT_PAGE, app, (local_state){});
-            }
-            break;
-        }
-        case 'b':
-            navigate(MAIN_PAGE, app, (local_state){});
-            break;
-        case 'E':
+        if (confirm_result.selection == 0 && selected_channel_id > -1) {
+            delete_channel(selected_channel_id);
+        } 
+        if (result.selection == 1 && !selected_channel) {
             navigate(EXIT_PAGE, app, (local_state){});
-            break;
-        case 'i':
-            navigate(IMPORT_PAGE, app, (local_state){});
-            break;
-        case 'v':
-            if (toggle_channel_visibility(selected_channel_id) != 0) {
-                log_debug("Failed to toggle visibility!");
+        }
+    } else if (result.ev.ch == 'b') {
+        navigate(MAIN_PAGE, app, (local_state){});
+    } else if (result.ev.ch == 'E') {
+        navigate(EXIT_PAGE, app, (local_state){});
+    } else if (result.ev.ch == 'i') {
+        navigate(IMPORT_PAGE, app, (local_state){});
+    } else if (result.ev.ch == 'v') {
+        if (toggle_channel_visibility(selected_channel_id) != 0) {
+            log_debug("Failed to toggle visibility!");
+        }
+        navigate(CHANNELS_PAGE, app, (local_state){
+            .channels_state = {
+                .default_selection = result.selection 
             }
-            navigate(CHANNELS_PAGE, app, (local_state){
-                .channels_state = {
-                    .default_selection = result.selection 
-                }
-            });
-            break;
-        case 'r':
-            break;
+        });
+    } 
+}
+
+static menu_result delete_confirm(char *channel_title, int channel_id) {
+    char msg[CONFIRMATION_MSG_SIZE];
+    size_t chars_written = 0;
+    char *options[2]; 
+    if (channel_id > -1) {
+        chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "Are you sure you wish to delete channel, %s?", channel_title);
+        options[0] = "yes";
+        options[1] = "no";
+    } else {
+        chars_written = snprintf(msg, CONFIRMATION_MSG_SIZE, "You must import a channel before you can delete a channel.");
+        options[0] = "back";
+        options[1] = "exit";
     }
+
+    if (chars_written >= CONFIRMATION_MSG_SIZE) {
+        memcpy(msg + CONFIRMATION_MSG_SIZE - 4, "...", 3);
+        msg[CONFIRMATION_MSG_SIZE - 1] = '\0';
+    }
+    return display_confirmation_menu(msg, options, 2);
 }
 
 static int render_channel_list(renderer_params *params) {

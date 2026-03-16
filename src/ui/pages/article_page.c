@@ -54,10 +54,8 @@ void article_page(app_state *app, local_state *state) {
     char *description = format_description(item->description, width, &lines);
 
     tb_printf(PADDING, y++, TB_GREEN, 0, "DESCRIPTION");
-    log_debug("Article description \n\n%s", description);
     errno = 0;
-    int res = tb_printf(PADDING, y++, TB_GREEN, 0, "%s", description != NULL ? description : "No description provided");
-    log_debug("printf result %d | %s", res, strerror(errno));
+    tb_printf(PADDING, y++, TB_GREEN, 0, "%s", description != NULL ? description : "No description provided");
     y += lines + 5;
     menu_result result = display_basic_menu(tb_height() - 10, article_options, options_length);
 

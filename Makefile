@@ -1,52 +1,41 @@
-TEST_IMPORT_FILE = "./config/channel_list.txt"
-
-CLANG_DEBUG = clang -Wall -Werror -Wno-unused-variable -std=gnu11 -O0 -g 
-CLANG_PROD = clang -Wall -Werror -std=gnu11 -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE 
+TEST_IMPORT_FILE := "./config/channel_list.txt"
 
 CFLAGS_MAIN := $(shell pkg-config --cflags openssl liburiparser)
 LDFLAGS_MAIN := $(shell pkg-config --libs sqlite3 openssl liburiparser)
 
-MAIN_DEPS =   src/*.c \
-			  src/*.h \
-			  src/channels_db/*.c \
-			  src/channels_db/*.h \
-			  src/parser/*.c \
-			  src/parser/*.h \
-			  src/ui/*.c \
-			  src/ui/*.h \
-			  src/ui/pages/*.c \
-			  src/ui/pages/*.h
+DEPS := $(shell find src -path src/termbox2 -prune -o -type f -name "*.[h|c]" -print) 
+SOURCES := $(shell find src -path src/termbox2 -prune -o -type f -name "*.c" -print) 
 
-SOURCES = 	src/*.c \
-			src/parser/*.c \
-			src/ui/*.c \
-			src/ui/pages/*.c \
-			src/channels_db/*.c
+RELEASE_OBJS := $(patsubst src/%.c, build/release/%.o, $(SOURCES))
+DEBUG_OBJS := $(patsubst src/%.c, build/debug/%.o, $(SOURCES))
 
-MAIN_BUILD = -o main ${SOURCES} ${CFLAGS_MAIN} ${LDFLAGS_MAIN} 
+DEBUG_FLAGS := -Wall -Werror -g -O0
+RELEASE_FLAGS := -Wall -O2
 
-main: ${MAIN_DEPS}
-	${CLANG_PROD} ${MAIN_BUILD}
+compile_release: $(RELEASE_OBJS)
+compile_debug: $(DEBUG_OBJS)
 
-debug_main: ${MAIN_DEPS}
-	${CLANG_DEBUG} ${MAIN_BUILD}
+build/release/%.o: src/%.c
+	mkdir -p $(dir $@) 
+	clang $(CFLAGS_MAIN) $(DEBUG_FLAGS) -c $< -o $@
 
-debug_asan_main: ${MAIN_DEPS}
-	${CLANG_DEBUG} -fsanitize=address ${MAIN_BUILD}
+build/debug/%.o: src/%.c
+	mkdir -p $(dir $@) 
+	clang $(CFLAGS_MAIN) $(RELEASE_FLAGS) -c $< -o $@
 
-test_run_main: main
-	./main $(TEST_IMPORT_FILE)
+link_release: $(RELEASE_OBJS)  
+	clang $(RELEASE_OBJS) -o main $(LDFLAGS_MAIN)
 
-test_debug_main: debug_main 
-	./main $(TEST_IMPORT_FILE)
+link_debug: $(DEBUG_OBJS) 
+	clang $(DEBUG_OBJS) -o debug_main $(LDFLAGS_MAIN)
 
-test_debug_asan_main: debug_asan_main
-	./main $(TEST_IMPORT_FILE)
+# For running tests
 
-test_work_queue: src/queue.*
-	${CLANG_DEBUG} -o queue_test src/queue.c
-	./queue_test
+GTEST_CFLAGS := $(shell pkg-config --cflags gtest_main)
+GTEST_LDFLAGS := $(shell pkg-config --libs gtest_main)
 
-test_pool: src/thread_pool.* src/queue.*
-	${CLANG_DEBUG} -o pool src/thread_pool.c src/queue.c
-	./pool
+NO_MAIN_OBJS := $(shell find build/debug -name "main.o" -prune -o -type f -name "*.o" -print)
+
+test: $(DEBUG_OBJS)
+	clang++ -std=c++17 $(NO_MAIN_OBJS) -o run_tests test/*.cc $(GTEST_CFLAGS) $(LDFLAGS_MAIN) $(GTEST_LDFLAGS)
+	./run_tests
