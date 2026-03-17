@@ -69,6 +69,7 @@ TEST(parser_tests, test_parse_tree) {
         <description>A basic test RSS feed</description> \
         <item> \
             <title>First Article</title> \
+            <author>Test Author</author> \
             <link>https://engineering.fb.com/2026/03/02/data-infrastructure/investing-in-infrastructure-metas-renewed-commitment-to-jemalloc/</link> \
             <pubDate>Mon, 16 Mar 2026 18:12:32 +0000</pubDate> \
             <comments>https://news.ycombinator.com/item?id=47402640</comments> \
@@ -86,4 +87,12 @@ TEST(parser_tests, test_parse_tree) {
     EXPECT_STREQ(channel->description, "A basic test RSS feed");
     EXPECT_STREQ(channel->title, "Basic Feed");
     EXPECT_STREQ(channel->link, "https://basic-feed.com/");
+    ASSERT_EQ(channel->items->count, 1);
+
+    rss_item *item = (rss_item *)channel->items->elements[0];
+    EXPECT_STREQ(item->title, "First Article");
+    EXPECT_STREQ(item->link, "https://engineering.fb.com/2026/03/02/data-infrastructure/investing-in-infrastructure-metas-renewed-commitment-to-jemalloc/");
+    EXPECT_STREQ(item->description, "This is a description");
+    EXPECT_STREQ(item->author, "Test Author");
+    EXPECT_EQ(item->unix_timestamp, 1773684752);
 }

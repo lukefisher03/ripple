@@ -30,7 +30,6 @@ TEST(utility_tests, rfc_822_conversion_valid_formats) {
     };
 
     for (size_t i = 0; i < sizeof(timestamps) / sizeof(char *); i++) {
-        printf("%s\n", timestamps[i]);
         struct tm tmp_tm;
         ASSERT_EQ(rfc_822_to_utc_tm((char *)timestamps[i], &tmp_tm), 0);
     }
@@ -47,7 +46,6 @@ TEST(utility_tests, rfc_822_conversion_invalid_formats) {
     };
 
     for (size_t i = 0; i < sizeof(timestamps) / sizeof(char *); i++) {
-        printf("%s\n", timestamps[i]);
         struct tm tmp_tm;
         ASSERT_EQ(rfc_822_to_utc_tm((char *)timestamps[i], &tmp_tm), 1);
     }
