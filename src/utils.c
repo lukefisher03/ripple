@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "logger.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -12,7 +11,6 @@ char *file_to_string(const char *path, size_t *out_size) {
 
     fptr = fopen(path, "rb");
     if (!fptr) {
-        log_debug("Could not open file! %s\n", path);
         return NULL;
     }
 
@@ -21,7 +19,6 @@ char *file_to_string(const char *path, size_t *out_size) {
 
     str = malloc(capacity);
     if (!str) {
-        log_debug("Could not allocate space to hold file %s\n", path);
         fclose(fptr);
         return NULL;
     }
@@ -30,7 +27,6 @@ char *file_to_string(const char *path, size_t *out_size) {
     while (1) {
         if (buf_sz + CHUNK_SIZE >= MAX_FILE_SIZE - 1) {
             // Exit if the file goes over MAX_FILE_SIZE. (Minus 1 for null terminator)
-            log_debug("File is too big. Must be smaller than %d bytes\n", MAX_FILE_SIZE);
             fclose(fptr);
             free(str);
             return NULL;
@@ -40,7 +36,6 @@ char *file_to_string(const char *path, size_t *out_size) {
             capacity *= 2;
             char *tmp = realloc(str, capacity);
             if (!tmp) {
-                log_debug("Memory allocation error!\n");
                 fclose(fptr);
                 free(str);
                 return NULL;
@@ -94,8 +89,6 @@ int rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
             ;
 
         if (*end == '\0') {
-            log_debug("No timezone information given for timestamp: %s",
-                      timestamp);
             return 1;
         }
         if (*end == 'G') {
@@ -108,7 +101,6 @@ int rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         // Determine offset direction
         int offset_str_len = strlen(end);
         if (offset_str_len < 5 || offset_str_len > 6) {
-            log_debug("Given offset isn't valid: %s", end);
             return 1;
         }
 
@@ -124,8 +116,6 @@ int rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         errno = 0;
         hour_offset = strtol(hours_str, NULL, 10);
         if (errno == EINVAL || errno == ERANGE) {
-            log_debug("Failed to parse UTC offset: '%s' - %s", hours_str,
-                      strerror(errno));
             return 1;
         }
 
@@ -143,8 +133,6 @@ int rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         min_offset = strtol(mins_str, NULL, 10);
 
         if (errno == EINVAL || errno == ERANGE) {
-            log_debug("Failed to parse UTC offset: '%s' - %s", hours_str,
-                      strerror(errno));
             return 1;
         }
 
@@ -157,7 +145,7 @@ int rfc_822_to_utc_tm(char *timestamp, struct tm *tm) {
         return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 int unix_time_to_formatted(int64_t unix_timestamp, char *str, size_t buf_len) {
@@ -170,8 +158,6 @@ int unix_time_to_formatted(int64_t unix_timestamp, char *str, size_t buf_len) {
     // really be that important. Just noting it.
     time_t converted_timestamp = (time_t)unix_timestamp;
     if (!localtime_r(&converted_timestamp, &tm_local)) {
-        log_debug("Failed to convert UTC timestamp to local: %ld",
-                  unix_timestamp);
         return 1;
     }
 

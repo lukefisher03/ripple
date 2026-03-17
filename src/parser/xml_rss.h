@@ -64,6 +64,12 @@ rss_channel *build_channel(char *xml_rss, size_t size, char *link);
 rss_channel *channel_init(void);
 rss_item *item_init(void);
 
+ssize_t _accumulate_text(const char *str, size_t length, rss_node *new_node);
+ssize_t _skip_comment(const char *str, size_t length);
+int _read_tag(const char *str, size_t length, xml_tag *t);
+rss_node *_construct_parse_tree(const char *xml, size_t length);
+int _build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node);
+
 void free_channel(rss_channel *c);
 void free_item(rss_item *it);
 #endif

@@ -1,13 +1,11 @@
 #include "thread_pool.h"
 #include "queue.h"
-#include "logger.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 
 void busy_wait_long(void) {
-    log_debug("Going into busy wait\n");
     for (size_t i = 0; i < 2000000000; i++);
 } 
 
@@ -42,7 +40,6 @@ void *do_work(void *args) {
         }
 
         if (thread_args->stop_work) {
-            log_debug("Received stop signal, exiting\n");
             pthread_mutex_unlock(&thread_args->mut);
             break;
         }
@@ -52,7 +49,7 @@ void *do_work(void *args) {
         void *message = queue_dequeue(thread_args->work_queue);
         pthread_mutex_unlock(&thread_args->mut);
         if (!message) {
-            log_debug("Failed to pull message from queue!!\n");
+            continue;
         }
         thread_args->func(message, thread_args->arg);
 
@@ -132,7 +129,6 @@ thread_pool *thread_pool_create(size_t thread_count, size_t queue_cap, thread_fu
 
     for (size_t i = 0; i < thread_count; i++) {
         if ((err = pthread_create(&pool->threads[i], NULL, do_work, pool->info)) != 0) {
-            log_debug("Error creating a thread, cleaning up");
             stop_threads(pool);
             for (size_t j = 0; j < i; j++) {
                 pthread_join(pool->threads[j], NULL);
@@ -158,33 +154,3 @@ void join_pool(thread_pool *pool) {
         pthread_join(pool->threads[i], NULL);
     }
 }
-
-// void *test_func(void *message, void *arg) {
-//     if (!message) {
-//         log_debug("NO MESSAGE!");
-//     }
-//     int num = *(int *)message;
-//     char *str = *(char **)arg;
-//     busy_wait_short();
-//     log_debug("Thread received '%d' with '%s'\n", num, str);
-//     return NULL;
-// }
-
-// int main(int argc, char *argv[]) {
-//     char *hello = "Hi there";
-//     thread_pool *pool = thread_pool_create(8, 1000, test_func, &hello);
-//     busy_wait_long();
-//     int work[200];
-//     for (size_t i = 0; i < 200; i++) {
-//         work[i] = i + 1;
-//         thread_pool_add_work(&work[i], pool);
-//     }
-
-//     for (size_t i = 0; i < 50; i++) {
-//         work[i] = i + 1;
-//         thread_pool_add_work(&work[i], pool);
-//     }
-
-//     join_pool(pool);
-//     return 0;
-// }

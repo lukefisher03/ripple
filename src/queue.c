@@ -1,5 +1,4 @@
 #include "queue.h"
-#include "logger.h"
 
 #include <stdio.h>
 
@@ -67,31 +66,4 @@ void *queue_dequeue(message_queue *q) {
 void queue_free(message_queue *q) {
     free(q->items);
     free(q);
-}
-
-void print_queue(message_queue *q) {
-    if (!q) {
-        log_debug("NULL pointer exception");
-        return;
-    }
-    if (queue_empty(q)) log_debug("Queue is empty!");
-
-    log_debug("Queue:\n");
-    for (size_t i = 0; i < q->capacity; i++) {
-        log_debug("\t %lu. ", i + 1);
-        if (!q->items[i]) {
-            log_debug("NULL ");
-        } else {
-            log_debug("%d ", *(int *)q->items[i]);
-        }
-
-        if (i == q->back) {
-            log_debug(" <- BACK");
-        }
-
-        if (i == q->front) {
-            log_debug(" <- FRONT");
-        }
-        log_debug("\n");
-    }
 }

@@ -39,12 +39,12 @@ void free_container(rss_container *c);
 
 // ======== Build parse tree ======== //
 
-int read_tag(const char *str, size_t length, xml_tag *t) {
+int _read_tag(const char *str, size_t length, xml_tag *t) {
     // Given a string starting with `<`, extract the tag name and
     // return the length of the tag.
 
-    if (!t) return 0;
-    if (str[0] != '<') return 0;
+    if (!t) return 1;
+    if (str[0] != '<') return 1;
 
     size_t i = 1;
     if (str[i] == '/') {
@@ -55,8 +55,6 @@ int read_tag(const char *str, size_t length, xml_tag *t) {
     t->name = strndup(str+offset, i-offset);
     for (; i < length && str[i] != '>'; i++);
 
-    if (i >= length) return 0;
-
     if (str[1] == '/') {
         t->tag_type = TAG_CLOSE;
     } else if (str[i - 1] == '/') {
@@ -66,7 +64,7 @@ int read_tag(const char *str, size_t length, xml_tag *t) {
     }
 
     t->total_length = i+1;
-    return 1;
+    return 0;
 }
 
 xml_entity *replace_entity(const char *str) {
@@ -80,7 +78,7 @@ xml_entity *replace_entity(const char *str) {
     return NULL; 
 }
 
-ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
+ssize_t _accumulate_text(const char *str, size_t length, rss_node *new_node) {
     // Create a text node containing all the contents until a closing tag is 
     // reached. 
     if (!new_node) {
@@ -102,12 +100,10 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
 
     // Get the total length of the string
     size_t j = i;
-    size_t end_str_len = strlen(end_str);
-    for (; j < length && strncmp(str + j, end_str, end_str_len); j++);
+    for (; j < length && strncmp(str + j, end_str, strlen(end_str)); j++);
 
-    size_t content_length = 0;
     total_length += j;
-    content_length = j - i;
+    size_t content_length = j - i;
     
     new_node->text = malloc(content_length + 1);
     size_t len = 0;
@@ -133,24 +129,24 @@ ssize_t accumulate_text(const char *str, size_t length, rss_node *new_node) {
     return total_length;
 }
 
-ssize_t skip_comment(const char *str, size_t length) {
+ssize_t _skip_comment(const char *str, size_t length) {
     // Given a string starting with `<!--`, skip to the termination of
     // the comment `-->` and return the number of characters the comment
     // is. 
-    if (!str) return TRSS_ERR;
+    if (!str) return -1;
     if (!strncmp(str, "<!--", strlen("<!--"))) {
 
     }
     ssize_t i = 0;
     for (; i < length && strncmp(str + i, "-->", 3); i++);
     if (i == length) {
-        return TRSS_ERR;
+        return -1;
     }
     // Skip over the comment termination sequence.
     return i + 3;
 }
 
-rss_node *construct_parse_tree(const char *xml, size_t length) {
+rss_node *_construct_parse_tree(const char *xml, size_t length) {
     // Given a string of RSS XML construct a parse tree.
 
     rss_node *root = xml_node_init();
@@ -171,7 +167,7 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
         
         if (!strncmp(s, "<", 1) && strncmp(s, "<!", 2) && strncmp(s, "<?", 2)) {
             xml_tag new_tag;
-            if (read_tag(s, l, &new_tag)) { 
+            if (_read_tag(s, l, &new_tag) == 0) { 
                 if (new_tag.tag_type == TAG_OPEN) {
                     rss_node *top = list_peek(stack); 
                     rss_node *node = xml_node_init(); 
@@ -187,7 +183,7 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
                 i += new_tag.total_length;
             }
         } else if (!strncmp(s, "<!--", 3)) {
-            ssize_t comment_length = skip_comment(s, l);
+            ssize_t comment_length = _skip_comment(s, l);
             if (comment_length != TRSS_ERR) {
                 i += comment_length;
             } else {
@@ -197,7 +193,7 @@ rss_node *construct_parse_tree(const char *xml, size_t length) {
             }
         }else {
             rss_node *t_node = text_node_init();
-            ssize_t text_length = accumulate_text(s, l, t_node);
+            ssize_t text_length = _accumulate_text(s, l, t_node);
 
             if (text_length < 1) {
                 i++;
@@ -308,7 +304,7 @@ int process_node(rss_container *c, const rss_node *n) {
     return TRSS_OK;
 }
 
-int build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
+int _build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
     // Perform iterative DFS to build a channel from a parse tree
 
     generic_list *container_stack = list_init();
@@ -398,8 +394,8 @@ int build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
 
 rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
     rss_channel *new_channel = channel_init();
-    rss_node *tree = construct_parse_tree(xml_rss, size);
-    build_channel_from_parse_tree(new_channel, tree);
+    rss_node *tree = _construct_parse_tree(xml_rss, size);
+    _build_channel_from_parse_tree(new_channel, tree);
     free_node(tree);
     new_channel->rss_link = strdup(link);
     if (!new_channel->link) {
@@ -473,7 +469,7 @@ static char *get_spacer(int width) {
 }
 
 static inline int is_termination_char(char c) {
-    return (c == ' ' || c == ':' || c == '/' || c == '>');
+    return (c == ' ' || c == ':' || c == '/' || c == '>' || c == '\0');
 }
 
 // ======== Cleanup functions ======== //

@@ -17,11 +17,11 @@ compile_debug: $(DEBUG_OBJS)
 
 build/release/%.o: src/%.c
 	mkdir -p $(dir $@) 
-	clang $(CFLAGS_MAIN) $(DEBUG_FLAGS) -c $< -o $@
+	clang $(CFLAGS_MAIN) $(RELEASE_FLAGS) -c $< -o $@
 
 build/debug/%.o: src/%.c
 	mkdir -p $(dir $@) 
-	clang $(CFLAGS_MAIN) $(RELEASE_FLAGS) -c $< -o $@
+	clang $(CFLAGS_MAIN) $(DEBUG_FLAGS) -c $< -o $@
 
 main: compile_release 
 	clang $(RELEASE_OBJS) -o main $(LDFLAGS_MAIN)
