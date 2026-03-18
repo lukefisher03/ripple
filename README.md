@@ -18,25 +18,21 @@ git clone --recurse-submodules https://github.com/lukefisher03/ripple
 ```
 
 #### Using Docker Compose 
-
-The `Dockerfile` uses a multistage Alpine Linux build. The first stage compiles and the second produces the final image with just the binary and dependencies.
-
-Run this to build/pull images and stand up the container. The `-d` flag is required to run the container in detached mode. Include the `--build` flag if you need to rebuild the images.
+A dev image is provided to create an isolated environment to run tests and get up and running quickly. Run the commands below to get started.
 
 ```bash
 docker compose up -d
 ```
 
-Delete intermediate images from the multistage build.
-
-```bash
-docker image prune -f --filter label=stage=build
-```
-
 Exec into the container. Modify `config/channel_list.txt` in the host to add new feeds. You can also see the debug log in the `config` directory.
 
 ```bash
-docker compose exec ripple config/channel_list.txt
+docker compose exec ripple ./main config/channel_list.txt
+```
+
+Execute the test suite by running
+```
+docker compose run --rm test
 ```
 
 Tear everything down, this will delete the database and any imported feeds will be lost.
@@ -52,10 +48,16 @@ This project only has a few dependencies.
 - sqlite3
 - uriparser
 - openssl
+- gtest
 
 Ensure that `pkg-config` can locate these dependencies and run
-
 ```
 make main
 ./main <optional text file for importing new channels>
+```
+
+Alternatively, if debug symbols are required
+```
+make main_debug
+./main_debug <optional text file for importing new channels>
 ```

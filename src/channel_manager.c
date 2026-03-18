@@ -100,14 +100,13 @@ void *fetch_and_parse_channel(void *channel_link, void *arg) {
     (void) arg;
     char *link = (char *)channel_link;
 
-    size_t rss_size = 0;
-    char *feed_xml = get_feed_xml(link, &rss_size);
-    if (!feed_xml) {
+    http_response *response = send_http_get(link);
+    if (!response) {
         log_debug("Could not retrieve feed XML for %s. Skipping", link);
         return NULL;
     }
-    rss_channel *new_channel = build_channel(feed_xml, rss_size, link);
-    free(feed_xml);
+    rss_channel *new_channel = build_channel(response->body, response->body_size, link);
+    free_http_response(response);
     if (!new_channel) {
         log_debug("Failed to build new channel from link: %s", link);
     } else {

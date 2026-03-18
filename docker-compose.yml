@@ -1,7 +1,35 @@
 services:
   ripple:
-    build: .
+    build: 
+      context: .
+      target: base 
+    image: ripple:latest
     volumes:
-      - ./config:/config
-    tty: true
-    stdin_open: true
+      - ./src:/usr/src/ripple/src:ro
+      - ./test:/usr/src/ripple/test:ro
+      - ./config:/usr/src/ripple/config
+      - ./Makefile:/usr/src/ripple/Makefile:ro
+      - container-build:/usr/src/ripple/build
+    working_dir: /usr/src/ripple
+    command: sh -c "make -B main && tail -f /dev/null"
+  
+  file_server:
+    image: nginx:latest
+    volumes:
+      - ./nginx-docker-entrypoint.sh:/docker-entrypoint.sh
+      - ./test/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./test/test_files:/usr/share/nginx/html:ro
+    ports:
+      - 8080:80
+      - 8081:443
+  
+  test:
+    image: ripple:latest
+    volumes:
+      - .:/usr/src/ripple
+      - container-build:/usr/src/ripple/build 
+    working_dir: /usr/src/ripple
+    command: sh -c "make -B test && ./run_tests" 
+
+volumes:
+  container-build:

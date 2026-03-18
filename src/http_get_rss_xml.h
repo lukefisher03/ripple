@@ -7,6 +7,14 @@
 
 #include <stdlib.h>
 
-char * get_feed_xml(char *url, size_t *size);
+typedef struct {
+    char    *raw;
+    char    *body;
+    size_t  size;
+    size_t  body_size;
+} http_response;
+
+http_response *send_http_get(char *url);
+void free_http_response(http_response *response);
 
 #endif
