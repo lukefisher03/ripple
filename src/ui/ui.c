@@ -74,6 +74,10 @@ void ui_start(initial_state init_state) {
 void navigate(page_type page_id, app_state *app, local_state state) {
     // A page that is pushed, gets immediately rendered.
     reset_dividers();
+
+    page_destroy destroy = page_handlers_table[app->current_page->type].destroy;
+    if (destroy) destroy();
+
     page *current_page = malloc(sizeof(*current_page));
     current_page->state = state;
     current_page->type = page_id;

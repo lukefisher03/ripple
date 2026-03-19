@@ -1,12 +1,14 @@
 #include "logger.h"
 
 #include <stdio.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <time.h>
 
 #define LOG_FILE_NAME "config/ripple_debug.log"
 
 static FILE *log_file = NULL;
+static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void log_init(void) {
     log_file = fopen(LOG_FILE_NAME, "w");
@@ -16,11 +18,8 @@ void log_init(void) {
     log_debug("New session started");
 }
 
-void log_debug(const char *fmt, ...) {
-    if (!log_file) {
-        fprintf(stderr, "Attempted to log a debug statement with no open debug log file handle!\n");
-        return;
-    }
+static void _log_debug(const char *fmt, va_list args) {
+    if (!log_file) return;
 
     time_t now = time(NULL);
     struct tm tm;
@@ -36,14 +35,22 @@ void log_debug(const char *fmt, ...) {
         tm.tm_min,
         tm.tm_sec
     );
+    vfprintf(log_file, fmt, args);
+    fputc('\n', log_file);
+    fflush(log_file);
+}
+
+void log_debug(const char *fmt, ...) {
+    pthread_mutex_lock(&log_mutex);
 
     va_list args;
     va_start(args, fmt);
-    vfprintf(log_file, fmt, args);
+
+    _log_debug(fmt, args);
+
     va_end(args);
 
-    fputc('\n', log_file);
-    fflush(log_file);
+    pthread_mutex_unlock(&log_mutex);
 }
 
 void log_close(void) {
