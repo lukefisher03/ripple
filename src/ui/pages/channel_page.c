@@ -68,6 +68,8 @@ void channel_page(app_state *app, local_state *state) {
 
     menu_result result = display_menu(config);
 
+    state->channel_state.default_selection = result.selection;
+
     rss_item *selected_article = article_list->elements[result.selection];
     int selected_article_id = selected_article->id;
 
@@ -83,13 +85,12 @@ void channel_page(app_state *app, local_state *state) {
             navigate(MAIN_PAGE, app, (local_state){});
             break;
         case 'b':
-            navigate(CHANNELS_PAGE, app, (local_state){});
+            navigate_back(app);
             break;
         case 'E':
             navigate(EXIT_PAGE, app, (local_state){});
             break;
         default: {
-            state->channel_state.default_selection = result.selection;
             navigate(ARTICLE_PAGE, app, (local_state){
                 .article_state = {
                     .article_id = selected_article_id,

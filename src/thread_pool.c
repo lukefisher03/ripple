@@ -52,10 +52,8 @@ void *do_work(void *args) {
             continue;
         }
         thread_args->func(message, thread_args->arg);
-
         pthread_mutex_lock(&thread_args->mut);
-        if (thread_args->working_count-- == 0 && queue_empty(thread_args->work_queue)) {
-            printf("Signaled end!\n");
+        if (--thread_args->working_count == 0 && queue_empty(thread_args->work_queue)) {
             pthread_cond_broadcast(&thread_args->idle_cond); 
         }
         pthread_mutex_unlock(&thread_args->mut);
@@ -88,8 +86,15 @@ thread_info *_thread_info_init(size_t queue_cap, thread_function thread_func, vo
         return NULL;
     }
 
+    if ((err = pthread_cond_init(&info->idle_cond, NULL)) != 0) {
+        free(info);
+        pthread_cond_destroy(&info->work_cond);
+        return NULL;
+    }
+
     if ((err = pthread_mutex_init(&info->mut, NULL)) != 0) {
         pthread_cond_destroy(&info->work_cond);
+        pthread_cond_destroy(&info->idle_cond);
         free(info);
         return NULL;
     }

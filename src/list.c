@@ -36,7 +36,7 @@ int list_append(generic_list *l, void *item) {
     return 0;
 }
 
-inline int list_is_empty(const generic_list *l) { return l->count == 0; }
+inline int list_empty(const generic_list *l) { return l->count == 0; }
 
 void *list_peek(const generic_list *l) {
     if (l->count == 0) {
@@ -61,6 +61,68 @@ inline void list_clear(generic_list *l) { l->count = 0; }
 
 void list_free(generic_list *l) {
     if (!l) return;
+    free(l->elements);
+    free(l);
+}
+
+bounded_list *bounded_list_init(size_t capacity) {
+    if (capacity == 0) return NULL;
+
+    bounded_list *l = malloc(sizeof(*l));
+
+    if (!l) return NULL;
+    l->elements = calloc(capacity, sizeof(void *));
+
+    if (!l->elements) {
+        free(l);
+        return NULL;
+    }
+
+    l->capacity = capacity;
+    l->front = -1;
+    l->count = 0;
+     
+    return l;
+}
+
+int bounded_list_full(bounded_list *l) {
+    return l->count == l->capacity;
+}
+
+int bounded_list_empty(bounded_list *l) {
+    return l->count == 0;
+}
+
+void *bounded_list_append(bounded_list *l, void *element) {
+    // Returns ejected element if the bounded list is full
+    if (l->count < l->capacity) l->count++;
+
+    // Advance 1, if that spot is full, then ejected will store the old pointer.
+    l->front = (l->front + 1) % l->capacity;
+    void *ejected = l->elements[l->front];
+
+    l->elements[l->front] = element;  
+
+    return ejected;
+}
+
+void *bounded_list_pop(bounded_list *l) {
+    if (bounded_list_empty(l)) {
+        return NULL;
+    }
+
+    void *element = l->elements[l->front];
+    l->front = (l->front - 1 + l->capacity) % l->capacity;
+    l->count--;
+    return element;
+}
+
+void *bounded_list_peek(bounded_list *l) {
+    if (bounded_list_empty(l)) return NULL;
+    return l->elements[l->front];
+}
+
+void bounded_list_free(bounded_list *l) {
     free(l->elements);
     free(l);
 }

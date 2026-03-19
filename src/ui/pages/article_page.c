@@ -66,7 +66,7 @@ void article_page(app_state *app, local_state *state) {
 
     switch (result.selection) {
         case 0:
-            navigate(app->previous_page.type, app, app->previous_page.state);
+            navigate_back(app);
             break;
         case 1:
             navigate(MAIN_PAGE, app, (local_state){});

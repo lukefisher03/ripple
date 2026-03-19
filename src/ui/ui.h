@@ -61,7 +61,6 @@ typedef struct {
 typedef struct {
     page_type       type;
     local_state     state;
-    page_handlers   handlers;
 } page;
 
 typedef struct {
@@ -69,8 +68,8 @@ typedef struct {
 } initial_state;
 
 struct app_state {
-    page                current_page;
-    page                previous_page;
+    page                *current_page;
+    bounded_list        *page_stack;
     size_t              channel_count;
     app_configuration   config;
     initial_state       init_state;
@@ -78,4 +77,5 @@ struct app_state {
 
 void ui_start(initial_state init_state);
 void navigate(page_type page_id, app_state *app, local_state state);
+void navigate_back(app_state *app);
 #endif

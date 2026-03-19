@@ -342,7 +342,7 @@ int _build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
 
     list_append(dfs_stack, root_node); 
 
-    while (!list_is_empty(dfs_stack)) {
+    while (!list_empty(dfs_stack)) {
         rss_node *node = list_pop(dfs_stack);
 
         switch (node->type) {
@@ -383,7 +383,7 @@ int _build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
                         rss_node *n = node->xml.children->elements[i];
                         list_append(dfs_stack, n);
                     }
-                } else if (list_is_empty(container_stack)) {
+                } else if (list_empty(container_stack)) {
                     // Append node's children backwards so that the stack has the 
                     // leftmost child on the top
                     for (ssize_t i = node->xml.children->count - 1; i >= 0; i--) {

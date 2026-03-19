@@ -19,7 +19,7 @@ extern char *blank_line;
 static int render_feed_article_selections(renderer_params *params);
 
 void main_feed(app_state *app, local_state *state){
-    (void) state;
+    log_debug("Selection: %d", state->feed_state.default_selection);
     int width = tb_width();
 
     generic_list *items = list_init();
@@ -71,7 +71,7 @@ void main_feed(app_state *app, local_state *state){
     article_with_channel_name *selected_item = NULL;
     int selected_article_id = -1;
 
-    if (!list_is_empty(items)) {
+    if (!list_empty(items)) {
         selected_item = items->elements[result.selection];
         selected_article_id = selected_item->item->id;
     } 

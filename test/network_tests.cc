@@ -34,9 +34,7 @@ void *test_fetch_channel(void *channel_link, void *arg) {
     char *link = (char *)channel_link;
     
     http_response *response = send_http_get(link);
-
     if (!response) {
-        printf("Could not retrieve feed XML for %s. Skipping\n", link);
         return NULL;
     }
 
@@ -44,13 +42,11 @@ void *test_fetch_channel(void *channel_link, void *arg) {
     free_http_response(response);
 
     if (!new_channel) {
-        printf("No channel could be made\n");
         return NULL;
     }
     if (queue_enqueue((void *)new_channel, final_queue)) {
         free_channel(new_channel);
     }
-    // printf("Finished processing feed\n");
     return NULL;
 }
 
@@ -62,18 +58,17 @@ TEST(http_get_tests, stress_test) {
     thread_pool *pool = thread_pool_create(10, num_fetches, test_fetch_channel, final_queue); 
 
     for (size_t i = 0; i < num_fetches; i++) {
-        // printf("Added link to work pool\n");
         thread_pool_add_work((void *)"https://file_server/basic.xml", pool);
     }
 
-    struct timespec t = {
-        .tv_sec = 100,
-        .tv_nsec = 0,
-    };
+    struct timespec t;
+    clock_gettime(CLOCK_REALTIME, &t);
+    t.tv_sec += 300;
 
     pthread_mutex_lock(&pool->info->mut);
     while (pool->info->working_count > 0 || !queue_empty(pool->info->work_queue)) {
-        pthread_cond_timedwait(&pool->info->idle_cond, &pool->info->mut, &t);
+        int rc = pthread_cond_timedwait(&pool->info->idle_cond, &pool->info->mut, &t);
+        ASSERT_EQ(rc, 0);
     }
     long t2 = current_time_ms();
     printf("Took %ld ms to process %d requests\n", t2 - t1, num_fetches);

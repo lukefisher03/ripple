@@ -47,3 +47,33 @@ TEST(list_tests, pop) {
 
     ASSERT_EQ(l->count, 0);
 }
+
+TEST(bounded_list_tests, append) {
+    bounded_list *l = bounded_list_init(5);
+    int nums[5];
+    for (size_t i = 0; i < 5; i++) {
+        nums[i] = (int)i + 1;
+        bounded_list_append(l, &nums[i]);
+    }
+
+    int end = 5;
+    while (!bounded_list_empty(l)) {
+        int *n = (int *)bounded_list_pop(l);
+        EXPECT_EQ(*n, end--);
+    }
+}
+
+TEST(bounded_list_tests, append_overwrite) {
+    bounded_list *l = bounded_list_init(3);
+    int nums[5];
+    for (size_t i = 0; i < 5; i++) {
+        nums[i] = (int)i + 1;
+        bounded_list_append(l, &nums[i]);
+    }
+
+    int end = 5;
+    while (!bounded_list_empty(l)) {
+        int *n = (int *)bounded_list_pop(l);
+        EXPECT_EQ(*n, end--);
+    }
+}

@@ -50,22 +50,10 @@ void import_page(app_state *app, local_state *state) {
     menu_result result = display_menu(config);
     free(row);
 
-    switch (result.ev.ch) {
-    case 'b':
-        navigate(CHANNELS_PAGE, app, (local_state){});
-        break;
-    case 'h':
-        navigate(MAIN_PAGE, app, (local_state){});
-        break;
-    default:
-        break;
-    }
-
     if (result.ev.key == TB_KEY_ENTER) {
         tb_clear();
         write_centered(tb_height() / 2 - 1, TB_GREEN, 0, "Importing channels, please wait");
         tb_present();
-        // int channels_imported_count = store_new_channels((char**)links->elements, links->count);  
 
         for (size_t i = 0; i < links->count; i++) {
             char *link = links->elements[i];
@@ -73,8 +61,10 @@ void import_page(app_state *app, local_state *state) {
                 log_debug("Feed with link: %s already exists", link);
                 continue;
             }
-            fetch_parse_tp_enqueue(link);
+            fetch_parse_tp_enqueue(link);   // ownership of the link variable changes here,
+                                            // The thread is expected to free the variable.
         }
+        list_free(links);
 
         tb_clear();
         struct tb_event ev;
@@ -87,6 +77,20 @@ void import_page(app_state *app, local_state *state) {
         tb_poll_event(&ev);
         
         navigate(CHANNELS_PAGE, app, (local_state){});
+        return;
+    } 
+
+    for (size_t i = 0; i < links->count; i++) {
+        free(links->elements[i]);
+    }
+    list_free(links);
+
+    if (result.ev.ch == 'b') {
+        navigate_back(app);
+        return;
+    } else if (result.ev.ch == 'h') {
+        return;
+        navigate(MAIN_PAGE, app, (local_state){});
     }
 }
 

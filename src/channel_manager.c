@@ -11,7 +11,7 @@
 #include <time.h>
 #include <string.h>
 
-#define TP_THREAD_COUNT 5
+#define TP_THREAD_COUNT 10
 
 static thread_pool *fetch_parse_tp = NULL;
 
@@ -33,7 +33,7 @@ int refresh_channels(void) {
 
     get_stale_channels(stale_channel_cutoff, stale_channels);
 
-    if (list_is_empty(stale_channels)) {
+    if (list_empty(stale_channels)) {
         log_debug("No stale channels!");
         goto cleanup;
     }
@@ -102,15 +102,22 @@ void *_fetch_and_parse_channel(void *channel_link, void *arg) {
     http_response *response = send_http_get(link);
     if (!response) {
         log_debug("Could not retrieve feed XML for %s. Skipping", link);
-        return NULL;
+        goto cleanup;
     }
+
     rss_channel *new_channel = build_channel(response->body, response->body_size, link);
     free_http_response(response);
-    if (!new_channel) return NULL;
+    if (!new_channel) {
+        log_debug("Could not build new channel response. Link: %s", link);
+        goto cleanup;
+    }
 
     if (db_tp_enqueue(new_channel) != 0) {
+        log_debug("Failed to add %s to database work queue", new_channel->title);
         free_channel(new_channel);
     }
 
+cleanup:
+    free(channel_link);
     return NULL;
 }

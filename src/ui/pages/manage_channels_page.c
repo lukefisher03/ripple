@@ -102,14 +102,16 @@ void manage_channels_page(app_state *app, local_state *state) {
             break;
         }
     }
-    
+
+    state->channels_state.default_selection = result.selection; 
+
     free(row);
 
     rss_channel *selected_channel = NULL;
     char selected_channel_title[512] = "";
     int selected_channel_id = -1;
    
-    if (!list_is_empty(channel_list)) {
+    if (!list_empty(channel_list)) {
         selected_channel = channel_list->elements[result.selection];
         snprintf(selected_channel_title, 512, "%s", selected_channel->title);
         selected_channel_id = selected_channel->id;
@@ -143,7 +145,7 @@ void manage_channels_page(app_state *app, local_state *state) {
             navigate(EXIT_PAGE, app, (local_state){});
         }
     } else if (result.ev.ch == 'b') {
-        navigate(MAIN_PAGE, app, (local_state){});
+        navigate_back(app);
     } else if (result.ev.ch == 'E') {
         navigate(EXIT_PAGE, app, (local_state){});
     } else if (result.ev.ch == 'i') {
@@ -152,11 +154,6 @@ void manage_channels_page(app_state *app, local_state *state) {
         if (toggle_channel_visibility(selected_channel_id) != 0) {
             log_debug("Failed to toggle visibility!");
         }
-        navigate(CHANNELS_PAGE, app, (local_state){
-            .channels_state = {
-                .default_selection = result.selection 
-            }
-        });
     } 
 }
 
