@@ -15,10 +15,9 @@
 
 static thread_pool *fetch_parse_tp = NULL;
 
-void *fetch_and_parse_channel(void *channel_link, void *arg);
 
-int create_thread_pools(void) {
-    fetch_parse_tp = thread_pool_create(TP_THREAD_COUNT, 100, fetch_and_parse_channel, NULL);
+int create_fetch_thread_pool(void) {
+    fetch_parse_tp = thread_pool_create(TP_THREAD_COUNT, 100, _fetch_and_parse_channel, NULL);
     return fetch_parse_tp != NULL;
 }
 
@@ -96,7 +95,7 @@ int fetch_parse_tp_busy(void) {
     return thread_pool_busy(fetch_parse_tp);
 }
 
-void *fetch_and_parse_channel(void *channel_link, void *arg) {
+void *_fetch_and_parse_channel(void *channel_link, void *arg) {
     (void) arg;
     char *link = (char *)channel_link;
 
@@ -107,11 +106,7 @@ void *fetch_and_parse_channel(void *channel_link, void *arg) {
     }
     rss_channel *new_channel = build_channel(response->body, response->body_size, link);
     free_http_response(response);
-    if (!new_channel) {
-        log_debug("Failed to build new channel from link: %s", link);
-    } else {
-        log_debug("BUILDING CHANNEL: %s", new_channel->title);
-    }
+    if (!new_channel) return NULL;
 
     if (db_tp_enqueue(new_channel) != 0) {
         free_channel(new_channel);

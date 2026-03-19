@@ -42,7 +42,7 @@ NO_MAIN_OBJS := $(filter-out %main.o, $(DEBUG_OBJS))
 
 test: test/*.cc $(DEBUG_OBJS)
 	rm run_tests || true
-	clang++ -std=c++17 $(NO_MAIN_OBJS) -o run_tests test/*.cc $(GTEST_CFLAGS) $(LDFLAGS_MAIN) $(GTEST_LDFLAGS)
+	clang++ -g -std=c++17 $(NO_MAIN_OBJS) -o run_tests test/*.cc $(GTEST_CFLAGS) $(LDFLAGS_MAIN) $(GTEST_LDFLAGS)
 
 run_tests: test
 	./run_tests

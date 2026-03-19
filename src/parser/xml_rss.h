@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <time.h>
 
+#define MAX_RSS_ITEM_DATE_LEN 64
+
 enum tag_type {
     TAG_OPEN,
     TAG_CLOSE,
@@ -33,7 +35,6 @@ typedef struct {
     generic_list     *items; // List of items
 } rss_channel;
 
-#define MAX_RSS_ITEM_DATE_LEN 64
 
 typedef struct {
     int64_t         id;

@@ -2,6 +2,11 @@
 
 set -eu
 
+apt update
+apt install -y iproute2
+
+tc qdisc add dev eth0 root netem delay 50ms 10ms
+
 mkdir -p /certs/
 
 if [ ! -f /certs/key.pem ] || [ ! -f /certs/cert.pem ]; then

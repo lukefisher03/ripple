@@ -54,14 +54,17 @@ void *do_work(void *args) {
         thread_args->func(message, thread_args->arg);
 
         pthread_mutex_lock(&thread_args->mut);
-        thread_args->working_count--;
+        if (thread_args->working_count-- == 0 && queue_empty(thread_args->work_queue)) {
+            printf("Signaled end!\n");
+            pthread_cond_broadcast(&thread_args->idle_cond); 
+        }
         pthread_mutex_unlock(&thread_args->mut);
     }
 
     return NULL;
 }
 
-void stop_threads(thread_pool *pool) {
+void thread_pool_stop(thread_pool *pool) {
     if (!pool) return;
     pthread_mutex_lock(&pool->info->mut);
     pool->info->stop_work = 1;
@@ -129,7 +132,7 @@ thread_pool *thread_pool_create(size_t thread_count, size_t queue_cap, thread_fu
 
     for (size_t i = 0; i < thread_count; i++) {
         if ((err = pthread_create(&pool->threads[i], NULL, do_work, pool->info)) != 0) {
-            stop_threads(pool);
+            thread_pool_stop(pool);
             for (size_t j = 0; j < i; j++) {
                 pthread_join(pool->threads[j], NULL);
             }
@@ -148,7 +151,7 @@ cleanup:
     return pool;
 }
 
-void join_pool(thread_pool *pool) {
+void thread_pool_join(thread_pool *pool) {
     if (!pool) return;
     for (size_t i = 0; i < pool->thread_count; i++) {
         pthread_join(pool->threads[i], NULL);

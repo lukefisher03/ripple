@@ -2,6 +2,7 @@
 
 extern "C" {
     #include "../src/parser/xml_rss.h"
+    #include "../src/utils.h"
     #include <string.h>
 }
 
@@ -77,8 +78,7 @@ TEST(parser_tests, test_parse_tree) {
         </item> \
     </channel> \
     </rss>";
-
-    rss_node *tree = _construct_parse_tree(xml, strlen(xml + 1));
+    rss_node *tree = _construct_parse_tree(xml, strlen(xml) + 1);
     ASSERT_NE(tree, nullptr);
 
     rss_channel *channel = channel_init();
@@ -95,4 +95,18 @@ TEST(parser_tests, test_parse_tree) {
     EXPECT_STREQ(item->description, "This is a description");
     EXPECT_STREQ(item->author, "Test Author");
     EXPECT_EQ(item->unix_timestamp, 1773684752);
+}
+
+TEST(parser_tests, parse_malformed_feed_0) {
+    size_t size;
+    char *xml = file_to_string("test/test_files/malformed_feed_0.xml", &size); 
+    rss_channel *chan = build_channel(xml, strlen(xml) + 1, (char *)"testlink");
+    ASSERT_EQ(chan, nullptr);
+}
+
+TEST(parser_tests, parse_malformed_feed_1) {
+    size_t size;
+    char *xml = file_to_string("test/test_files/malformed_feed_1.xml", &size); 
+    rss_channel *chan = build_channel(xml, strlen(xml) + 1, (char *)"testlink");
+    ASSERT_EQ(chan, nullptr);
 }

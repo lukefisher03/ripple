@@ -12,6 +12,11 @@ generic_list *list_init(void) {
     l->count = 0;
     l->elements = calloc(LIST_DEFAULT_CAPACITY, sizeof(void *));
 
+    if (!l->elements) {
+        free(l);
+        return NULL;
+    }
+
     return l;
 }
 

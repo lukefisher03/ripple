@@ -273,12 +273,15 @@ http_response *send_http_get(char *url) {
     } else {
         log_debug("Attempting to make connection");
         int sfd = _insecure_connect(results);
-        log_debug("File descriptor: %d", sfd);
+        if (sfd < 0) {
+            goto cleanup;
+        }
         response = send_insecure_request(sfd, request);
         log_debug("Finished request! %s", response->body);
         close(sfd);
     }
 
+cleanup:
     freeaddrinfo(results);
     
     if (!response) {

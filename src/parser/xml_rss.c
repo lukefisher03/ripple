@@ -46,12 +46,20 @@ int _read_tag(const char *str, size_t length, xml_tag *t) {
     if (!t) return 1;
     if (str[0] != '<') return 1;
 
+    t->total_length = 0;
+
     size_t i = 1;
     if (str[i] == '/') {
         i++;
     }
     size_t offset = i;
     for (; i < length && !is_termination_char(str[i]); i++);
+
+    if (i - offset <= 0) {
+        log_debug("Tag could not be parsed");
+        return 1;
+    }
+
     t->name = strndup(str+offset, i-offset);
     for (; i < length && str[i] != '>'; i++);
 
@@ -62,8 +70,14 @@ int _read_tag(const char *str, size_t length, xml_tag *t) {
     } else {
         t->tag_type = TAG_OPEN;
     }
-
     t->total_length = i+1;
+
+
+    if (t->total_length > length) {
+        if (t->name) free(t->name);
+        return 1;
+    }
+
     return 0;
 }
 
@@ -82,8 +96,7 @@ ssize_t _accumulate_text(const char *str, size_t length, rss_node *new_node) {
     // Create a text node containing all the contents until a closing tag is 
     // reached. 
     if (!new_node) {
-        printf("EXITED DUE TO NOT HAVING NEW NODE!\n");
-        return TRSS_ERR;
+        return -1;
     }
 
     ssize_t i = 0;
@@ -178,9 +191,15 @@ rss_node *_construct_parse_tree(const char *xml, size_t length) {
                 } else if (new_tag.tag_type == TAG_CLOSE) {
                     list_pop(stack);
                 }
+                // Self-closing tags are simply ignored for now. They rarely appear with any
+                // meaningful content in real RSS feeds.
 
                 free(new_tag.name);
                 i += new_tag.total_length;
+            } else {
+                log_debug("Tag could not be parsed starting at: %s", s);
+                err = 1;
+                goto cleanup;
             }
         } else if (!strncmp(s, "<!--", 3)) {
             ssize_t comment_length = _skip_comment(s, l);
@@ -189,7 +208,7 @@ rss_node *_construct_parse_tree(const char *xml, size_t length) {
             } else {
                 log_debug("Unterminated comment found when parsing");
                 err = TRSS_ERR;
-                break;
+                goto cleanup;
             }
         }else {
             rss_node *t_node = text_node_init();
@@ -207,12 +226,17 @@ rss_node *_construct_parse_tree(const char *xml, size_t length) {
         }
     }
 
+cleanup:
     list_free(stack);
-    if (err != TRSS_OK) {
-        return NULL;
-    }
     root->type = ROOT_NODE;
     root->xml.name = strdup("ROOT");
+
+    if (err) {
+        log_debug("Could not build parse tree!");
+        free_node(root);
+        root = NULL;
+    }
+
     return root;
 }
 
@@ -322,11 +346,6 @@ int _build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
         rss_node *node = list_pop(dfs_stack);
 
         switch (node->type) {
-            case ROOT_NODE:
-                for (ssize_t i = node->xml.children->count - 1; i >= 0; i--) {
-                    list_append(dfs_stack, node->xml.children->elements[i]);
-                }
-                break;
             case DUMMY:
                 // If we encounter a dummy node, we know that we just finished
                 // iterating through a container's children
@@ -335,8 +354,10 @@ int _build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
                                                  // itself.   
                 free_node(node);
                 break;
+            case ROOT_NODE:
             case XML_NODE:
-                if (!strcmp(node->xml.name,"item")) {
+                
+                if (strcmp(node->xml.name,"item") == 0) {
                     rss_container *new_item = container_init(ITEM);
                     new_item->item->channel_id = chan->id;
                     list_append(chan->items, new_item->item);
@@ -351,7 +372,7 @@ int _build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
                     for (ssize_t i = node->xml.children->count - 1; i >= 0; i--) {
                         list_append(dfs_stack, node->xml.children->elements[i]);
                     }
-                } else if (!strcmp(node->xml.name, "channel")) {
+                } else if (strcmp(node->xml.name, "channel") == 0) {
                     // Create new container holding the channel
                     rss_container *root_container = malloc(sizeof(*root_container));
                     root_container->type = CHANNEL;
@@ -393,19 +414,37 @@ int _build_channel_from_parse_tree(rss_channel *chan, rss_node *root_node) {
 }
 
 rss_channel *build_channel(char *xml_rss, size_t size, char *link) {
+    if (!link) return NULL;
+    int err = 0;
     rss_channel *new_channel = channel_init();
     rss_node *tree = _construct_parse_tree(xml_rss, size);
-    _build_channel_from_parse_tree(new_channel, tree);
-    free_node(tree);
+    if (!tree) {
+        err = 1;
+        goto cleanup;
+    }
+
+    if (_build_channel_from_parse_tree(new_channel, tree) != 0) {
+        err = 1;
+        goto cleanup;
+    }
+
     new_channel->rss_link = strdup(link);
+
     if (!new_channel->link) {
-        free(new_channel);
-        log_debug("<channel> is missing or has an empty <link> tag.");
-        return NULL;
+        log_debug("<channel> is missing a <link> tag.");
+        err = 1;
+        goto cleanup;
     }
     if (!new_channel->title) {
         log_debug("Channel has no title tag, replacing with the link, %s", new_channel->link);
         new_channel->title = strdup(new_channel->link);
+    }
+    
+cleanup:
+    free_node(tree);
+    if (err) {
+        free_channel(new_channel);
+        return NULL;
     }
     return new_channel;
 }

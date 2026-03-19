@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 
-int get_new_channel_links(const char *feeds_file, size_t length, generic_list *list);
-
 int main(int argc, char *argv[]) {
     log_init();
     get_db_path();
@@ -21,7 +19,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    create_thread_pools();
+    create_fetch_thread_pool();
     create_database_thread();
 
     initial_state init_state = {0};

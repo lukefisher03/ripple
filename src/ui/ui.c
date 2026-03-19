@@ -52,7 +52,6 @@ void ui_start(initial_state init_state) {
     app_state app = {
         .init_state = init_state,
     };
-    app_init(&app);
 
     navigate(MAIN_PAGE, &app, (local_state){});
     
@@ -63,15 +62,6 @@ void ui_start(initial_state init_state) {
         create(&app, st);
     }
     tb_shutdown();
-}
-
-void app_init(app_state *app) {
-    app->channel_list = NULL; 
-    app->channel_count = 0;
-}
-
-void app_destroy(app_state *app) {
-    free(app->channel_list);
 }
 
 void navigate(page_type page_id, app_state *app, local_state state) {

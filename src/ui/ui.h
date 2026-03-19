@@ -50,7 +50,7 @@ typedef struct {
 
 typedef struct app_state app_state;
 
-typedef void (*page_create)(app_state *, local_state *state);
+typedef void (*page_create)(app_state *app, local_state *state);
 typedef void (*page_destroy)(void);
 
 typedef struct {
@@ -71,15 +71,11 @@ typedef struct {
 struct app_state {
     page                current_page;
     page                previous_page;
-    rss_channel         **channel_list;
     size_t              channel_count;
     app_configuration   config;
     initial_state       init_state;
 };
 
-
-void app_init(app_state *app);
-void app_destroy(app_state *app);
 void ui_start(initial_state init_state);
 void navigate(page_type page_id, app_state *app, local_state state);
 #endif

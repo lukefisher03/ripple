@@ -28,6 +28,11 @@ typedef struct {
     int                 default_selection;
 } menu_config;
 
+typedef struct {
+    int             selection;
+    struct tb_event ev;
+} menu_result;
+
 struct renderer_params{
     int             selected;
     int             idx;
@@ -37,10 +42,6 @@ struct renderer_params{
 };
 
 
-typedef struct {
-    int             selection;
-    struct tb_event ev;
-} menu_result;
 
 
 menu_result display_menu(menu_config config);
